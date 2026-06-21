@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>श्री बालाजी सायबर पॉईंट - स्मार्ट ऑटो प्रिंट</title>
-    <!-- QR कोड एरर घालवण्यासाठी गॅरंटीड चालणारी लायब्ररी -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; margin: 0; padding: 20px; color: #333; text-align: center; }
@@ -52,8 +51,8 @@
         <div class="section">
             <span class="section-title" id="fileLabel">📁 फाईल्स निवडा:</span>
             <div id="normalFileInput" class="file-input-group">
-                <!-- multiple सेटिंगमुळे ५ ते १० फोटो एकत्र सिलेक्ट करता येतात -->
-                <input type="file" id="mainFile" accept=".jpg,.jpeg,.png,.pdf" multiple onchange="checkPdfSelection()">
+                <!-- ५ ते १० फोटो किंवा पीडीएफ एकत्र निवडण्यासाठी multiple पर्याय -->
+                <input type="file" id="mainFile" accept=".jpg,.jpeg,.png,.pdf" multiple onchange="calculatePrice()">
             </div>
             <div id="idCardFileInputs" class="file-input-group hidden">
                 <label style="display:block; margin-bottom:10px;">
@@ -67,19 +66,19 @@
             </div>
         </div>
 
-        <!-- ठराविक पेजेस निवडण्याचा दुरुस्त केलेला बॉक्स -->
-        <div class="section hidden" id="pageRangeSection">
-            <span class="section-title">🔢 कोणती पेजेस प्रिंट करायची आहेत?</span>
+        <!-- 🎯 बदल: हा बॉक्स आता लपलेला न राहता स्क्रीनवर नेहमी उघडा दिसेल जर डॉक्युमेंट प्रकार 'नॉर्मल' असेल तर -->
+        <div class="section" id="pageRangeSection">
+            <span class="section-title">🔢 कोणती पेजेस प्रिंट करायची आहेत? (फक्त PDF साठी)</span>
             <label><input type="radio" name="pageOption" value="all" checked onclick="togglePageInput(false)"> सर्व पेजेस (All)</label>
-            <label><input type="radio" name="pageOption" value="custom" onclick="togglePageInput(true)"> ठराविक पेजेस</label>
+            <label><input type="radio" name="pageOption" value="custom" onclick="togglePageInput(true)"> ठराविक पेजेस (Custom Pages)</label>
             <div id="customPageInputGroup" class="hidden">
                 <input type="text" id="pageRangeInput" placeholder="उदा. 3,4 किंवा 1-5">
-                <small style="color:#666; font-size:11px; display:block; margin-top:5px;">(टीप: फक्त हवी असलेली पेजेस लिहा)</small>
+                <small style="color:#666; font-size:11px; display:block; margin-top:5px;">(टीप: जर ग्राहक फोटो प्रिंट करत असेल, तर हा बॉक्स 'सर्व पेजेस' वरच राहू द्या)</small>
             </div>
         </div>
 
         <div class="section">
-            <span class="section-title">🔄 पेज बाजू सेटिंग:</span>
+            <span class="section-title">🔄 पेज बाजू賽टिंग:</span>
             <label><input type="checkbox" id="bothSide" value="true" onclick="calculatePrice()"> कागदाच्या दोन्ही बाजूंवर प्रिंट करा (Both Side Print)</label>
         </div>
 
@@ -106,17 +105,13 @@
     <div class="modal-content">
         <h3 style="color: #002d62; margin-top: 0;">पैसे भरा (Pay to Print)</h3>
         <div class="amt-text" id="modalAmount">₹१०.००</div>
-        
         <div id="qrcode"></div>
-        
         <div style="background: #e3f2fd; padding: 10px; border-radius: 5px; margin: 10px 0; font-size: 14px; font-weight: bold; border: 1px dashed #1e88e5;">
             UPI ID: <span id="upiIdText">8007365051@okbizaxis</span>
             <button type="button" onclick="copyUpiId()" style="background: #1e88e5; color: white; padding: 3px 8px; font-size: 12px; margin-left: 5px; width: auto; display: inline-block; margin-top: 0; border-radius: 4px; border:none; cursor:pointer;">Copy</button>
         </div>
-        
         <p style="font-size: 13px; color: #666; margin-top:10px;">१. वरील QR कोड स्कॅन करा किंवा UPI ID कॉपी करून पे करा.</p>
         <p style="font-size: 13px; color: #d32f2f; font-weight: bold;">२. पेमेंट यशस्वी झाल्यावर खालील बटणावर क्लिक करा:</p>
-        
         <button type="button" class="success-btn" onclick="triggerOnlinePrint()">✅ मी पैसे भरले आहेत, प्रिंट काढा</button>
         <button type="button" style="background:#ccc; font-size:14px; padding:8px; margin-top:15px; width:100%; color:black; border:none; border-radius:5px; cursor:pointer;" onclick="closeModal()">❌ रद्द करा</button>
     </div>
@@ -135,27 +130,7 @@
         } else {
             document.getElementById('normalFileInput').classList.remove('hidden');
             document.getElementById('idCardFileInputs').classList.add('hidden');
-            checkPdfSelection();
-        }
-        calculatePrice();
-    }
-
-    // 🎯 'endsWith' अचूक स्पेलिंगसह सुधारलेले फंक्शन जे पीडीएफ ओळखते
-    function checkPdfSelection() {
-        const fileInput = document.getElementById('mainFile');
-        let hasPdf = false;
-        
-        for (let i = 0; i < fileInput.files.length; i++) {
-            if (fileInput.files[i].name.toLowerCase().endsWith('.pdf')) {
-                hasPdf = true;
-                break;
-            }
-        }
-        
-        if (hasPdf) {
             document.getElementById('pageRangeSection').classList.remove('hidden');
-        } else {
-            document.getElementById('pageRangeSection').classList.add('hidden');
         }
         calculatePrice();
     }
@@ -183,7 +158,6 @@
         }
 
         let price = (jobType === 'id_card') ? ((printMode === 'color') ? 15 : 5) : (ratePerPage * totalFilesCount);
-        
         document.getElementById('totalPriceDisplay').innerText = `₹${price}`;
         return price;
     }
