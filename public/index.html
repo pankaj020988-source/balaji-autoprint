@@ -3,10 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>श्री बालाजी सायबर पॉईंट - स्मार्ट ऑटो प्रिंट</title>
+    <title>श्री बालाजी सायबर पॉईंट - स्मार्ट ऑटो PRINT</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
-        /* 🔤 अक्षरे विखुरू नयेत म्हणून कडक फॉन्ट सेटिंग */
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; background-color: #f4f7f6; margin: 0; padding: 20px; color: #333; text-align: center; }
         .container { max-width: 500px; margin: auto; background: white; padding: 25px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); border-top: 8px solid #002d62; }
         h1 { color: #002d62; margin-bottom: 5px; font-size: 24px; font-weight: bold; }
@@ -17,7 +16,7 @@
         input[type="radio"], input[type="checkbox"] { margin-right: 5px; transform: scale(1.1); }
         .file-input-group { margin-top: 10px; }
         input[type="file"] { width: 100%; padding: 10px; background: white; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
-        input[type="text"] { width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
+        input[type="text"], input[type="number"] { width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
         .hidden { display: none; }
         button { width: 100%; background: #002d62; color: white; border: none; padding: 15px; border-radius: 8px; font-size: 18px; font-weight: bold; cursor: pointer; margin-top: 15px; transition: 0.3s; }
         button:hover { background: #b8860b; }
@@ -40,19 +39,18 @@
         <div class="section" onclick="calculatePrice()">
             <span class="section-title">🎨 प्रिंटचा प्रकार निवडा:</span>
             <label><input type="radio" name="printMode" value="color" checked> कलर (Color)</label>
-            <label><input type="radio" name="printMode" value="bw"> | ब्लॅक अँड व्हाईट (B&W)</label>
+            <label><input type="radio" name="printMode" value="bw"> | ब्लॅक अँड व्हाई特 (B&W)</label>
         </div>
 
         <div class="section" onclick="toggleJobType()">
             <span class="section-title">📄 डॉक्युमेंटचा प्रकार:</span>
-            <label><input type="radio" name="jobType" value="normal" checked> नॉर्मल (फोटो / PDF)</label>
+            <label><input type="radio" name="jobType" value="normal" checked> Normal (फोटो / PDF)</label>
             <label><input type="radio" name="jobType" value="id_card"> आयडी कार्ड (Front & Back)</label>
         </div>
 
         <div class="section">
             <span class="section-title" id="fileLabel">📁 फाईल्स निवडा:</span>
             <div id="normalFileInput" class="file-input-group">
-                <!-- 🔄 मल्टिपल फोटो किंवा पीडीएफ एकत्र सिलेक्ट करण्यासाठी -->
                 <input type="file" id="mainFile" accept=".jpg,.jpeg,.png,.pdf" multiple>
             </div>
             <div id="idCardFileInputs" class="file-input-group hidden">
@@ -67,13 +65,22 @@
             </div>
         </div>
 
+        <!-- 🎯 नवीन अपडेटेड पेजेसचा आणि किंमतीचा रकाना -->
         <div class="section" id="pageRangeSection">
-            <span class="section-title">🔢 कोणती पेजेस प्रिंट करायची आहेत? (फक्त PDF साठी)</span>
+            <span class="section-title">🔢 पेजेस सेटिंग (फक्त PDF साठी):</span>
             <label><input type="radio" name="pageOption" value="all" checked onclick="togglePageInput(false)"> सर्व पेजेस (All)</label>
             <label><input type="radio" name="pageOption" value="custom" onclick="togglePageInput(true)"> ठराविक पेजेस</label>
-            <div id="customPageInputGroup" class="hidden">
+            
+            <div id="customPageInputGroup" class="hidden" style="margin-top:10px;">
+                <span style="font-size:13px; font-weight:bold; color:#333;">कोणती पेजेस पाहिजेत?</span>
                 <input type="text" id="pageRangeInput" placeholder="उदा. 3,4 किंवा 1-5">
-                <small style="color:#666; font-size:11px; display:block; margin-top:5px;">(टीप: फोटो प्रिंट करत असल्यास हा पर्याय 'सर्व पेजेस' वरच ठेवा)</small>
+            </div>
+
+            <!-- 💸 तोटा टाळण्यासाठी एकूण पेजेस मोजण्याचा बॉक्स -->
+            <div style="margin-top: 12px; border-top: 1px dashed #ccc; padding-top: 10px;">
+                <span style="font-size:13px; font-weight:bold; color:#002d62;">📄 एकूण किती पेजेस प्रिंट होणार आहेत?</span>
+                <input type="number" id="totalPagesCountInput" value="1" min="1" oninput="calculatePrice()" style="margin-top:5px;">
+                <small style="color:#d32f2f; font-size:11px; display:block; margin-top:3px;">*टीप: जर PDF मध्ये ५ पेजेस असतील किंवा ५ फोटो असतील, तर इथे ५ लिहा.</small>
             </div>
         </div>
 
@@ -143,29 +150,31 @@
         }
     }
 
-    // 🎯 मल्टिपल फाईल्सचा दर १००% अचूकपणे मोजणारा पक्का फॉर्म्युला
+    // 🎯 नवीन परफेक्ट कॅल्क्युलेटर: जो फाईल्स आणि टाईप केलेल्या पेजेस दोन्हीचा हिशोब करतो
     function calculatePrice() {
         const printMode = document.querySelector('input[name="printMode"]:checked').value;
         const jobType = document.querySelector('input[name="jobType"]:checked').value;
         
         let ratePerPage = (printMode === 'color') ? 10 : 5;
-        let totalFilesCount = 1;
+        let multiplier = 1;
 
         if (jobType === 'normal') {
-            const fileInput = document.getElementById('mainFile');
-            // जर १ पेक्षा जास्त फाईल्स निवडल्या असतील तर त्यांची अचूक संख्या मोजणे
-            if (fileInput && fileInput.files && fileInput.files.length > 0) {
-                totalFilesCount = fileInput.files.length;
-            }
+            const pagesInput = document.getElementById('totalPagesCountInput').value;
+            multiplier = parseInt(pagesInput) || 1;
         }
 
-        let price = (jobType === 'id_card') ? ((printMode === 'color') ? 15 : 5) : (ratePerPage * totalFilesCount);
+        let price = (jobType === 'id_card') ? ((printMode === 'color') ? 15 : 5) : (ratePerPage * multiplier);
         document.getElementById('totalPriceDisplay').innerText = `₹${price}`;
         return price;
     }
 
-    // ⏳ मॅजिक टाइमर: मोबाईलवर दर अर्ध्या सेकंदाला फाईल्सची संख्या मोजून किंमत लाईव्ह अपडेट करत राहील!
-    setInterval(calculatePrice, 500);
+    // फाईल्स अपलोड केल्यावर हा रकाना आपोआप संख्या अपडेट करेल
+    document.getElementById('mainFile').addEventListener('change', function() {
+        if (this.files && this.files.length > 0) {
+            document.getElementById('totalPagesCountInput').value = this.files.length;
+        }
+        calculatePrice();
+    });
 
     function copyUpiId() {
         const upiText = document.getElementById('upiIdText').innerText;
