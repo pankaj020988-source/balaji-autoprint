@@ -94,6 +94,7 @@
         <h3 style="color: #002d62; margin-top: 0;">पैसे भरा (Pay to Print)</h3>
         <div class="amt-text" id="modalAmount">₹१०.००</div>
         
+        <!-- डायनॅमिक क्युआर कोड बॉक्स -->
         <div id="qrcode"></div>
         
         <!-- कॉपी करण्यासाठी सोपी सिस्टीम (रिस्क एरर येत असल्यास पर्यायी मार्ग) -->
@@ -105,6 +106,7 @@
         <p style="font-size: 13px; color: #666; margin-top:10px;">१. वरील QR कोड स्कॅन करा किंवा UPI ID कॉपी करून पे करा.</p>
         <p style="font-size: 13px; color: #d32f2f; font-weight: bold;">२. पेमेंट यशस्वी झाल्यावर खालील बटणावर क्लिक करा:</p>
         
+        <!-- 🔒 फक्त या बटणावर क्लिक केल्यावरच काउंटरवर रिक्वेस्ट जाईल -->
         <button type="button" class="success-btn" onclick="triggerOnlinePrint()">✅ मी पैसे भरले आहेत, प्रिंट काढा</button>
         <button type="button" style="background:#ccc; font-size:14px; padding:8px; margin-top:15px; width:100%; color:black; border:none; border-radius:5px; cursor:pointer;" onclick="closeModal()">❌ रद्द करा</button>
     </div>
@@ -154,13 +156,21 @@
         if (jobType === 'normal' && document.getElementById('mainFile').files.length === 0) { alert('कृपया आधी फाईल निवडा!'); return; }
         if (jobType === 'id_card' && (document.getElementById('frontFile').files.length === 0 || document.getElementById('backFile').files.length === 0)) { alert('कृपया दोन्ही फोटो निवडा!'); return; }
 
+        const amount = calculatePrice(); // 🎯 इथे अचूक किंमत दर घेतला
+
         if (payMethod === 'online') {
-            const amount = calculatePrice();
             document.getElementById('modalAmount').innerText = `₹${amount}.00`;
+            
+            // 🔄 पैशांची अचूक किंमत (&am=) मर्चंट लिंकमध्ये व्यवस्थित पास केली
             const upiUrl = `upi://pay?pa=${UPI_ID}&pn=${encodeURIComponent(MERCHANT_NAME)}&am=${amount}&cu=INR`;
             
+            // 🎯 क्युआर कोड जनरेटरला संपूर्ण रक्कमेची लिंक पाठवून बारकोड बनवणे
             document.getElementById('qrcode').innerHTML = "";
-            qrInstance = new QRCode(document.getElementById('qrcode'), { text: upiUrl, width: 200, height: 200 });
+            qrInstance = new QRCode(document.getElementById('qrcode'), { 
+                text: upiUrl, 
+                width: 200, 
+                height: 200 
+            });
             
             document.getElementById('paymentModal').style.display = 'flex';
         } else {
