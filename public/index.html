@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>श्री बालाजी सायबर पॉईंट - स्मार्ट ऑटो प्रिंट</title>
+    <!-- QR कोड एरर घालवण्यासाठी गॅरंटीड चालणारी लायब्ररी -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; margin: 0; padding: 20px; color: #333; text-align: center; }
@@ -51,7 +52,7 @@
         <div class="section">
             <span class="section-title" id="fileLabel">📁 फाईल्स निवडा:</span>
             <div id="normalFileInput" class="file-input-group">
-                <!-- 🔄 multiple जोडले जेणेकरून ५ ते १० फोटो एकत्र सिलेक्ट करता येतील -->
+                <!-- multiple सेटिंगमुळे ५ ते १० फोटो एकत्र सिलेक्ट करता येतात -->
                 <input type="file" id="mainFile" accept=".jpg,.jpeg,.png,.pdf" multiple onchange="checkPdfSelection()">
             </div>
             <div id="idCardFileInputs" class="file-input-group hidden">
@@ -66,14 +67,14 @@
             </div>
         </div>
 
-        <!-- 🎯 पेजेस निवडण्याचा नवीन कडक बॉक्स -->
+        <!-- ठराविक पेजेस निवडण्याचा दुरुस्त केलेला बॉक्स -->
         <div class="section hidden" id="pageRangeSection">
             <span class="section-title">🔢 कोणती पेजेस प्रिंट करायची आहेत?</span>
             <label><input type="radio" name="pageOption" value="all" checked onclick="togglePageInput(false)"> सर्व पेजेस (All)</label>
             <label><input type="radio" name="pageOption" value="custom" onclick="togglePageInput(true)"> ठराविक पेजेस</label>
             <div id="customPageInputGroup" class="hidden">
                 <input type="text" id="pageRangeInput" placeholder="उदा. 3,4 किंवा 1-5">
-                <small style="color:#666; font-size:11px; display:block; margin-top:5px;">(टीप: फक्त हवी असलेली पेजेस लिहा, तुमचे पैसे तेवढ्याच पेजेसचे कट होतील)</small>
+                <small style="color:#666; font-size:11px; display:block; margin-top:5px;">(टीप: फक्त हवी असलेली पेजेस लिहा)</small>
             </div>
         </div>
 
@@ -100,17 +101,22 @@
     </div>
 </div>
 
+<!-- सुरक्षित पेमेंट पॉपअप विंडो -->
 <div id="paymentModal" class="modal">
     <div class="modal-content">
         <h3 style="color: #002d62; margin-top: 0;">पैसे भरा (Pay to Print)</h3>
         <div class="amt-text" id="modalAmount">₹१०.००</div>
+        
         <div id="qrcode"></div>
+        
         <div style="background: #e3f2fd; padding: 10px; border-radius: 5px; margin: 10px 0; font-size: 14px; font-weight: bold; border: 1px dashed #1e88e5;">
             UPI ID: <span id="upiIdText">8007365051@okbizaxis</span>
             <button type="button" onclick="copyUpiId()" style="background: #1e88e5; color: white; padding: 3px 8px; font-size: 12px; margin-left: 5px; width: auto; display: inline-block; margin-top: 0; border-radius: 4px; border:none; cursor:pointer;">Copy</button>
         </div>
+        
         <p style="font-size: 13px; color: #666; margin-top:10px;">१. वरील QR कोड स्कॅन करा किंवा UPI ID कॉपी करून पे करा.</p>
         <p style="font-size: 13px; color: #d32f2f; font-weight: bold;">२. पेमेंट यशस्वी झाल्यावर खालील बटणावर क्लिक करा:</p>
+        
         <button type="button" class="success-btn" onclick="triggerOnlinePrint()">✅ मी पैसे भरले आहेत, प्रिंट काढा</button>
         <button type="button" style="background:#ccc; font-size:14px; padding:8px; margin-top:15px; width:100%; color:black; border:none; border-radius:5px; cursor:pointer;" onclick="closeModal()">❌ रद्द करा</button>
     </div>
@@ -134,16 +140,18 @@
         calculatePrice();
     }
 
-    // पीडीएफ फाईल निवडली आहे का तपासणे
+    // 🎯 'endsWith' अचूक स्पेलिंगसह सुधारलेले फंक्शन जे पीडीएफ ओळखते
     function checkPdfSelection() {
         const fileInput = document.getElementById('mainFile');
         let hasPdf = false;
+        
         for (let i = 0; i < fileInput.files.length; i++) {
-            if (fileInput.files[i].name.toLowerCase().endswith('.pdf')) {
+            if (fileInput.files[i].name.toLowerCase().endsWith('.pdf')) {
                 hasPdf = true;
                 break;
             }
         }
+        
         if (hasPdf) {
             document.getElementById('pageRangeSection').classList.remove('hidden');
         } else {
@@ -220,7 +228,7 @@
     function triggerOnlinePrint() { closeModal(); sendDataToServer('ONLINE_PENDING'); }
 
     async function sendDataToServer(paymentStatus) {
-        alert('डॉक्युमेंट काउंटर कॉम्प्युटरवर पाठवले आहे!');
+        alert('डॉक्युमेंट काउंटर कॉम्प्युटरवर पाठवले आहे. कृपया दुकानदाराकडून अप्रूव्ह करून घ्या!');
         const printMode = document.querySelector('input[name="printMode"]:checked').value;
         const jobType = document.querySelector('input[name="jobType"]:checked').value;
         const bothSide = document.getElementById('bothSide').checked;
@@ -228,7 +236,6 @@
         const pageOption = document.querySelector('input[name="pageOption"]:checked') ? document.querySelector('input[name="pageOption"]:checked').value : 'all';
         const pageRange = document.getElementById('pageRangeInput').value;
 
-        // मल्टिपल फाईल्स पाठवण्यासाठी लूप लावणे
         if (jobType === 'normal') {
             const fileInput = document.getElementById('mainFile');
             for (let i = 0; i < fileInput.files.length; i++) {
