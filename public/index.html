@@ -67,8 +67,10 @@
 
         <div class="section" id="pageRangeSection">
             <span class="section-title">🔢 पेजेस सेटिंग (फक्त PDF साठी):</span>
-            <label><input type="radio" name="pageOption" value="all" checked onclick="togglePageInput(false)"> सर्व पेजेस (All)</label>
-            <label><input type="radio" name="pageOption" value="custom" onclick="togglePageInput(true)"> ठराविक पेजेस</label>
+            <div onchange="calculatePrice()">
+                <label><input type="radio" name="pageOption" value="all" checked onclick="togglePageInput(false)"> सर्व पेजेस (All)</label>
+                <label><input type="radio" name="pageOption" value="custom" onclick="togglePageInput(true)"> ठराविक पेजेस</label>
+            </div>
             
             <div id="customPageInputGroup" class="hidden" style="margin-top:10px;">
                 <span style="font-size:13px; font-weight:bold; color:#333;">कोणती पेजेस पाहिजेत?</span>
@@ -129,4 +131,151 @@
     function toggleJobType() {
         const jobType = document.querySelector('input[name="jobType"]:checked').value;
         if (jobType === 'id_card') {
-            document.getElementById('normalFileInput
+            document.getElementById('normalFileInput').classList.add('hidden');
+            document.getElementById('idCardFileInputs').classList.remove('hidden');
+            document.getElementById('pageRangeSection').classList.add('hidden');
+        } else {
+            document.getElementById('normalFileInput').classList.remove('hidden');
+            document.getElementById('idCardFileInputs').classList.add('hidden');
+            document.getElementById('pageRangeSection').classList.remove('hidden');
+        }
+        calculatePrice();
+    }
+
+    function togglePageInput(show) {
+        if (show) {
+            document.getElementById('customPageInputGroup').classList.remove('hidden');
+        } else {
+            document.getElementById('customPageInputGroup').classList.add('hidden');
+        }
+        calculatePrice();
+    }
+
+    function updateFilesCount() {
+        const fileInput = document.getElementById('mainFile');
+        if (fileInput && fileInput.files && fileInput.files.length > 0) {
+            document.getElementById('totalPagesCountInput').value = fileInput.files.length;
+        }
+        calculatePrice();
+    }
+
+    // 🎯 पक्का आणि गॅरंटीड हिशोब करणारा फॉर्म्युला
+    function calculatePrice() {
+        const printMode = document.querySelector('input[name="printMode"]:checked').value;
+        const jobType = document.querySelector('input[name="jobType"]:checked').value;
+        
+        let ratePerPage = (printMode === 'color') ? 10 : 5;
+        let multiplier = 1;
+
+        if (jobType === 'normal') {
+            const pagesInput = document.getElementById('totalPagesCountInput').value;
+            multiplier = parseInt(pagesInput);
+            if (isNaN(multiplier) || multiplier < 1) {
+                multiplier = 1;
+            }
+        }
+
+        let price = (jobType === 'id_card') ? ((printMode === 'color') ? 15 : 5) : (ratePerPage * multiplier);
+        
+        // लाईव्ह स्क्रीनवर किंमत बदलणे
+        document.getElementById('totalPriceDisplay').innerText = `₹${price}`;
+        return price;
+    }
+
+    // 🚀 बोटाची हालचाल ओळखणारे कडक लिसनर्स (गॅरंटीड सिंक करण्यासाठी)
+    document.addEventListener("DOMContentLoaded", function() {
+        const inputField = document.getElementById('totalPagesCountInput');
+        if(inputField) {
+            ['input', 'change', 'keyup', 'paste'].forEach(evt => 
+                inputField.addEventListener(evt, calculatePrice, false)
+            );
+        }
+    });
+
+    function copyUpiId() {
+        const upiText = document.getElementById('upiIdText').innerText;
+        const currentAmount = document.getElementById('modalAmount').innerText; 
+        navigator.clipboard.writeText(upiText).then(() => {
+            alert(`📋 UPI ID कॉपी झाला आहे!\n\n👉 कृपया तुमच्या GPay/PhonePe मध्ये जाऊन अचूक ${currentAmount} पेमेंट करा.`);
+        });
+    }
+
+    const toBase64 = file => new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = error => reject(error);
+    });
+
+    async function processPrintRequest() {
+        const jobType = document.querySelector('input[name="jobType"]:checked').value;
+        const payMethod = document.querySelector('input[name="payMethod"]:checked').value;
+
+        if (jobType === 'normal' && document.getElementById('mainFile').files.length === 0) { alert('कृपया आधी फाईल निवडा!'); return; }
+        if (jobType === 'id_card' && (document.getElementById('frontFile').files.length === 0 || document.getElementById('backFile').files.length === 0)) { alert('कृपया दोन्ही फोटो निवडा!'); return; }
+
+        const amount = calculatePrice(); 
+
+        if (payMethod === 'online') {
+            document.getElementById('modalAmount').innerText = `₹${amount}.00`;
+            const upiUrl = `upi://pay?pa=${UPI_ID}&pn=${encodeURIComponent(MERCHANT_NAME)}&am=${amount}&cu=INR`;
+            
+            document.getElementById('qrcode').innerHTML = "";
+            qrInstance = new QRCode(document.getElementById('qrcode'), { text: upiUrl, width: 200, height: 200 });
+            document.getElementById('paymentModal').style.display = 'flex';
+        } else {
+            sendDataToServer('CASH_PENDING');
+        }
+    }
+
+    function closeModal() { document.getElementById('paymentModal').style.display = 'none'; }
+    function triggerOnlinePrint() { closeModal(); sendDataToServer('ONLINE_PENDING'); }
+
+    async function sendDataToServer(paymentStatus) {
+        alert('डॉक्युमेंट काउंटर कॉम्प्युटरवर पाठवले आहे. कृपया दुकानदाराकडून अप्रूव्ह करून घ्या!');
+        const printMode = document.querySelector('input[name="printMode"]:checked').value;
+        const jobType = document.querySelector('input[name="jobType"]:checked').value;
+        const bothSide = document.getElementById('bothSide').checked;
+        
+        const pageOption = document.querySelector('input[name="pageOption"]:checked') ? document.querySelector('input[name="pageOption"]:checked').value : 'all';
+        const pageRange = document.getElementById('pageRangeInput').value;
+        const totalPagesCount = document.getElementById('totalPagesCountInput').value;
+
+        if (jobType === 'normal') {
+            const fileInput = document.getElementById('mainFile');
+            for (let i = 0; i < fileInput.files.length; i++) {
+                let file = fileInput.files[i];
+                let fileData = await toBase64(file);
+                
+                let payload = { 
+                    printMode, jobType, bothSide, paymentStatus, 
+                    fileData, fileName: file.name,
+                    pageOption, pageRange, totalPagesCount
+                };
+
+                await fetch('https://balaji-autoprint.onrender.com/upload-print', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+            }
+        } else {
+            const frontFile = document.getElementById('frontFile');
+            const backFile = document.getElementById('backFile');
+            let payload = { 
+                printMode, jobType, bothSide, paymentStatus, 
+                fileData: await toBase64(frontFile.files[0]), fileName: frontFile.files[0].name,
+                fileDataBack: await toBase64(backFile.files[0]), fileNameBack: backFile.files[0].name
+            };
+            await fetch('https://balaji-autoprint.onrender.com/upload-print', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+        }
+    }
+    
+    calculatePrice();
+</script>
+</body>
+</html>
