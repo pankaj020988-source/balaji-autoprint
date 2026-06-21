@@ -72,7 +72,7 @@
 
         <div class="section">
             <span class="section-title">💵 पेमेंटची पद्धत निवडा:</span>
-            <label><input type="radio" name="payMethod" value="online" checked> 📲 ऑनलाईन (UPI/QR)</label>
+            <label><input type="radio" name="payMethod" value="online" checked> 📲 On-line (UPI/QR)</label>
             <label><input type="radio" name="payMethod" value="cash"> 🪙 काउंटरवर रोख (Cash)</label>
         </div>
 
@@ -97,6 +97,7 @@
         <!-- डायनॅमिक क्युआर कोड बॉक्स -->
         <div id="qrcode"></div>
         
+        <!-- कॉपी करण्याची स्मार्ट सिस्टीम -->
         <div style="background: #e3f2fd; padding: 10px; border-radius: 5px; margin: 10px 0; font-size: 14px; font-weight: bold; border: 1px dashed #1e88e5;">
             UPI ID: <span id="upiIdText">8007365051@okbizaxis</span>
             <button type="button" onclick="copyUpiId()" style="background: #1e88e5; color: white; padding: 3px 8px; font-size: 12px; margin-left: 5px; width: auto; display: inline-block; margin-top: 0; border-radius: 4px; border:none; cursor:pointer;">Copy</button>
@@ -126,27 +127,32 @@
         calculatePrice();
     }
 
-    // 🎯 पैशांचा हिशोब करणारा परफेक्ट फॉर्म्युला
     function calculatePrice() {
         const printMode = document.querySelector('input[name="printMode"]:checked').value;
         const jobType = document.querySelector('input[name="jobType"]:checked').value;
         
-        let price = 5; // डिफॉल्ट ब्लॅक अँड व्हाईट ला ५ रुपये
+        let price = 5; 
         
         if (jobType === 'id_card') {
-            if (printMode === 'color') { price = 15; } // आयडी कार्ड कलर = १५
+            if (printMode === 'color') { price = 15; } 
         } else {
-            if (printMode === 'color') { price = 10; } // नॉर्मल कलर = १०
+            if (printMode === 'color') { price = 10; } 
         }
         
         document.getElementById('totalPriceDisplay').innerText = `₹${price}`;
         return price;
     }
 
+    // 🎯 ग्राहकाला रक्कम दाखवणारी नवीन कडक कॉपी सिस्टीम
     function copyUpiId() {
         const upiText = document.getElementById('upiIdText').innerText;
-        navigator.clipboard.writeText(upiText);
-        alert('UPI ID कॉपी झाला! आता तुमच्या गुगल पे / फोनपे मध्ये पेस्ट करून पे करा.');
+        const currentAmount = document.getElementById('modalAmount').innerText; 
+        
+        navigator.clipboard.writeText(upiText).then(() => {
+            alert(`📋 UPI ID कॉपी झाला आहे!\n\n👉 कृपया तुमच्या GPay/PhonePe मध्ये जाऊन अचूक ${currentAmount} पेमेंट करा.`);
+        }).catch(err => {
+            console.error('Copy failed', err);
+        });
     }
 
     const toBase64 = file => new Promise((resolve, reject) => {
@@ -163,12 +169,10 @@
         if (jobType === 'normal' && document.getElementById('mainFile').files.length === 0) { alert('कृपया आधी फाईल निवडा!'); return; }
         if (jobType === 'id_card' && (document.getElementById('frontFile').files.length === 0 || document.getElementById('backFile').files.length === 0)) { alert('कृपया दोन्ही फोटो निवडा!'); return; }
 
-        const amount = calculatePrice(); // 🎯 एकूण फायनल रक्कम घेतली
+        const amount = calculatePrice(); 
 
         if (payMethod === 'online') {
             document.getElementById('modalAmount').innerText = `₹${amount}.00`;
-            
-            // 🔄 यूपीआय लिंक मध्ये रक्कम परफेक्ट सेट केली
             const upiUrl = `upi://pay?pa=${UPI_ID}&pn=${encodeURIComponent(MERCHANT_NAME)}&am=${amount}&cu=INR`;
             
             document.getElementById('qrcode').innerHTML = "";
@@ -221,7 +225,6 @@
         } catch (error) { console.error('Error sending data'); }
     }
     
-    // पेज उघडताच मूळ किंमत ५ रुपये दिसेल
     calculatePrice();
 </script>
 </body>
