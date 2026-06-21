@@ -4,29 +4,29 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>श्री बालाजी सायबर पॉईंट - स्मार्ट ऑटो प्रिंट</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
-        body { font-family: 'Poppins', sans-serif; background-color: #f4f7f6; margin: 0; padding: 20px; color: #333; text-align: center; }
+        /* 🔤 अक्षरे विखुरू नयेत म्हणून कडक फॉन्ट सेटिंग */
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; background-color: #f4f7f6; margin: 0; padding: 20px; color: #333; text-align: center; }
         .container { max-width: 500px; margin: auto; background: white; padding: 25px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); border-top: 8px solid #002d62; }
-        h1 { color: #002d62; margin-bottom: 5px; font-size: 24px; font-weight: 700; }
-        h2 { color: #b8860b; margin-top: 0; font-size: 17px; margin-bottom: 20px; font-weight: 600; }
+        h1 { color: #002d62; margin-bottom: 5px; font-size: 24px; font-weight: bold; }
+        h2 { color: #b8860b; margin-top: 0; font-size: 17px; margin-bottom: 20px; font-weight: bold; }
         .section { background: #f9f9f9; padding: 15px; border-radius: 10px; margin-bottom: 15px; text-align: left; border: 1px solid #eef0f2; }
-        .section-title { font-weight: 600; color: #002d62; margin-bottom: 10px; display: block; font-size: 15px; }
-        label { display: inline-block; margin-right: 15px; cursor: pointer; font-weight: 500; font-size: 14px; }
+        .section-title { font-weight: bold; color: #002d62; margin-bottom: 10px; display: block; font-size: 15px; }
+        label { display: inline-block; margin-right: 15px; cursor: pointer; font-weight: bold; font-size: 14px; }
         input[type="radio"], input[type="checkbox"] { margin-right: 5px; transform: scale(1.1); }
         .file-input-group { margin-top: 10px; }
-        input[type="file"] { width: 100%; padding: 10px; background: white; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
-        input[type="text"] { width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        input[type="file"] { width: 100%; padding: 10px; background: white; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
+        input[type="text"] { width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
         .hidden { display: none; }
-        button { width: 100%; background: #002d62; color: white; border: none; padding: 15px; border-radius: 8px; font-size: 18px; font-weight: bold; cursor: pointer; margin-top: 15px; transition: 0.3s; font-family: 'Poppins', sans-serif; }
+        button { width: 100%; background: #002d62; color: white; border: none; padding: 15px; border-radius: 8px; font-size: 18px; font-weight: bold; cursor: pointer; margin-top: 15px; transition: 0.3s; }
         button:hover { background: #b8860b; }
         .footer { margin-top: 20px; font-size: 12px; color: #777; }
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); justify-content: center; align-items: center; z-index: 1000; }
         .modal-content { background: white; padding: 30px; border-radius: 15px; max-width: 90%; width: 350px; text-align: center; box-shadow: 0 5px 25px rgba(0,0,0,0.3); }
         #qrcode { margin: 15px auto; padding: 10px; background: white; display: inline-block; border: 4px solid #002d62; border-radius: 10px; }
         .amt-text { font-size: 22px; font-weight: bold; color: #d32f2f; margin: 10px 0; }
-        .success-btn { background: #2e7d32; color: white; margin-top: 15px; padding: 12px; font-size: 16px; width: 100%; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-family: 'Poppins', sans-serif; }
+        .success-btn { background: #2e7d32; color: white; margin-top: 15px; padding: 12px; font-size: 16px; width: 100%; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
         .success-btn:hover { background: #1b5e20; }
     </style>
 </head>
@@ -37,22 +37,23 @@
     <h2>स्मार्ट मोबाईल ऑटो प्रिंट सिस्टीम</h2>
 
     <form id="uploadForm">
-        <div class="section">
+        <div class="section" onclick="calculatePrice()">
             <span class="section-title">🎨 प्रिंटचा प्रकार निवडा:</span>
-            <label><input type="radio" name="printMode" value="color" checked onclick="calculatePrice()"> कलर (Color)</label>
-            <label><input type="radio" name="printMode" value="bw" onclick="calculatePrice()"> | ब्लॅक अँड व्हाईट (B&W)</label>
+            <label><input type="radio" name="printMode" value="color" checked> कलर (Color)</label>
+            <label><input type="radio" name="printMode" value="bw"> | ब्लॅक अँड व्हाईट (B&W)</label>
         </div>
 
-        <div class="section">
-            <span class="section-title">📄 डॉक्युメントचा प्रकार:</span>
-            <label><input type="radio" name="jobType" value="normal" checked onclick="toggleJobType('normal')"> नॉर्मल (फोटो / PDF)</label>
-            <label><input type="radio" name="jobType" value="id_card" onclick="toggleJobType('id_card')"> आयडी कार्ड (Front & Back)</label>
+        <div class="section" onclick="toggleJobType()">
+            <span class="section-title">📄 डॉक्युमेंटचा प्रकार:</span>
+            <label><input type="radio" name="jobType" value="normal" checked> नॉर्मल (फोटो / PDF)</label>
+            <label><input type="radio" name="jobType" value="id_card"> आयडी कार्ड (Front & Back)</label>
         </div>
 
         <div class="section">
             <span class="section-title" id="fileLabel">📁 फाईल्स निवडा:</span>
             <div id="normalFileInput" class="file-input-group">
-                <input type="file" id="mainFile" accept=".jpg,.jpeg,.png,.pdf" multiple onchange="calculatePrice()">
+                <!-- 🔄 मल्टिपल फोटो किंवा पीडीएफ एकत्र सिलेक्ट करण्यासाठी -->
+                <input type="file" id="mainFile" accept=".jpg,.jpeg,.png,.pdf" multiple>
             </div>
             <div id="idCardFileInputs" class="file-input-group hidden">
                 <label style="display:block; margin-bottom:10px;">
@@ -76,9 +77,9 @@
             </div>
         </div>
 
-        <div class="section">
+        <div class="section" onclick="calculatePrice()">
             <span class="section-title">🔄 पेज बाजू सेटिंग:</span>
-            <label><input type="checkbox" id="bothSide" value="true" onclick="calculatePrice()"> कागदाच्या दोन्ही बाजूंवर प्रिंट करा (Both Side)</label>
+            <label><input type="checkbox" id="bothSide" value="true"> कागदाच्या दोन्ही बाजूंवर प्रिंट करा (Both Side)</label>
         </div>
 
         <div class="section">
@@ -101,7 +102,7 @@
 
 <div id="paymentModal" class="modal">
     <div class="modal-content">
-        <h3 style="color: #002d62; margin-top: 0; font-weight:600;">पैसे भरा (Pay to Print)</h3>
+        <h3 style="color: #002d62; margin-top: 0; font-weight:bold;">पैसे भरा (Pay to Print)</h3>
         <div class="amt-text" id="modalAmount">₹१०.००</div>
         <div id="qrcode"></div>
         <div style="background: #e3f2fd; padding: 10px; border-radius: 5px; margin: 10px 0; font-size: 14px; font-weight: bold; border: 1px dashed #1e88e5;">
@@ -120,8 +121,9 @@
     const MERCHANT_NAME = "Balaji Cyber Point";
     let qrInstance = null;
 
-    function toggleJobType(type) {
-        if (type === 'id_card') {
+    function toggleJobType() {
+        const jobType = document.querySelector('input[name="jobType"]:checked').value;
+        if (jobType === 'id_card') {
             document.getElementById('normalFileInput').classList.add('hidden');
             document.getElementById('idCardFileInputs').classList.remove('hidden');
             document.getElementById('pageRangeSection').classList.add('hidden');
@@ -141,7 +143,7 @@
         }
     }
 
-    // 🎯 मल्टिपल फाईल्सची अचूक संख्या मोजणारे सुधारित फंक्शन
+    // 🎯 मल्टिपल फाईल्सचा दर १००% अचूकपणे मोजणारा पक्का फॉर्म्युला
     function calculatePrice() {
         const printMode = document.querySelector('input[name="printMode"]:checked').value;
         const jobType = document.querySelector('input[name="jobType"]:checked').value;
@@ -151,7 +153,8 @@
 
         if (jobType === 'normal') {
             const fileInput = document.getElementById('mainFile');
-            if (fileInput.files && fileInput.files.length > 0) {
+            // जर १ पेक्षा जास्त फाईल्स निवडल्या असतील तर त्यांची अचूक संख्या मोजणे
+            if (fileInput && fileInput.files && fileInput.files.length > 0) {
                 totalFilesCount = fileInput.files.length;
             }
         }
@@ -160,6 +163,9 @@
         document.getElementById('totalPriceDisplay').innerText = `₹${price}`;
         return price;
     }
+
+    // ⏳ मॅजिक टाइमर: मोबाईलवर दर अर्ध्या सेकंदाला फाईल्सची संख्या मोजून किंमत लाईव्ह अपडेट करत राहील!
+    setInterval(calculatePrice, 500);
 
     function copyUpiId() {
         const upiText = document.getElementById('upiIdText').innerText;
@@ -197,4 +203,53 @@
         }
     }
 
-    function closeModal() { document.getElementById('
+    function closeModal() { document.getElementById('paymentModal').style.display = 'none'; }
+    function triggerOnlinePrint() { closeModal(); sendDataToServer('ONLINE_PENDING'); }
+
+    async function sendDataToServer(paymentStatus) {
+        alert('डॉक्युमेंट काउंटर कॉम्प्युटरवर पाठवले आहे. कृपया दुकानदाराकडून अप्रूव्ह करून घ्या!');
+        const printMode = document.querySelector('input[name="printMode"]:checked').value;
+        const jobType = document.querySelector('input[name="jobType"]:checked').value;
+        const bothSide = document.getElementById('bothSide').checked;
+        
+        const pageOption = document.querySelector('input[name="pageOption"]:checked') ? document.querySelector('input[name="pageOption"]:checked').value : 'all';
+        const pageRange = document.getElementById('pageRangeInput').value;
+
+        if (jobType === 'normal') {
+            const fileInput = document.getElementById('mainFile');
+            for (let i = 0; i < fileInput.files.length; i++) {
+                let file = fileInput.files[i];
+                let fileData = await toBase64(file);
+                
+                let payload = { 
+                    printMode, jobType, bothSide, paymentStatus, 
+                    fileData, fileName: file.name,
+                    pageOption, pageRange
+                };
+
+                await fetch('https://balaji-autoprint.onrender.com/upload-print', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+            }
+        } else {
+            const frontFile = document.getElementById('frontFile');
+            const backFile = document.getElementById('backFile');
+            let payload = { 
+                printMode, jobType, bothSide, paymentStatus, 
+                fileData: await toBase64(frontFile.files[0]), fileName: frontFile.files[0].name,
+                fileDataBack: await toBase64(backFile.files[0]), fileNameBack: backFile.files[0].name
+            };
+            await fetch('https://balaji-autoprint.onrender.com/upload-print', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+        }
+    }
+    
+    calculatePrice();
+</script>
+</body>
+</html>
