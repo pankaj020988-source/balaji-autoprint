@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>श्री बालाजी सायबर पॉईंट - स्मार्ट ऑटो प्रिंट</title>
-    <!-- 🔄 QR कोड एरर घालवण्यासाठी नवीन लायब्ररी जोडली -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; margin: 0; padding: 20px; color: #333; text-align: center; }
@@ -23,9 +22,10 @@
         .footer { margin-top: 20px; font-size: 12px; color: #777; }
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); justify-content: center; align-items: center; z-index: 1000; }
         .modal-content { background: white; padding: 30px; border-radius: 15px; max-width: 90%; width: 350px; text-align: center; box-shadow: 0 5px 25px rgba(0,0,0,0.3); }
-        /* QR कोड बॉक्स सेटिंग */
         #qrcode { margin: 15px auto; padding: 10px; background: white; display: inline-block; border: 4px solid #002d62; border-radius: 10px; }
         .amt-text { font-size: 22px; font-weight: bold; color: #d32f2f; margin: 10px 0; }
+        .success-btn { background: #2e7d32; color: white; margin-top: 15px; padding: 12px; font-size: 16px; width: 100%; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        .success-btn:hover { background: #1b5e20; }
     </style>
 </head>
 <body>
@@ -42,7 +42,7 @@
         </div>
 
         <div class="section">
-            <span class="section-title">📄 डॉक्युメントचा प्रकार:</span>
+            <span class="section-title">📄 डॉक्युमेंटचा प्रकार:</span>
             <label><input type="radio" name="jobType" value="normal" checked onclick="toggleJobType('normal')"> नॉर्मल (फोटो / PDF)</label>
             <label><input type="radio" name="jobType" value="id_card" onclick="toggleJobType('id_card')"> आयडी कार्ड (Front & Back)</label>
         </div>
@@ -87,15 +87,20 @@
     </div>
 </div>
 
+<!-- सुरक्षित पेमेंट पॉपअप विंडो -->
 <div id="paymentModal" class="modal">
     <div class="modal-content">
         <h3 style="color: #002d62; margin-top: 0;">पैसे भरा (Pay to Print)</h3>
         <div class="amt-text" id="modalAmount">₹१०.००</div>
         
-        <!-- 🎯 जुन्या इमेज ऐवजी आता लायब्ररी थेट QR जनरेट करेल -->
         <div id="qrcode"></div>
         
-        <p style="font-size: 13px; color: #388e3c; font-weight: bold; margin-top:10px;">⚠️ पेमेंट झाल्यावर QR कोडवर क्लिक करा, प्रिंट सुरू होईल!</p>
+        <p style="font-size: 13px; color: #666; margin-top:10px;">१. वरील QR कोड स्कॅन करून पेमेंट पूर्ण करा.</p>
+        <p style="font-size: 13px; color: #d32f2f; font-weight: bold;">२. पैसे ट्रान्सफर झाल्यावरच खालील हिरव्या बटणावर क्लिक करा:</p>
+        
+        <!-- 🔒 फक्त या बटणावर क्लिक केल्यावरच कॉम्प्युटरकडे रिक्वेस्ट जाईल, बारकोडवर क्लिक केल्यास काही होणार नाही -->
+        <button type="button" class="success-btn" onclick="triggerOnlinePrint()">✅ मी पैसे भरले आहेत, प्रिंट काढा</button>
+        
         <button type="button" style="background:#ccc; font-size:14px; padding:8px; margin-top:15px; width:100%; color:black; border:none; border-radius:5px;" onclick="closeModal()">❌ रद्द करा</button>
     </div>
 </div>
@@ -116,21 +121,10 @@
         calculatePrice();
     }
 
-    // 💰 पंकजजींच्या गरजेनुसार रेट कॅल्क्युलेटर दुरुस्त केला
     function calculatePrice() {
         const printMode = document.querySelector('input[name="printMode"]:checked').value;
         const jobType = document.querySelector('input[name="jobType"]:checked').value;
-        
-        let price = 0;
-        
-        if (jobType === 'id_card') {
-            // आयडी कार्ड: कलर = १५, ब्लॅक अँड व्हाईट = ५
-            price = (printMode === 'color') ? 15 : 5;
-        } else {
-            // नॉर्मल: कलर = १०, ब्लॅक अँड व्हाईट = ५
-            price = (printMode === 'color') ? 10 : 5;
-        }
-        
+        let price = (jobType === 'id_card') ? ((printMode === 'color') ? 15 : 5) : ((printMode === 'color') ? 10 : 5);
         document.getElementById('totalPriceDisplay').innerText = `₹${price}`;
         return price;
     }
@@ -152,16 +146,10 @@
         if (payMethod === 'online') {
             const amount = calculatePrice();
             document.getElementById('modalAmount').innerText = `₹${amount}.00`;
-            
             const upiUrl = `upi://pay?pa=${UPI_ID}&pn=${encodeURIComponent(MERCHANT_NAME)}&am=${amount}&cu=INR`;
             
-            // 🔄 जुनी इमेज काढून नवीन पक्की QR कोड पद्धत वापरली
             document.getElementById('qrcode').innerHTML = "";
-            qrInstance = new QRCode(document.getElementById('qrcode'), {
-                text: upiUrl,
-                width: 200,
-                height: 200
-            });
+            qrInstance = new QRCode(document.getElementById('qrcode'), { text: upiUrl, width: 200, height: 200 });
             
             document.getElementById('paymentModal').style.display = 'flex';
         } else {
@@ -170,10 +158,14 @@
     }
 
     function closeModal() { document.getElementById('paymentModal').style.display = 'none'; }
-    document.getElementById('qrcode').onclick = () => { closeModal(); sendDataToServer('PAID_ONLINE'); };
+    
+    function triggerOnlinePrint() {
+        closeModal();
+        sendDataToServer('ONLINE_PENDING'); // सर्व्हरला 'ऑनलाईन पेंडिंग' पाठवणे जेणेकरून तुमचे अप्रूव्हल मागेल
+    }
 
     async function sendDataToServer(paymentStatus) {
-        alert('डॉक्युमेंट सर्व्हरकडे पाठवले जात आहे. कृपया काउंटरवर संपर्क करा!');
+        alert('डॉक्युमेंट काउंटर कॉम्प्युटरवर पाठवले आहे. कृपया दुकानदाराकडून अप्रूव्ह करून घ्या!');
         const printMode = document.querySelector('input[name="printMode"]:checked').value;
         const jobType = document.querySelector('input[name="jobType"]:checked').value;
         const bothSide = document.getElementById('bothSide').checked;
@@ -194,18 +186,14 @@
         }
 
         try {
-            const response = await fetch('https://balaji-autoprint.onrender.com/upload-print', {
+            await fetch('https://balaji-autoprint.onrender.com/upload-print', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             });
-            if (response.ok) {
-                alert('यशस्वी! फाईल काउंटर कॉम्प्युटरवर पाठवली आहे.');
-            }
-        } catch (error) { alert('त्रुटी आली!'); }
+        } catch (error) { console.error('Error sending data'); }
     }
     
-    // पहिल्यांदा पेज उघडल्यावर रेट सेट करणे
     calculatePrice();
 </script>
 </body>
