@@ -26,6 +26,7 @@
         .amt-text { font-size: 22px; font-weight: bold; color: #d32f2f; margin: 10px 0; }
         .success-btn { background: #2e7d32; color: white; margin-top: 15px; padding: 12px; font-size: 16px; width: 100%; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
         .success-btn:hover { background: #1b5e20; }
+        .app-btn { background: #4caf50; color: white; margin-top: 10px; padding: 12px; font-size: 16px; width: 100%; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; display: block; text-decoration: none; }
     </style>
 </head>
 <body>
@@ -87,20 +88,21 @@
     </div>
 </div>
 
-<!-- सुरक्षित पेमेंट पॉपअप विंडो -->
+<!-- सुरक्षित आणि डायरेक्ट ॲप ओपनिंग पेमेंट पॉपअप विंडो -->
 <div id="paymentModal" class="modal">
     <div class="modal-content">
         <h3 style="color: #002d62; margin-top: 0;">पैसे भरा (Pay to Print)</h3>
         <div class="amt-text" id="modalAmount">₹१०.००</div>
         
+        <!-- 📲 मोबाईल युजर्ससाठी डायरेक्ट पेमेंट ॲप उघडणारे बटण -->
+        <a id="directPayLink" href="#" class="app-btn hidden">📲 मोबाईल ॲपवरून थेट पे करा</a>
+        
+        <!-- 💻 कॉम्प्युटर/दुसऱ्या मोबाईलसाठी QR कोड -->
         <div id="qrcode"></div>
         
-        <p style="font-size: 13px; color: #666; margin-top:10px;">१. वरील QR कोड स्कॅन करून पेमेंट पूर्ण करा.</p>
-        <p style="font-size: 13px; color: #d32f2f; font-weight: bold;">२. पैसे ट्रान्सफर झाल्यावरच खालील हिरव्या बटणावर क्लिक करा:</p>
+        <p style="font-size: 13px; color: #666; margin-top:10px;">१. पेमेंट पूर्ण झाल्यावरच खालील बटनावर क्लिक करा.</p>
         
-        <!-- 🔒 फक्त या बटणावर क्लिक केल्यावरच कॉम्प्युटरकडे रिक्वेस्ट जाईल, बारकोडवर क्लिक केल्यास काही होणार नाही -->
         <button type="button" class="success-btn" onclick="triggerOnlinePrint()">✅ मी पैसे भरले आहेत, प्रिंट काढा</button>
-        
         <button type="button" style="background:#ccc; font-size:14px; padding:8px; margin-top:15px; width:100%; color:black; border:none; border-radius:5px;" onclick="closeModal()">❌ रद्द करा</button>
     </div>
 </div>
@@ -146,8 +148,23 @@
         if (payMethod === 'online') {
             const amount = calculatePrice();
             document.getElementById('modalAmount').innerText = `₹${amount}.00`;
-            const upiUrl = `upi://pay?pa=${UPI_ID}&pn=${encodeURIComponent(MERCHANT_NAME)}&am=${amount}&cu=INR`;
             
+            // 🔄 अचूक आणि अधिकृत मर्चंट UPI इंटिग्रेशन लिंक
+            const upiUrl = `upi://pay?pa=${UPI_ID}&pn=${encodeURIComponent(MERCHANT_NAME)}&am=${amount}&cu=INR&mode=02&orgid=000000`;
+            
+            // 📲 जर युझर मोबाईलवर असेल, तर थेट लिंक बटन दाखवणे आणि त्यावर क्लिक करणे
+            if(/Android|iPhone|iPad/i.test(navigator.userAgent)) {
+                const payLink = document.getElementById('directPayLink');
+                payLink.href = upiUrl;
+                payLink.classList.remove('hidden');
+                
+                // 🚀 मॅजिक: युझरला डायरेक्ट ॲपवर पाठवण्याचा प्रयत्न करणे
+                window.location.href = upiUrl;
+            } else {
+                document.getElementById('directPayLink').classList.add('hidden');
+            }
+            
+            // बॅकअपसाठी क्युआर कोड नेहमी तयार ठेवणे
             document.getElementById('qrcode').innerHTML = "";
             qrInstance = new QRCode(document.getElementById('qrcode'), { text: upiUrl, width: 200, height: 200 });
             
@@ -161,7 +178,7 @@
     
     function triggerOnlinePrint() {
         closeModal();
-        sendDataToServer('ONLINE_PENDING'); // सर्व्हरला 'ऑनलाईन पेंडिंग' पाठवणे जेणेकरून तुमचे अप्रूव्हल मागेल
+        sendDataToServer('ONLINE_PENDING');
     }
 
     async function sendDataToServer(paymentStatus) {
