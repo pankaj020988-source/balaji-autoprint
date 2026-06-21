@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>श्री बालाजी सायबर पॉईंट - स्मार्ट ऑटो प्रिंट</title>
+    <!-- QR कोड एरर घालवण्यासाठी गॅरंटीड चालणारी लायब्ररी -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; margin: 0; padding: 20px; color: #333; text-align: center; }
@@ -37,7 +38,7 @@
     <form id="uploadForm">
         <div class="section">
             <span class="section-title">🎨 प्रिंटचा प्रकार निवडा:</span>
-            <label><input type="radio" name="printMode" value="color" checked onclick="calculatePrice()">  कलर (Color)</label>
+            <label><input type="radio" name="printMode" value="color" checked onclick="calculatePrice()"> कलर (Color)</label>
             <label><input type="radio" name="printMode" value="bw" onclick="calculatePrice()"> | ब्लॅक अँड व्हाईट (B&W)</label>
         </div>
 
@@ -87,20 +88,25 @@
     </div>
 </div>
 
-<!-- सुरक्षित आणि स्थिर पेमेंट पॉपअप विंडो -->
+<!-- सुरक्षित पेमेंट पॉपअप विंडो -->
 <div id="paymentModal" class="modal">
     <div class="modal-content">
         <h3 style="color: #002d62; margin-top: 0;">पैसे भरा (Pay to Print)</h3>
         <div class="amt-text" id="modalAmount">₹१०.००</div>
         
-        <!-- स्थिर क्यूआर जो कधीच एरर देणार नाही -->
         <div id="qrcode"></div>
         
-        <p style="font-size: 13px; color: #666; margin-top:10px;">१. वरील QR कोड स्कॅन करून किंवा दुकानाच्या बारकोडवर पैसे पाठवा.</p>
-        <p style="font-size: 13px; color: #d32f2f; font-weight: bold;">२. पेमेंट झाल्यावर खालील बटनावर क्लिक करा:</p>
+        <!-- कॉपी करण्यासाठी सोपी सिस्टीम (रिस्क एरर येत असल्यास पर्यायी मार्ग) -->
+        <div style="background: #e3f2fd; padding: 10px; border-radius: 5px; margin: 10px 0; font-size: 14px; font-weight: bold; border: 1px dashed #1e88e5;">
+            UPI ID: <span id="upiIdText">8007365051@okbizaxis</span>
+            <button type="button" onclick="copyUpiId()" style="background: #1e88e5; color: white; padding: 3px 8px; font-size: 12px; margin-left: 5px; width: auto; display: inline-block; margin-top: 0; border-radius: 4px; border:none; cursor:pointer;">Copy</button>
+        </div>
+        
+        <p style="font-size: 13px; color: #666; margin-top:10px;">१. वरील QR कोड स्कॅन करा किंवा UPI ID कॉपी करून पे करा.</p>
+        <p style="font-size: 13px; color: #d32f2f; font-weight: bold;">२. पेमेंट यशस्वी झाल्यावर खालील बटणावर क्लिक करा:</p>
         
         <button type="button" class="success-btn" onclick="triggerOnlinePrint()">✅ मी पैसे भरले आहेत, प्रिंट काढा</button>
-        <button type="button" style="background:#ccc; font-size:14px; padding:8px; margin-top:15px; width:100%; color:black; border:none; border-radius:5px;" onclick="closeModal()">❌ रद्द करा</button>
+        <button type="button" style="background:#ccc; font-size:14px; padding:8px; margin-top:15px; width:100%; color:black; border:none; border-radius:5px; cursor:pointer;" onclick="closeModal()">❌ रद्द करा</button>
     </div>
 </div>
 
@@ -128,6 +134,12 @@
         return price;
     }
 
+    function copyUpiId() {
+        const upiText = document.getElementById('upiIdText').innerText;
+        navigator.clipboard.writeText(upiText);
+        alert('UPI ID कॉपी झाला! आता तुमच्या गुगल पे / फोनपे मध्ये पेस्ट करून पे करा.');
+    }
+
     const toBase64 = file => new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.readAsDataURL(file);
@@ -145,8 +157,6 @@
         if (payMethod === 'online') {
             const amount = calculatePrice();
             document.getElementById('modalAmount').innerText = `₹${amount}.00`;
-            
-            // रिस्क पॉलिसी टाळण्यासाठी एकदम सरळ आणि सुरक्षित UPI फॉरमॅट
             const upiUrl = `upi://pay?pa=${UPI_ID}&pn=${encodeURIComponent(MERCHANT_NAME)}&am=${amount}&cu=INR`;
             
             document.getElementById('qrcode').innerHTML = "";
