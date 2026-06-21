@@ -19,13 +19,10 @@
         button { width: 100%; background: #002d62; color: white; border: none; padding: 15px; border-radius: 8px; font-size: 18px; font-weight: bold; cursor: pointer; margin-top: 15px; transition: 0.3s; }
         button:hover { background: #b8860b; }
         .footer { margin-top: 20px; font-size: 12px; color: #777; }
-        
-        /* पेमेंट पॉपअप स्टाईल */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); justify-content: center; align-items: center; z-index: 1000; }
         .modal-content { background: white; padding: 30px; border-radius: 15px; max-width: 90%; width: 350px; text-align: center; box-shadow: 0 5px 25px rgba(0,0,0,0.3); }
         .qr-img { width: 200px; height: 200px; margin: 15px auto; display: block; border: 4px solid #002d62; border-radius: 10px; padding: 5px; }
         .amt-text { font-size: 22px; font-weight: bold; color: #d32f2f; margin: 10px 0; }
-        .pay-btn { background: #4caf50; font-size: 16px; padding: 12px; margin-top: 10px; }
     </style>
 </head>
 <body>
@@ -65,15 +62,22 @@
         </div>
 
         <div class="section">
-            <span class="section-title">🔄 पेज बाजू सेटिंग:</span>
+            <span class="section-title">🔄 पेज बाजू設定:</span>
             <label><input type="checkbox" id="bothSide" value="true" onclick="calculatePrice()"> कागदाच्या दोन्ही बाजूंवर प्रिंट करा (Both Side Print)</label>
         </div>
 
-        <div class="section" style="background: #fff8e1; border: 1px solid #ffe082; text-align: center;">
-            <span style="font-size: 18px; font-weight: bold; color: #b8860b;">💸 एकूण देय रक्कम: <span id="totalPriceDisplay">₹१०</span></span>
+        <!-- 💰 पेमेंट मोड निवडणे -->
+        <div class="section">
+            <span class="section-title">💵 पेमेंटची पद्धत निवडा:</span>
+            <label><input type="radio" name="payMethod" value="online" checked> 📲 ऑनलाईन (UPI/QR)</label>
+            <label><input type="radio" name="payMethod" value="cash"> 🪙 काउंटरवर रोख (Cash)</label>
         </div>
 
-        <button type="button" onclick="startPaymentProcess()">🚀 पैसे भरा आणि प्रिंट काढा</button>
+        <div class="section" style="background: #fff8e1; border: 1px solid #ffe082; text-align: center;">
+            <span style="font-size: 18px; font-weight: bold; color: #b8860b;">💸 एकूण रक्कम: <span id="totalPriceDisplay">₹१०</span></span>
+        </div>
+
+        <button type="button" onclick="processPrintRequest()">🚀 प्रिंटसाठी पाठवा</button>
     </form>
 
     <div class="footer">
@@ -81,27 +85,19 @@
     </div>
 </div>
 
-<!-- 💰 UPI पेमेंट पॉपअप विंडो -->
+<!-- UPI पॉपअप विंडो -->
 <div id="paymentModal" class="modal">
     <div class="modal-content">
         <h3 style="color: #002d62; margin-top: 0;">पैसे भरा (Pay to Print)</h3>
-        <p style="font-size: 14px; color: #666; margin-bottom: 5px;">खालील QR कोड गुगल पे, फोनपे किंवा कोणत्याही UPI ॲपने स्कॅन करा:</p>
-        
         <div class="amt-text" id="modalAmount">₹१०.००</div>
-        
-        <!-- डायनॅमिक QR कोड इमेज -->
         <img id="dynamicQR" src="" class="qr-img" alt="UPI QR Code">
-        
-        <p style="font-size: 13px; color: #388e3c; font-weight: bold; animation: blink 1.5s infinite;">⚠️ पेमेंट झाल्यावर २ सेकंद थांबा, प्रिंट आपोआप निघेल!</p>
-        
-        <!-- मोबाईल युजर्ससाठी डायरेक्ट पे बटन -->
-        <a id="upiDeepLink" href="" class="hidden"><button type="button" class="pay-btn">📲 मोबाईलवरून थेट पे करा</button></a>
-        <button type="button" style="background:#ccc; font-size:14px; padding:8px; margin-top:15px;" onclick="closeModal()">❌ रद्द करा</button>
+        <p style="font-size: 13px; color: #388e3c; font-weight: bold;">⚠️ पेमेंट झाल्यावर क्युआर कोडवर क्लिक करा, प्रिंट सुरू होईल!</p>
+        <button type="button" style="background:#ccc; font-size:14px; padding:8px; margin-top:15px; width:100%; color:black;" onclick="closeModal()">❌ रद्द करा</button>
     </div>
 </div>
 
 <script>
-    const UPI_ID = "8007365051@okbizaxis"; // तुमचा मर्चंट किंवा वैयक्तिक UPI ID इथे टाका
+    const UPI_ID = "8007365051@okbizaxis";
     const MERCHANT_NAME = "Balaji Cyber Point";
 
     function toggleJobType(type) {
@@ -119,19 +115,8 @@
         const printMode = document.querySelector('input[name="printMode"]:checked').value;
         const jobType = document.querySelector('input[name="jobType"]:checked').value;
         const bothSide = document.getElementById('bothSide').checked;
-        
-        let price = 0;
-        
-        if (jobType === 'id_card') {
-            price = (printMode === 'color') ? 15 : 10; // आयडी कार्ड दर
-        } else {
-            price = (printMode === 'color') ? 10 : 5;  // नॉर्मल प्रिंट दर
-        }
-        
-        if (bothSide && jobType === 'normal') {
-            price = price * 1.5; // बोथ साईड असेल तर दीडपट (तुम्ही तुमच्या हिशोबाने बदलू शकता)
-        }
-        
+        let price = (jobType === 'id_card') ? ((printMode === 'color') ? 15 : 10) : ((printMode === 'color') ? 10 : 5);
+        if (bothSide && jobType === 'normal') { price = price * 1.5; }
         document.getElementById('totalPriceDisplay').innerText = `₹${price}`;
         return price;
     }
@@ -143,56 +128,35 @@
         reader.onerror = error => reject(error);
     });
 
-    async function startPaymentProcess() {
+    async function processPrintRequest() {
         const jobType = document.querySelector('input[name="jobType"]:checked').value;
-        
-        // आधी फाईल सिलेक्ट केली आहे का ते तपासणे
-        if (jobType === 'normal' && document.getElementById('mainFile').files.length === 0) { 
-            alert('कृपया आधी फाईल निवडा!'); return; 
-        }
-        if (jobType === 'id_card' && (document.getElementById('frontFile').files.length === 0 || document.getElementById('backFile').files.length === 0)) { 
-            alert('कृपया आयडी कार्डचे दोन्ही फोटो निवडा!'); return; 
-        }
+        const payMethod = document.querySelector('input[name="payMethod"]:checked').value;
 
-        const amount = calculatePrice();
-        document.getElementById('modalAmount').innerText = `₹${amount}.00`;
-        
-        // 🔄 अचूक रक्कमेचा डायनॅमिक UPI URL तयार करणे
-        const upiUrl = `upi://pay?pa=${UPI_ID}&pn=${encodeURIComponent(MERCHANT_NAME)}&am=${amount}&cu=INR&tn=AutoPrint_${Date.now()}`;
-        
-        // 📲 गुगलवरून मोफत QR कोड जनरेट करणे
-        const qrChartUrl = `https://chart.googleapis.com/chart?chs=250x250&cht=qr&chl=${encodeURIComponent(upiUrl)}`;
-        document.getElementById('dynamicQR').src = qrChartUrl;
-        
-        // मोबाईल युजर्ससाठी डायरेक्ट लिंक
-        if(/Android|iPhone/i.test(navigator.userAgent)) {
-            document.getElementById('upiDeepLink').href = upiUrl;
-            document.getElementById('upiDeepLink').classList.remove('hidden');
-        }
+        if (jobType === 'normal' && document.getElementById('mainFile').files.length === 0) { alert('कृपया फाईल निवडा!'); return; }
+        if (jobType === 'id_card' && (document.getElementById('frontFile').files.length === 0 || document.getElementById('backFile').files.length === 0)) { alert('कृपया दोन्ही फोटो निवडा!'); return; }
 
-        // पॉपअप विंडो दाखवणे
-        document.getElementById('paymentModal').style.display = 'flex';
-        
-        // 🚨 सिम्युलेटेड पेमेंट ऑटो-सक्सेस (ग्राहकाने पे केल्यावर तुम्ही ओके केल्यावर किंवा १० सेकंदाने प्रिंट सुरू होईल)
-        // खऱ्या ऑटोमेशनसाठी मर्चंट API लागतो, पण काउंटरवर सोपे जाण्यासाठी आपण पेमेंट नंतर थेट सबमिट करू
-        setTimeout(() => {
-            // ग्राहकाने पे केल्याचे गृहीत धरून किंवा कन्फर्म करून सबमिट करणे
-            // सध्या आपण युझरला थेट प्रिंट मारण्याची परवानगी देत आहोत, खऱ्या वेहेरिफिकेशनसाठी खालील फंक्शन ट्रिगर होईल
-        }, 1000);
+        if (payMethod === 'online') {
+            const amount = calculatePrice();
+            document.getElementById('modalAmount').innerText = `₹${amount}.00`;
+            const upiUrl = `upi://pay?pa=${UPI_ID}&pn=${encodeURIComponent(MERCHANT_NAME)}&am=${amount}&cu=INR`;
+            document.getElementById('dynamicQR').src = `https://chart.googleapis.com/chart?chs=250x250&cht=qr&chl=${encodeURIComponent(upiUrl)}`;
+            document.getElementById('paymentModal').style.display = 'flex';
+        } else {
+            // कॅश पेमेंट असेल तर थेट सर्व्हरकडे पाठवणे (अप्रूव्हल मोडमध्ये)
+            sendDataToServer('CASH_PENDING');
+        }
     }
 
-    function closeModal() {
-        document.getElementById('paymentModal').style.display = 'none';
-    }
+    function closeModal() { document.getElementById('paymentModal').style.style.display = 'none'; }
+    document.getElementById('dynamicQR').onclick = () => { closeModal(); sendDataToServer('PAID_ONLINE'); };
 
-    // पेमेंटनंतर फाईल थेट सर्व्हर आणि कॉम्प्युटरकडे पाठवणारे फंक्शन
-    async function finalizeAndPrint() {
-        closeModal();
+    async function sendDataToServer(paymentStatus) {
+        alert('डॉक्युमेंट सर्व्हरकडे पाठवले जात आहे. कृपया काउंटरवर संपर्क करा!');
         const printMode = document.querySelector('input[name="printMode"]:checked').value;
         const jobType = document.querySelector('input[name="jobType"]:checked').value;
         const bothSide = document.getElementById('bothSide').checked;
         
-        let payload = { printMode, jobType, bothSide, fileData: '', fileDataBack: '', fileName: '', fileNameBack: '' };
+        let payload = { printMode, jobType, bothSide, paymentStatus, fileData: '', fileDataBack: '', fileName: '', fileNameBack: '' };
 
         if (jobType === 'normal') {
             const fileInput = document.getElementById('mainFile');
@@ -214,17 +178,10 @@
                 body: JSON.stringify(payload)
             });
             if (response.ok) {
-                alert('पेमेंट यशस्वी! प्रिंटरमधून कागद बाहेर येत आहे.');
-            } else {
-                alert('काहीतरी गडबड झाली, पुन्हा प्रयत्न करा.');
+                alert('यशस्वी! फाईल काउंटर कॉम्प्युटरवर पाठवली आहे.');
             }
-        } catch (error) {
-            alert('सर्व्हरशी संपर्क होऊ शकला नाही.');
-        }
+        } catch (error) { alert('त्रुटी आली!'); }
     }
-    
-    // क्यूआर कोडवर क्लिक केल्यास किंवा मोबाईल बटन दाबल्यास प्रिंट सोडण्यासाठी मॅपिंग
-    document.getElementById('dynamicQR').onclick = finalizeAndPrint;
 </script>
 </body>
 </html>
