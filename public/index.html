@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>बालाji सायबर पॉईंट - ऑटो प्रिंट</title>
+    <style>
+        body { font-family: sans-serif; background: #f0f4f8; text-align: center; padding: 20px; }
+        .container { max-width: 400px; background: white; margin: 0 auto; padding: 20px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        h2 { color: #0d47a1; }
+        .btn { border: 2px dashed #0d47a1; padding: 15px; font-weight: bold; cursor: pointer; display: block; margin: 20px auto; width: 80%; }
+        #printBtn { background: #2e7d32; color: white; border: none; padding: 12px 30px; font-size: 16px; border-radius: 5px; cursor: pointer; display: none; margin: 20px auto; }
+        #status { margin-top: 15px; font-weight: bold; color: #333; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>👑 बालाजी सायबर पॉईंट 👑</h2>
+    <p>माणगाव, रायगड</p>
+    <hr>
+    <h3>🖨️ मोबाईल ऑटो प्रिंट</h3>
+    
+    <input type="file" id="fileInput" accept="image/*,application/pdf" style="display:none;">
+    <button class="btn" onclick="document.getElementById('fileInput').click()">📄 फाईल / फोटो निवडा</button>
+    
+    <p id="fileName"></p>
+    <button id="printBtn">🚀 थेट प्रिंट काढा</button>
+    <p id="status"></p>
+</div>
+
+<script>
+    const fileInput = document.getElementById('fileInput');
+    const printBtn = document.getElementById('printBtn');
+    const status = document.getElementById('status');
+    const fileName = document.getElementById('fileName');
+    let selectedFile;
+
+    fileInput.addEventListener('change', (e) => {
+        if(e.target.files.length > 0) {
+            selectedFile = e.target.files[0];
+            fileName.innerText = "निवडलेली फाईल: " + selectedFile.name;
+            printBtn.style.display = 'block';
+        }
+    });
+
+    printBtn.addEventListener('click', () => {
+        if(!selectedFile) return;
+        
+        status.innerText = "फाईल प्रिंटरकडे पाठवत आहे... कृपया थांबा...";
+        const formData = new FormData();
+        formData.append('file', selectedFile);
+
+        // सर्व्हरला फाईल पोस्ट करणे
+        fetch('/upload-print', {
+            method: 'POST',
+            body: formData
+        })
+        .then(res => res.text())
+        .then(text => {
+            status.style.color = 'green';
+            status.innerText = text;
+        })
+        .catch(err => {
+            status.style.color = 'red';
+            status.innerText = "एरर: प्रिंट सबमिट झाली नाही.";
+        });
+    });
+</script>
+</body>
+</html>
