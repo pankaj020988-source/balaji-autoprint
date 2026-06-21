@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>श्री बालाजी सायबर पॉईंट - स्मार्ट ऑटो प्रिंट</title>
+    <!-- 🔄 QR कोड एरर घालवण्यासाठी नवीन लायब्ररी जोडली -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; margin: 0; padding: 20px; color: #333; text-align: center; }
         .container { max-width: 500px; margin: auto; background: white; padding: 25px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); border-top: 8px solid #002d62; }
@@ -21,7 +23,8 @@
         .footer { margin-top: 20px; font-size: 12px; color: #777; }
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); justify-content: center; align-items: center; z-index: 1000; }
         .modal-content { background: white; padding: 30px; border-radius: 15px; max-width: 90%; width: 350px; text-align: center; box-shadow: 0 5px 25px rgba(0,0,0,0.3); }
-        .qr-img { width: 200px; height: 200px; margin: 15px auto; display: block; border: 4px solid #002d62; border-radius: 10px; padding: 5px; }
+        /* QR कोड बॉक्स सेटिंग */
+        #qrcode { margin: 15px auto; padding: 10px; background: white; display: inline-block; border: 4px solid #002d62; border-radius: 10px; }
         .amt-text { font-size: 22px; font-weight: bold; color: #d32f2f; margin: 10px 0; }
     </style>
 </head>
@@ -34,12 +37,12 @@
     <form id="uploadForm">
         <div class="section">
             <span class="section-title">🎨 प्रिंटचा प्रकार निवडा:</span>
-            <label><input type="radio" name="printMode" value="color" checked onclick="calculatePrice()"> कलर (Color) - ₹१०</label>
-            <label><input type="radio" name="printMode" value="bw" onclick="calculatePrice()"> | ब्लॅक अँड व्हाईट (B&W) - ₹५</label>
+            <label><input type="radio" name="printMode" value="color" checked onclick="calculatePrice()"> कलर (Color)</label>
+            <label><input type="radio" name="printMode" value="bw" onclick="calculatePrice()"> | ब्लॅक अँड व्हाईट (B&W)</label>
         </div>
 
         <div class="section">
-            <span class="section-title">📄 डॉक्युमेंटचा प्रकार:</span>
+            <span class="section-title">📄 डॉक्युメントचा प्रकार:</span>
             <label><input type="radio" name="jobType" value="normal" checked onclick="toggleJobType('normal')"> नॉर्मल (फोटो / PDF)</label>
             <label><input type="radio" name="jobType" value="id_card" onclick="toggleJobType('id_card')"> आयडी कार्ड (Front & Back)</label>
         </div>
@@ -62,11 +65,10 @@
         </div>
 
         <div class="section">
-            <span class="section-title">🔄 पेज बाजू設定:</span>
+            <span class="section-title">🔄 पेज बाजू सेटिंग:</span>
             <label><input type="checkbox" id="bothSide" value="true" onclick="calculatePrice()"> कागदाच्या दोन्ही बाजूंवर प्रिंट करा (Both Side Print)</label>
         </div>
 
-        <!-- 💰 पेमेंट मोड निवडणे -->
         <div class="section">
             <span class="section-title">💵 पेमेंटची पद्धत निवडा:</span>
             <label><input type="radio" name="payMethod" value="online" checked> 📲 ऑनलाईन (UPI/QR)</label>
@@ -85,20 +87,23 @@
     </div>
 </div>
 
-<!-- UPI पॉपअप विंडो -->
 <div id="paymentModal" class="modal">
     <div class="modal-content">
         <h3 style="color: #002d62; margin-top: 0;">पैसे भरा (Pay to Print)</h3>
         <div class="amt-text" id="modalAmount">₹१०.००</div>
-        <img id="dynamicQR" src="" class="qr-img" alt="UPI QR Code">
-        <p style="font-size: 13px; color: #388e3c; font-weight: bold;">⚠️ पेमेंट झाल्यावर क्युआर कोडवर क्लिक करा, प्रिंट सुरू होईल!</p>
-        <button type="button" style="background:#ccc; font-size:14px; padding:8px; margin-top:15px; width:100%; color:black;" onclick="closeModal()">❌ रद्द करा</button>
+        
+        <!-- 🎯 जुन्या इमेज ऐवजी आता लायब्ररी थेट QR जनरेट करेल -->
+        <div id="qrcode"></div>
+        
+        <p style="font-size: 13px; color: #388e3c; font-weight: bold; margin-top:10px;">⚠️ पेमेंट झाल्यावर QR कोडवर क्लिक करा, प्रिंट सुरू होईल!</p>
+        <button type="button" style="background:#ccc; font-size:14px; padding:8px; margin-top:15px; width:100%; color:black; border:none; border-radius:5px;" onclick="closeModal()">❌ रद्द करा</button>
     </div>
 </div>
 
 <script>
     const UPI_ID = "8007365051@okbizaxis";
     const MERCHANT_NAME = "Balaji Cyber Point";
+    let qrInstance = null;
 
     function toggleJobType(type) {
         if (type === 'id_card') {
@@ -111,12 +116,21 @@
         calculatePrice();
     }
 
+    // 💰 पंकजजींच्या गरजेनुसार रेट कॅल्क्युलेटर दुरुस्त केला
     function calculatePrice() {
         const printMode = document.querySelector('input[name="printMode"]:checked').value;
         const jobType = document.querySelector('input[name="jobType"]:checked').value;
-        const bothSide = document.getElementById('bothSide').checked;
-        let price = (jobType === 'id_card') ? ((printMode === 'color') ? 15 : 10) : ((printMode === 'color') ? 10 : 5);
-        if (bothSide && jobType === 'normal') { price = price * 1.5; }
+        
+        let price = 0;
+        
+        if (jobType === 'id_card') {
+            // आयडी कार्ड: कलर = १५, ब्लॅक अँड व्हाईट = ५
+            price = (printMode === 'color') ? 15 : 5;
+        } else {
+            // नॉर्मल: कलर = १०, ब्लॅक अँड व्हाईट = ५
+            price = (printMode === 'color') ? 10 : 5;
+        }
+        
         document.getElementById('totalPriceDisplay').innerText = `₹${price}`;
         return price;
     }
@@ -132,23 +146,31 @@
         const jobType = document.querySelector('input[name="jobType"]:checked').value;
         const payMethod = document.querySelector('input[name="payMethod"]:checked').value;
 
-        if (jobType === 'normal' && document.getElementById('mainFile').files.length === 0) { alert('कृपया फाईल निवडा!'); return; }
+        if (jobType === 'normal' && document.getElementById('mainFile').files.length === 0) { alert('कृपया आधी फाईल निवडा!'); return; }
         if (jobType === 'id_card' && (document.getElementById('frontFile').files.length === 0 || document.getElementById('backFile').files.length === 0)) { alert('कृपया दोन्ही फोटो निवडा!'); return; }
 
         if (payMethod === 'online') {
             const amount = calculatePrice();
             document.getElementById('modalAmount').innerText = `₹${amount}.00`;
+            
             const upiUrl = `upi://pay?pa=${UPI_ID}&pn=${encodeURIComponent(MERCHANT_NAME)}&am=${amount}&cu=INR`;
-            document.getElementById('dynamicQR').src = `https://chart.googleapis.com/chart?chs=250x250&cht=qr&chl=${encodeURIComponent(upiUrl)}`;
+            
+            // 🔄 जुनी इमेज काढून नवीन पक्की QR कोड पद्धत वापरली
+            document.getElementById('qrcode').innerHTML = "";
+            qrInstance = new QRCode(document.getElementById('qrcode'), {
+                text: upiUrl,
+                width: 200,
+                height: 200
+            });
+            
             document.getElementById('paymentModal').style.display = 'flex';
         } else {
-            // कॅश पेमेंट असेल तर थेट सर्व्हरकडे पाठवणे (अप्रूव्हल मोडमध्ये)
             sendDataToServer('CASH_PENDING');
         }
     }
 
-    function closeModal() { document.getElementById('paymentModal').style.style.display = 'none'; }
-    document.getElementById('dynamicQR').onclick = () => { closeModal(); sendDataToServer('PAID_ONLINE'); };
+    function closeModal() { document.getElementById('paymentModal').style.display = 'none'; }
+    document.getElementById('qrcode').onclick = () => { closeModal(); sendDataToServer('PAID_ONLINE'); };
 
     async function sendDataToServer(paymentStatus) {
         alert('डॉक्युमेंट सर्व्हरकडे पाठवले जात आहे. कृपया काउंटरवर संपर्क करा!');
@@ -182,6 +204,9 @@
             }
         } catch (error) { alert('त्रुटी आली!'); }
     }
+    
+    // पहिल्यांदा पेज उघडल्यावर रेट सेट करणे
+    calculatePrice();
 </script>
 </body>
 </html>
