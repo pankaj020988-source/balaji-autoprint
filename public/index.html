@@ -3,69 +3,137 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>बालाji सायबर पॉईंट - ऑटो प्रिंट</title>
+    <title>श्री बालाजी सायबर पॉईंट - स्मार्ट ऑटो प्रिंट</title>
     <style>
-        body { font-family: sans-serif; background: #f0f4f8; text-align: center; padding: 20px; }
-        .container { max-width: 400px; background: white; margin: 0 auto; padding: 20px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        h2 { color: #0d47a1; }
-        .btn { border: 2px dashed #0d47a1; padding: 15px; font-weight: bold; cursor: pointer; display: block; margin: 20px auto; width: 80%; }
-        #printBtn { background: #2e7d32; color: white; border: none; padding: 12px 30px; font-size: 16px; border-radius: 5px; cursor: pointer; display: none; margin: 20px auto; }
-        #status { margin-top: 15px; font-weight: bold; color: #333; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; margin: 0; padding: 20px; color: #333; text-align: center; }
+        .container { max-width: 500px; margin: auto; background: white; padding: 25px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); border-top: 8px solid #002d62; }
+        h1 { color: #002d62; margin-bottom: 5px; font-size: 24px; }
+        h2 { color: #b8860b; margin-top: 0; font-size: 18px; margin-bottom: 20px; }
+        .section { background: #f9f9f9; padding: 15px; border-radius: 10px; margin-bottom: 15px; text-align: left; border: 1px solid #eef0f2; }
+        .section-title { font-weight: bold; color: #002d62; margin-bottom: 10px; display: block; }
+        label { display: inline-block; margin-right: 15px; cursor: pointer; font-weight: 500; }
+        input[type="radio"], input[type="checkbox"] { margin-right: 5px; transform: scale(1.1); }
+        .file-input-group { margin-top: 10px; }
+        input[type="file"] { width: 100%; padding: 10px; background: white; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
+        .hidden { display: none; }
+        button { width: 100%; background: #002d62; color: white; border: none; padding: 15px; border-radius: 8px; font-size: 18px; font-weight: bold; cursor: pointer; margin-top: 15px; transition: 0.3s; }
+        button:hover { background: #b8860b; }
+        .footer { margin-top: 20px; font-size: 12px; color: #777; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>👑 बालाजी सायबर पॉईंट 👑</h2>
-    <p>माणगाव, रायगड</p>
-    <hr>
-    <h3>🖨️ मोबाईल ऑटो प्रिंट</h3>
-    
-    <input type="file" id="fileInput" accept="image/*,application/pdf" style="display:none;">
-    <button class="btn" onclick="document.getElementById('fileInput').click()">📄 फाईल / फोटो निवडा</button>
-    
-    <p id="fileName"></p>
-    <button id="printBtn">🚀 थेट प्रिंट काढा</button>
-    <p id="status"></p>
+    <h1>👑 श्री बालाजी सायबर पॉईंट 👑</h1>
+    <h2>स्मार्ट मोबाईल ऑटो प्रिंट सिस्टीम</h2>
+
+    <form id="uploadForm">
+        <!-- १. प्रिंट मोड (Color / BW) -->
+        <div class="section">
+            <span class="section-title">🎨 प्रिंटचा प्रकार निवडा:</span>
+            <label><input type="radio" name="printMode" value="color" checked> कलर (Color)</label>
+            <label><input type="radio" name="printMode" value="bw"> ब्लॅक अँड व्हाईट (B&W)</label>
+        </div>
+
+        <!-- २. जॉब टाईप (Normal / ID Card) -->
+        <div class="section">
+            <span class="section-title">📄 डॉक्युमेंटचा प्रकार:</span>
+            <label><input type="radio" name="jobType" value="normal" checked onclick="toggleJobType('normal')"> नॉर्मल (फोटो / PDF)</label>
+            <label><input type="radio" name="jobType" value="id_card" onclick="toggleJobType('id_card')"> आयडी कार्ड (पुढचा-मागचा भाग)</label>
+        </div>
+
+        <!-- ३. फाईल अपलोड विभाग -->
+        <div class="section">
+            <span class="section-title" id="fileLabel">📁 फाईल निवडा:</span>
+            
+            <!-- नॉर्मल फाईल इनपुट -->
+            <div id="normalFileInput" class="file-input-group">
+                <input type="file" id="mainFile" name="file" accept=".jpg,.jpeg,.png,.pdf">
+            </div>
+
+            <!-- आयडी कार्ड फाईल इनपुट्स -->
+            <div id="idCardFileInputs" class="file-input-group hidden">
+                <label style="display:block; margin-bottom:10px;">
+                    <span style="font-size:14px; color:#555;">१. पुढचा भाग (Front Side Photo):</span>
+                    <input type="file" id="frontFile" name="fileFront" accept=".jpg,.jpeg,.png">
+                </label>
+                <label style="display:block;">
+                    <span style="font-size:14px; color:#555;">२. मागचा भाग (Back Side Photo):</span>
+                    <input type="file" id="backFile" name="fileBack" accept=".jpg,.jpeg,.png">
+                </label>
+            </div>
+        </div>
+
+        <!-- ४. बोथ साईड प्रिंट (Duplex) -->
+        <div class="section">
+            <span class="section-title">🔄 पेज बाजू सेटिंग:</span>
+            <label><input type="checkbox" id="bothSide" name="bothSide" value="true"> कागदाच्या दोन्ही बाजूंवर प्रिंट करा (Both Side Print)</label>
+        </div>
+
+        <button type="button" onclick="submitPrintJob()">🚀 थेट प्रिंट काढा</button>
+    </form>
+
+    <div class="footer">
+        संपर्क: पंकज देसाई - 8007365051 | माणगाव, रायगड
+    </div>
 </div>
 
 <script>
-    const fileInput = document.getElementById('fileInput');
-    const printBtn = document.getElementById('printBtn');
-    const status = document.getElementById('status');
-    const fileName = document.getElementById('fileName');
-    let selectedFile;
-
-    fileInput.addEventListener('change', (e) => {
-        if(e.target.files.length > 0) {
-            selectedFile = e.target.files[0];
-            fileName.innerText = "निवडलेली फाईल: " + selectedFile.name;
-            printBtn.style.display = 'block';
+    function toggleJobType(type) {
+        if (type === 'id_card') {
+            document.getElementById('normalFileInput').classList.add('hidden');
+            document.getElementById('idCardFileInputs').classList.remove('hidden');
+            document.getElementById('fileLabel').innerText = "💳 आयडी कार्डचे फोटो अपलोड करा:";
+        } else {
+            document.getElementById('normalFileInput').classList.remove('hidden');
+            document.getElementById('idCardFileInputs').classList.add('hidden');
+            document.getElementById('fileLabel').innerText = "📁 फाईल निवडा:";
         }
-    });
+    }
 
-    printBtn.addEventListener('click', () => {
-        if(!selectedFile) return;
+    async function submitPrintJob() {
+        const printMode = document.querySelector('input[name="printMode"]:checked').value;
+        const jobType = document.querySelector('input[name="jobType"]:checked').value;
+        const bothSide = document.getElementById('bothSide').checked;
         
-        status.innerText = "फाईल प्रिंटरकडे पाठवत आहे... कृपया थांबा...";
         const formData = new FormData();
-        formData.append('file', selectedFile);
+        formData.append('printMode', printMode);
+        formData.append('jobType', jobType);
+        formData.append('bothSide', bothSide);
 
-        // सर्व्हरला फाईल पोस्ट करणे
-        fetch('/upload-print', {
-            method: 'POST',
-            body: formData
-        })
-        .then(res => res.text())
-        .then(text => {
-            status.style.color = 'green';
-            status.innerText = text;
-        })
-        .catch(err => {
-            status.style.color = 'red';
-            status.innerText = "एरर: प्रिंट सबमिट झाली नाही.";
-        });
-    });
+        if (jobType === 'normal') {
+            const fileInput = document.getElementById('mainFile');
+            if (fileInput.files.length === 0) { alert('कृपया फाईल निवडा!'); return; }
+            formData.append('file', fileInput.files[0]);
+        } else {
+            const frontFile = document.getElementById('frontFile');
+            const backFile = document.getElementById('backFile');
+            if (frontFile.files.length === 0 || backFile.files.length === 0) { 
+                alert('कृपया आयडी कार्डचे दोन्ही (पुढचा आणि मागचा) फोटो निवडा!'); 
+                return; 
+            }
+            formData.append('file', frontFile.files[0]);
+            formData.append('fileBack', backFile.files[0]);
+        }
+
+        alert('प्रिंट कमांड पाठवली जात आहे... कृपया प्रिंटर जवळ चेक करा!');
+
+        try {
+            const response = await fetch('https://balaji-autoprint.onrender.com/upload-print', {
+                method: 'POST',
+                body: formData
+            });
+            if (response.ok) {
+                alert('यशस्वी! प्रिंटरमधून कागद बाहेर येत आहे.');
+            } else {
+                alert('काहीतरी गडबड झाली, कृपया पुन्हा प्रयत्न करा.');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('सर्व्हरशी संपर्क होऊ शकला नाही.');
+        }
+    }
 </script>
+
 </body>
 </html>
