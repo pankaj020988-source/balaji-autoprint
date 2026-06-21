@@ -6,8 +6,7 @@
     <title>श्री बालाजी सायबर पॉईंट - स्मार्ट ऑटो प्रिंट</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
-        /* 🔤 अक्षरे विखुरू नयेत म्हणून कडक सिस्टम फॉन्ट सेटिंग */
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; background-color: #f4f7f6; margin: 0; padding: 20px; color: #333; text-align: center; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #f4f7f6; margin: 0; padding: 20px; color: #333; text-align: center; }
         .container { max-width: 500px; margin: auto; background: white; padding: 25px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); border-top: 8px solid #002d62; }
         h1 { color: #002d62; margin-bottom: 5px; font-size: 24px; font-weight: bold; }
         h2 { color: #b8860b; margin-top: 0; font-size: 17px; margin-bottom: 20px; font-weight: bold; }
@@ -37,13 +36,97 @@
     <h2>स्मार्ट मोबाईल ऑटो प्रिंट सिस्टीम</h2>
 
     <form id="uploadForm">
-        <div class="section" onclick="calculatePrice()">
+        <div class="section" onchange="calculatePrice()">
             <span class="section-title">🎨 प्रिंटचा प्रकार निवडा:</span>
             <label><input type="radio" name="printMode" value="color" checked> कलर (Color)</label>
             <label><input type="radio" name="printMode" value="bw"> | ब्लॅक अँड व्हाईट (B&W)</label>
         </div>
 
-        <div class="section" onclick="toggleJobType()">
+        <div class="section" onchange="toggleJobType()">
             <span class="section-title">📄 डॉक्युमेंटचा प्रकार:</span>
             <label><input type="radio" name="jobType" value="normal" checked> Normal (फोटो / PDF)</label>
             <label><input type="radio" name="jobType" value="id_card"> आयडी कार्ड (Front & Back)</label>
+        </div>
+
+        <div class="section">
+            <span class="section-title" id="fileLabel">📁 फाईल्स निवडा:</span>
+            <div id="normalFileInput" class="file-input-group">
+                <input type="file" id="mainFile" accept=".jpg,.jpeg,.png,.pdf" multiple onchange="updateFilesCount()">
+            </div>
+            <div id="idCardFileInputs" class="file-input-group hidden">
+                <label style="display:block; margin-bottom:10px;">
+                    <span>१. पुढचा भाग (Front Photo):</span>
+                    <input type="file" id="frontFile" accept=".jpg,.jpeg,.png" onchange="calculatePrice()">
+                </label>
+                <label style="display:block;">
+                    <span>२. मागचा भाग (Back Photo):</span>
+                    <input type="file" id="backFile" accept=".jpg,.jpeg,.png" onchange="calculatePrice()">
+                </label>
+            </div>
+        </div>
+
+        <div class="section" id="pageRangeSection">
+            <span class="section-title">🔢 पेजेस सेटिंग (फक्त PDF साठी):</span>
+            <label><input type="radio" name="pageOption" value="all" checked onclick="togglePageInput(false)"> सर्व पेजेस (All)</label>
+            <label><input type="radio" name="pageOption" value="custom" onclick="togglePageInput(true)"> ठराविक पेजेस</label>
+            
+            <div id="customPageInputGroup" class="hidden" style="margin-top:10px;">
+                <span style="font-size:13px; font-weight:bold; color:#333;">कोणती पेजेस पाहिजेत?</span>
+                <input type="text" id="pageRangeInput" placeholder="उदा. 3,4 किंवा 1-5">
+            </div>
+
+            <div style="margin-top: 12px; border-top: 1px dashed #ccc; padding-top: 10px;">
+                <span style="font-size:13px; font-weight:bold; color:#002d62;">📄 एकूण किती पेजेस किंवा फोटो प्रिंट होणार आहेत?</span>
+                <input type="number" id="totalPagesCountInput" value="1" min="1" oninput="calculatePrice()" onchange="calculatePrice()" onkeyup="calculatePrice()">
+                <small style="color:#d32f2f; font-size:11px; display:block; margin-top:3px;">*टीप: जर PDF मध्ये ९ पेजेस असतील, तर इथे ९ लिहा.</small>
+            </div>
+        </div>
+
+        <div class="section" onchange="calculatePrice()">
+            <span class="section-title">🔄 पेज बाजू सेटिंग:</span>
+            <label><input type="checkbox" id="bothSide" value="true"> कागदाच्या दोन्ही बाजूंवर प्रिंट करा (Both Side)</label>
+        </div>
+
+        <div class="section">
+            <span class="section-title">💵 पेमेंटची पद्धत निवडा:</span>
+            <label><input type="radio" name="payMethod" value="online" checked> 📲 ऑनलाईन (UPI/QR)</label>
+            <label><input type="radio" name="payMethod" value="cash"> 🪙 काउंटरवर रोख (Cash)</label>
+        </div>
+
+        <div class="section" style="background: #fff8e1; border: 1px solid #ffe082; text-align: center;">
+            <span style="font-size: 18px; font-weight: bold; color: #b8860b;">💸 एकूण रक्कम: <span id="totalPriceDisplay">₹१०</span></span>
+        </div>
+
+        <button type="button" onclick="processPrintRequest()">🚀 प्रिंटसाठी पाठवा</button>
+    </form>
+
+    <div class="footer">
+        संपर्क: पंकज देसाई - 8007365051 | माणगाव, रायगड
+    </div>
+</div>
+
+<div id="paymentModal" class="modal">
+    <div class="modal-content">
+        <h3 style="color: #002d62; margin-top: 0; font-weight:bold;">पैसे भरा (Pay to Print)</h3>
+        <div class="amt-text" id="modalAmount">₹१०.००</div>
+        <div id="qrcode"></div>
+        <div style="background: #e3f2fd; padding: 10px; border-radius: 5px; margin: 10px 0; font-size: 14px; font-weight: bold; border: 1px dashed #1e88e5;">
+            UPI ID: <span id="upiIdText">8007365051@okbizaxis</span>
+            <button type="button" onclick="copyUpiId()" style="background: #1e88e5; color: white; padding: 3px 8px; font-size: 12px; margin-left: 5px; width: auto; display: inline-block; margin-top: 0; border-radius: 4px; border:none; cursor:pointer;">Copy</button>
+        </div>
+        <p style="font-size: 13px; color: #666; margin-top:10px;">१. वरील QR कोड स्कॅन करा किंवा UPI ID कॉपी करून पे करा.</p>
+        <p style="font-size: 13px; color: #d32f2f; font-weight: bold;">२. पेमेंट यशस्वी झाल्यावर खालील बटणावर क्लिक करा:</p>
+        <button type="button" class="success-btn" onclick="triggerOnlinePrint()">✅ मी पैसे भरले आहेत, प्रिंट काढा</button>
+        <button type="button" style="background:#ccc; font-size:14px; padding:8px; margin-top:15px; width:100%; color:black; border:none; border-radius:5px; cursor:pointer;" onclick="closeModal()">❌ रद्द करा</button>
+    </div>
+</div>
+
+<script>
+    const UPI_ID = "8007365051@okbizaxis";
+    const MERCHANT_NAME = "Balaji Cyber Point";
+    let qrInstance = null;
+
+    function toggleJobType() {
+        const jobType = document.querySelector('input[name="jobType"]:checked').value;
+        if (jobType === 'id_card') {
+            document.getElementById('normalFileInput
