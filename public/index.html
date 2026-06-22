@@ -96,7 +96,7 @@
         </div>
 
         <div class="section" style="background: #fff8e1; border: 1px solid #ffe082; text-align: center;">
-            <span style="font-size: 18px; font-weight: bold; color: #b8860b;">💸 एकूण रक्कम: <span id="totalPriceDisplay">₹१०</span></span>
+            <span style="font-size: 18px; font-weight: bold; color: #b8860b;">💸 एकूण रक्कम: <span id="totalPriceDisplay">₹२०</span></span>
         </div>
 
         <button type="button" onclick="processPrintRequest()">🚀 प्रिंटसाठी पाठवा</button>
@@ -110,7 +110,7 @@
 <div id="paymentModal" class="modal">
     <div class="modal-content">
         <h3 style="color: #002d62; margin-top: 0; font-weight:bold;">पैसे भरा (Pay to Print)</h3>
-        <div class="amt-text" id="modalAmount">₹१०.००</div>
+        <div class="amt-text" id="modalAmount">₹२०.००</div>
         <div id="qrcode"></div>
         <div style="background: #e3f2fd; padding: 10px; border-radius: 5px; margin: 10px 0; font-size: 14px; font-weight: bold; border: 1px dashed #1e88e5;">
             UPI ID: <span id="upiIdText">8007365051@okbizaxis</span>
@@ -159,30 +159,28 @@
         calculatePrice();
     }
 
-    // 🎯 पक्का आणि गॅरंटीड हिशोब करणारा फॉर्म्युला
+    // 🎯 नवे दर लागू करणारे परफेक्ट कॅल्क्युलेटर फंक्शन
     function calculatePrice() {
         const printMode = document.querySelector('input[name="printMode"]:checked').value;
         const jobType = document.querySelector('input[name="jobType"]:checked').value;
         
-        let ratePerPage = (printMode === 'color') ? 10 : 5;
+        // 💸 नवीन रेट चार्ट: कलर २० रुपये, ब्लॅक अँड व्हाईट १० रुपये
+        let ratePerPage = (printMode === 'color') ? 20 : 10;
         let multiplier = 1;
 
         if (jobType === 'normal') {
             const pagesInput = document.getElementById('totalPagesCountInput').value;
             multiplier = parseInt(pagesInput);
-            if (isNaN(multiplier) || multiplier < 1) {
-                multiplier = 1;
-            }
+            if (isNaN(multiplier) || multiplier < 1) { multiplier = 1; }
         }
 
-        let price = (jobType === 'id_card') ? ((printMode === 'color') ? 15 : 5) : (ratePerPage * multiplier);
+        // 🆔 आयडी कार्ड (Front + Back मिळून): कलर २० रुपये, ब्लॅक अँड व्हाईट १० रुपये
+        let price = (jobType === 'id_card') ? ((printMode === 'color') ? 20 : 10) : (ratePerPage * multiplier);
         
-        // लाईव्ह स्क्रीनवर किंमत बदलणे
         document.getElementById('totalPriceDisplay').innerText = `₹${price}`;
         return price;
     }
 
-    // 🚀 बोटाची हालचाल ओळखणारे कडक लिसनर्स (गॅरंटीड सिंक करण्यासाठी)
     document.addEventListener("DOMContentLoaded", function() {
         const inputField = document.getElementById('totalPagesCountInput');
         if(inputField) {
