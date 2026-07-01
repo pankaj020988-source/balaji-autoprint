@@ -6,24 +6,30 @@ import io
 # पेज सेटिंग
 st.set_page_config(page_title="बालाजी सायबर पॉईंट - होम", page_icon="🌐", layout="centered")
 
-# युझर सिलेक्शन सिस्टीम (पासवर्ड शिवाय)
+# ==========================================
+# 👤 साईडबार युझर सिलेक्शन सिस्टीम (पासवर्ड शिवाय)
+# ==========================================
 if "user_role" not in st.session_state:
     st.session_state.user_role = "Manager (Pankajji)"
 
-st.markdown("<h2 style='text-align: center; color: #0056b3;'>🌐 श्री बालाजी सायबर पॉईंट, माणगाव</h2>", unsafe_allow_html=True)
-st.write("---")
-
-# स्क्रीनवरच थेट युझर निवडण्याचा पर्याय
-current_user = st.radio(
-    "👤 सध्या कॉम्प्युटरवर कोण काम करत आहे? (काम करण्यापूर्वी नाव निवडा):",
-    ("Manager (Pankajji)", "Staff / Partner")
+# डाव्या बाजूला (Sidebar) युझर निवडण्याचा कडक पर्याय
+st.sidebar.markdown("### 👥 सिस्टीम युझर")
+current_user = st.sidebar.radio(
+    "कॉम्प्युटर कोण वापरत आहे?",
+    ("Manager (Pankajji)", "Staff / Partner"),
+    index=0 if st.session_state.user_role == "Manager (Pankajji)" else 1
 )
 st.session_state.user_role = current_user
 
+st.sidebar.write("---")
 st.sidebar.markdown(f"👤 **चालू युझर:** `{st.session_state.user_role}`")
-st.write("---")
 
+# ==========================================
+# 🚀 मुख्य आयुष्मान भारत कोड
+# ==========================================
+st.markdown("<h2 style='text-align: center; color: #0056b3;'>🌐 श्री बालाजी सायबर पॉईंट, माणगाव</h2>", unsafe_allow_html=True)
 st.markdown("<h4 style='text-align: center; color: #28a745;'>आयुष्मान भारत PDF ते 4X6 कडक प्रिंट कंव्हर्टर</h4>", unsafe_allow_html=True)
+st.write("---")
 
 uploaded_file = st.file_uploader("तुमची आयुष्मान भारत सरकारी PDF फाईल इथे अपलोड करा:", type=["pdf"])
 
