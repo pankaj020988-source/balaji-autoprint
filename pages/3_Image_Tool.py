@@ -25,12 +25,12 @@ if uploaded_image is not None:
     
     # ३. पेपर निवडीसाठी ऑप्शन्स
     paper_option = st.radio(
-        "कोणत्या साईझच्या पेपरवर फोटो सेट करायचे आहेत?",
+        "कोणत्या साईझच्या paper वर फोटो सेट करायचे आहेत?",
         ("४x६ इंच फोटो पेपर (4x6 Sheet)", "पूर्ण A4 सरकारी पेपर (Full A4 Sheet)")
     )
     
     if st.button("🚀 पासपोर्ट साईझ फोटो शीट तयार करा", type="primary", use_container_width=True):
-        with st.spinner("⏳ परफेक्ट लेआउट तयार होत आहे..."):
+        with st.spinner("⏳ परफेक्ट हाय-क्वालिटी लेआउट तयार होत आहे..."):
             try:
                 # निवडलेल्या पेपरनुसार पिक्सेल साईझ ठरवणे
                 if "४x६" in paper_option:
@@ -40,7 +40,7 @@ if uploaded_image is not None:
                     canvas_w, canvas_h = int(8.27 * DPI), int(11.69 * DPI)
                     file_suffix = "A4_Sheet"
                 
-                # फोटो कडक ३.५ x ४.५ सेमी मध्ये फिट करणे
+                # 🔥 फोटो कडक ३.५ x ४.५ सेमी मध्ये हाय-क्वालिटी रिसाईझ करणे
                 resized_id = ImageOps.fit(img, (id_w, id_h), Image.Resampling.LANCZOS)
                 
                 # कोऱ्या पांढऱ्या पेपरचा कॅनव्हास तयार करणे
@@ -52,20 +52,20 @@ if uploaded_image is not None:
                     for x in range(margin, canvas_w - id_w, id_w + margin):
                         sheet.paste(resized_id, (x, y))
                 
-                # प्रिव्ह्यू दाखवण्यासाठी आणि डाऊनलोड करण्यासाठी मेमरी सेव्हिंग
+                # 🎯 क्वालिटी कडक राखण्यासाठी JPEG ऐवजी PNG मध्ये सेव्ह करणे
                 buffer = io.BytesIO()
-                sheet.save(buffer, format="JPEG", quality=95, dpi=(DPI, DPI))
+                sheet.save(buffer, format="PNG", dpi=(DPI, DPI))
                 buffer.seek(0)
                 
-                st.success("✅ तुमचे पासपोर्ट फोटो शीट एकदम परफेक्ट तयार झाले आहे!")
+                st.success("✅ तुमचे पासपोर्ट फोटो शीट एकदम हाय-क्वालिटीमध्ये तयार झाले आहे!")
                 st.image(sheet, caption="⚙️ प्रिंट प्रिव्ह्यू (डाऊनलोड करून डायरेक्ट प्रिंट काढा)", use_container_width=True)
                 
-                # 📥 ४. कडक डाऊनलोड बटण
+                # 📥 ४. कडक डाऊनलोड बटण (PNG फाईल)
                 st.download_button(
-                    label="📥 तयार झालेली फोटो शीट (JPG) डाऊनलोड करा",
+                    label="📥 तयार झालेली HD फोटो शीट (PNG) डाऊनलोड करा",
                     data=buffer,
-                    file_name=f"Balaji_Passport_{file_suffix}.jpg",
-                    mime="image/jpeg",
+                    file_name=f"Balaji_Passport_{file_suffix}.png",
+                    mime="image/png",
                     use_container_width=True
                 )
                 
