@@ -15,7 +15,6 @@ def get_next_bill_number_and_save(row_data_without_no):
     try:
         scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
         
-        # 🎯 वेब सर्व्हरवर सेक्रेटली क्रेडेंशियल्स वाचण्याची सिस्टीम
         if "gcp_service_account" in st.secrets:
             creds_dict = json.loads(st.secrets["gcp_service_account"])
             creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
@@ -74,7 +73,7 @@ st.markdown("<h5 style='color: #0056b3;'>──────── काम आ�
 services = [
     "निवडा...",
     "Xerox / झेरॉक्स", 
-    "Color Printout / कलर प्रिंट", 
+    "Color Printout /カラー प्रिंट", 
     "Lamination / लॅमिनेशन", 
     "Passport Photo / पासपोर्ट फोटो",
     "Online Form / ऑनलाईन फॉर्म फी",
@@ -132,7 +131,8 @@ if st.session_state.items_list:
         
     st.markdown(f"#### 💰 एकूण देय रक्कम: **₹ {total_bill}/-**")
     
-    if st.button("❌ Clear List (यादी साफ करा)", color="red"):
+    # 🎯 दुरुस्त केलेला भाग (बटण रीसेट करण्यासाठी)
+    if st.button("❌ Clear List (यादी साफ करा)", use_container_width=True):
         st.session_state.items_list = []
         st.rerun()
 
@@ -219,4 +219,4 @@ if st.session_state.items_list:
             )
             
             if sheet_success:
-                st.success("
+                st.success("✅ गुगल शीटमध्ये हिशोब सुरक्षित सेव्ह झाला आहे!")
