@@ -1,55 +1,76 @@
-import tkinter as tk
-from tkinter import filedialog, messagebox
+import streamlit as st
 from PIL import Image, ImageOps
+import io
 
-def create_layout(paper_type):
-    file_path = filedialog.askopenfilename(title="Select ID Photo", filetypes=[("Image Files", "*.jpg *.jpeg *.png")])
-    if not file_path:
-        return
+# पेजचे नाव आणि लेआउट सेट करणे
+st.set_page_config(page_title="बालाजी सायबर पॉइंट - इमेज टूल", page_icon="📸", layout="centered")
 
-    # Constants (300 DPI is standard for high-quality print)
+st.markdown("<h2 style='text-align: center; color: #0078D7;'>📸 श्री बालाजी सायबर पॉईंट, माणगाव</h2>", unsafe_allow_html=True)
+st.markdown("<h4 style='text-align: center; color: #555;'>पासपोर्ट साईझ फोटो ऑटो-शीट जनरेटर (३.५ x ४.५ सेमी)</h4>", unsafe_allow_html=True)
+st.write("---")
+
+# 📥 १. फोटो अपलोड करण्यासाठी सुंदर बॉक्स
+uploaded_image = st.file_uploader("ज्या फोटोचे पासपोर्ट साईझ शेड्स बनवायचे आहेत तो फोटो अपलोड करा:", type=["jpg", "jpeg", "png"])
+
+if uploaded_image is not None:
+    # फोटो मेमरीमध्ये लोड करणे
+    img = Image.open(uploaded_image)
+    
+    st.image(img, caption="अपलोड केलेला मूळ फोटो", width=150)
+    st.write("---")
+    
+    # 📏 २. साईझ आणि पेपर सेटिंग्ज (३०० DPI हाय क्वालिटी)
     DPI = 300
-    id_w, id_h = int(3.5 / 2.54 * DPI), int(4.5 / 2.54 * DPI)  # 3.5x4.5 cm in pixels
+    id_w, id_h = int(3.5 / 2.54 * DPI), int(4.5 / 2.54 * DPI)  # ३.५ x ४.५ सेमी पिक्सेलमध्ये
     
-    # Paper sizes in pixels
-    paper_sizes = {
-        "4x6": (int(4 * DPI), int(6 * DPI)),
-        "A4": (int(8.27 * DPI), int(11.69 * DPI))
-    }
+    # ३. पेपर निवडीसाठी ऑप्शन्स
+    paper_option = st.radio(
+        "कोणत्या साईझच्या पेपरवर फोटो सेट करायचे आहेत?",
+        ("४x६ इंच फोटो पेपर (4x6 Sheet)", "पूर्ण A4 सरकारी पेपर (Full A4 Sheet)")
+    )
     
-    canvas_w, canvas_h = paper_sizes[paper_type]
-    
-    try:
-        img = Image.open(file_path)
-        # Resize photo to 3.5 x 4.5 cm
-        img = ImageOps.fit(img, (id_w, id_h), Image.Resampling.LANCZOS)
-        
-        # Create blank white paper
-        sheet = Image.new("RGB", (canvas_w, canvas_h), "white")
-        
-        # Calculate how many photos fit
-        margin = 20
-        x_offset, y_offset = margin, margin
-        
-        for y in range(margin, canvas_h - id_h, id_h + margin):
-            for x in range(margin, canvas_w - id_w, id_w + margin):
-                sheet.paste(img, (x, y))
-        
-        save_path = filedialog.asksaveasfilename(defaultextension=".pdf", filetypes=[("PDF", "*.pdf"), ("JPEG", "*.jpg")])
-        if save_path:
-            sheet.save(save_path, quality=95, dpi=(DPI, DPI))
-            messagebox.showinfo("Success", f"Layout saved to {save_path}")
-            
-    except Exception as e:
-        messagebox.showerror("Error", str(e))
+    if st.button("🚀 पासपोर्ट साईझ फोटो शीट तयार करा", type="primary", use_container_width=True):
+        with st.spinner("⏳ परफेक्ट लेआउट तयार होत आहे..."):
+            try:
+                # निवडलेल्या पेपरनुसार पिक्सेल साईझ ठरवणे
+                if "४x६" in paper_option:
+                    canvas_w, canvas_h = int(4 * DPI), int(6 * DPI)
+                    file_suffix = "4x6_Sheet"
+                else:
+                    canvas_w, canvas_h = int(8.27 * DPI), int(11.69 * DPI)
+                    file_suffix = "A4_Sheet"
+                
+                # फोटो कडक ३.५ x ४.५ सेमी मध्ये फिट करणे
+                resized_id = ImageOps.fit(img, (id_w, id_h), Image.Resampling.LANCZOS)
+                
+                # कोऱ्या पांढऱ्या पेपरचा कॅनव्हास तयार करणे
+                sheet = Image.new("RGB", (canvas_w, canvas_h), "white")
+                
+                # फोटोंमधील अंतर (Margin) सेट करून ऑटो-पेस्ट चक्रव्यूह
+                margin = 25
+                for y in range(margin, canvas_h - id_h, id_h + margin):
+                    for x in range(margin, canvas_w - id_w, id_w + margin):
+                        sheet.paste(resized_id, (x, y))
+                
+                # प्रिव्ह्यू दाखवण्यासाठी आणि डाऊनलोड करण्यासाठी मेमरी सेव्हिंग
+                buffer = io.BytesIO()
+                sheet.save(buffer, format="JPEG", quality=95, dpi=(DPI, DPI))
+                buffer.seek(0)
+                
+                st.success("✅ तुमचे पासपोर्ट फोटो शीट एकदम परफेक्ट तयार झाले आहे!")
+                st.image(sheet, caption="⚙️ प्रिंट प्रिव्ह्यू (डाऊनलोड करून डायरेक्ट प्रिंट काढा)", use_container_width=True)
+                
+                # 📥 ४. कडक डाऊनलोड बटण
+                st.download_button(
+                    label="📥 तयार झालेली फोटो शीट (JPG) डाऊनलोड करा",
+                    data=buffer,
+                    file_name=f"Balaji_Passport_{file_suffix}.jpg",
+                    mime="image/jpeg",
+                    use_container_width=True
+                )
+                
+            except Exception as e:
+                st.error(f"❌ चूक झाली: {e}")
 
-# Simple GUI
-root = tk.Tk()
-root.title("ID Photo Tool")
-root.geometry("300x200")
-
-tk.Label(root, text="Convert ID Photo to Sheet", font=("Arial", 12, "bold")).pack(pady=10)
-tk.Button(root, text="Generate 4x6 Inch Sheet", command=lambda: create_layout("4x6")).pack(pady=5)
-tk.Button(root, text="Generate Full A4 Sheet", command=lambda: create_layout("A4")).pack(pady=5)
-
-root.mainloop()
+st.write("---")
+st.markdown("<p style='text-align: center; font-size: 12px; color: #888;'>Designed by Balaji Cyber Point, Mangaon</p>", unsafe_allow_html=True)
