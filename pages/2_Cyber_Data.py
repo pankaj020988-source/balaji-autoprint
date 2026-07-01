@@ -1,6 +1,7 @@
 import streamlit as st
 from urllib.parse import quote
 import os
+from datetime import datetime
 
 # पेजचे नाव आणि लेआउट सेट करणे
 st.set_page_config(page_title="बालाजी सायबर पॉइंट - सायबर डेटा", page_icon="📱", layout="centered")
@@ -24,6 +25,9 @@ st.write("---")
 
 # डेटा भरल्यावरच पावती दाखवणे आणि जनरेट करणे
 if c_name or f_purpose or f_id:
+    
+    # 🎯 अचूक चालू तारीख आणि वेळ सिस्टीम
+    current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     
     # 📝 १. व्हॉट्सॲप आणि साध्या टेक्स्टसाठी फॉरमॅट
     receipt_text = f"""*************************************
@@ -70,7 +74,7 @@ Thank you for visiting!
             <div style="font-size: 11px; font-weight: bold; color: #333; margin-top: 2px;">📞 8007365051 | 💬 WA: 8806789013</div>
         </div>
         
-        <div class="info-row"><div class="info-label">तारीख/वेळ:</div><div class="info-value">{st.datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</div></div>
+        <div class="info-row"><div class="info-label">तारीख/वेळ:</div><div class="info-value">{current_time}</div></div>
         <div class="info-row"><div class="info-label">ग्राहक नाव:</div><div class="info-value">{c_name}</div></div>
         <div class="info-row"><div class="info-label">मोबाईल नं:</div><div class="info-value">{c_phone if c_phone else '-'}</div></div>
         <div class="info-row"><div class="info-label">काम/फॉर्म:</div><div class="info-value">{f_purpose}</div></div>
@@ -90,7 +94,7 @@ Thank you for visiting!
     st.markdown("### 📄 पावती प्रिव्ह्यू:")
     st.code(receipt_text, language="text")
 
-    # 📥 सुधारलेले डाऊनलोड बटण (आता टेक्स्टऐवजी कडक HTML फाईल डाऊनलोड होईल)
+    # 📥 सुधारलेले डाऊनलोड बटण (HTML फाईल डाऊनलोड होईल)
     st.download_button(
         label="📄 Save & Download Color Receipt (कलर पावती डाऊनलोड करा)",
         data=html_receipt,
