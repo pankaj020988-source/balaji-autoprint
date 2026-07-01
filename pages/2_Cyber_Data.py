@@ -1,25 +1,35 @@
-import tkinter as tk
-from tkinter import messagebox
-import webbrowser
+import streamlit as st
 from urllib.parse import quote
 import os
 
-# --- Function to format the receipt text ---
-def get_formatted_text():
-    c_name = entry_name.get()
-    c_phone = entry_phone.get()
-    f_purpose = entry_purpose.get()
-    f_id = entry_id.get()
-    f_pass = entry_pass.get()
-    f_site = entry_site.get()
+# पेजचे नाव आणि लेआउट सेट करणे
+st.set_page_config(page_title="बालाजी सायबर पॉइंट - सायबर डेटा", page_icon="📱", layout="centered")
 
-    # The Receipt Format
-    text = f"""
-*************************************
+st.markdown("<h2 style='text-align: center; color: #ff6600;'>📱 श्री बालाजी सायबर पॉईंट, माणगाव</h2>", unsafe_allow_html=True)
+st.markdown("<h4 style='text-align: center; color: #555;'>ग्राहक फॉर्म डेटा आणि पावती मेकर</h4>", unsafe_allow_html=True)
+st.write("---")
+
+# 👤 ग्राहक आणि फॉर्मची माहिती इनपुट बॉक्स
+col1, col2 = st.columns(2)
+with col1:
+    c_name = st.text_input("Customer Name (ग्राहकाचे नाव):")
+    f_purpose = st.text_input("Form Name / Purpose (कामाचा प्रकार):")
+    f_id = st.text_input("Login / User ID (युझर आयडी):")
+with col2:
+    c_phone = st.text_input("Phone Number (१० अंकी मोबाईल):")
+    f_site = st.text_input("Website Used (वापरलेली वेबसाईट):")
+    f_pass = st.text_input("Password (पासवर्ड):", type="default")
+
+st.write("---")
+
+# डेटा भरल्यावरच पावती दाखवणे आणि जनरेट करणे
+if c_name or f_purpose or f_id:
+    # 📝 डिजिटल पावतीचे टेक्स्ट फॉरमॅट
+    receipt_text = f"""*************************************
       BALAJI CYBER POINT
 *************************************
 Customer: {c_name}
-Phone: {c_phone}
+Phone: {c_phone if c_phone else '-'}
 -------------------------------------
 Form Details:
 Purpose: {f_purpose}
@@ -29,83 +39,36 @@ Login ID: {f_id}
 Password: {f_pass}
 -------------------------------------
 Thank you for visiting!
-*************************************
-"""
-    return text, c_phone
+*************************************"""
 
-# --- Function to Save and Open for Printing ---
-def save_and_print():
-    receipt_text, _ = get_formatted_text()
-    
-    # Save to a text file
-    filename = "Customer_Receipt.txt"
-    with open(filename, "w", encoding="utf-8") as f:
-        f.write(receipt_text)
-    
-    # Open the file automatically (usually opens in Notepad)
-    os.startfile(filename) 
+    st.markdown("### 📄 पावती प्रिव्ह्यू:")
+    # स्क्रीनवर पावती कडक ब्लॉक स्वरूपात दाखवणे
+    st.code(receipt_text, language="text")
 
-# --- Function to Send via WhatsApp ---
-def send_whatsapp():
-    receipt_text, phone = get_formatted_text()
-    
-    if not phone:
-        messagebox.showerror("Error", "Please enter a Phone Number to WhatsApp.")
-        return
+    # 📥 १. पावती फाईल (.txt) डाऊनलोड बटण
+    st.download_button(
+        label="📄 Save & Download Receipt (पावती डाऊनलोड करा)",
+        data=receipt_text,
+        file_name=f"Receipt_{c_name.replace(' ', '_')}.txt",
+        mime="text/plain",
+        use_container_width=True
+    )
 
-    # Encode the message for the URL
-    encoded_message = quote(receipt_text)
-    
-    # Create the WhatsApp Web link
-    # Note: Phone number should usually include country code (e.g., 91 for India)
-    whatsapp_url = f"https://web.whatsapp.com/send?phone=91{phone}&text={encoded_message}"
-    
-    # Open browser
-    webbrowser.open(whatsapp_url)
+    # 📱 २. व्हॉट्सॲपवर पाठवण्याची सिस्टीम
+    if c_phone:
+        # टेक्स्ट मेसेज व्हॉट्सॲप लिंकसाठी एनकोड करणे
+        encoded_message = quote(receipt_text)
+        whatsapp_url = f"https://api.whatsapp.com/send?phone=91{c_phone}&text={encoded_message}"
+        
+        st.markdown(
+            f'<a href="{whatsapp_url}" target="_blank" style="text-decoration: none;">'
+            f'<div style="text-align: center; background-color: #25D366; color: white; '
+            f'padding: 10px; border-radius: 5px; font-weight: bold; font-size: 16px;">'
+            f'📱 Send via WhatsApp (ग्राहकाला व्हॉट्सॲपवर पाठवा)</div></a>',
+            unsafe_allow_html=True
+        )
+    else:
+        st.warning("⚠️ ग्राहकाला व्हॉट्सॲपवर पावती पाठवण्यासाठी कृपया मोबाईल नंबर भरा.")
 
-# --- GUI Setup (The Window) ---
-root = tk.Tk()
-root.title("Balaji Cyber Point - Manager")
-root.geometry("400x550")
-
-# Heading
-lbl_title = tk.Label(root, text="BALAJI CYBER POINT", font=("Arial", 16, "bold"), bg="orange", fg="white")
-lbl_title.pack(fill="x", pady=10)
-
-# Input Fields
-frame_inputs = tk.Frame(root, padx=20, pady=10)
-frame_inputs.pack(fill="both", expand=True)
-
-tk.Label(frame_inputs, text="Customer Name:").pack(anchor="w")
-entry_name = tk.Entry(frame_inputs)
-entry_name.pack(fill="x", pady=5)
-
-tk.Label(frame_inputs, text="Phone Number (10 digits):").pack(anchor="w")
-entry_phone = tk.Entry(frame_inputs)
-entry_phone.pack(fill="x", pady=5)
-
-tk.Label(frame_inputs, text="Form Name / Purpose:").pack(anchor="w")
-entry_purpose = tk.Entry(frame_inputs)
-entry_purpose.pack(fill="x", pady=5)
-
-tk.Label(frame_inputs, text="Website Used:").pack(anchor="w")
-entry_site = tk.Entry(frame_inputs)
-entry_site.pack(fill="x", pady=5)
-
-tk.Label(frame_inputs, text="Login / User ID:").pack(anchor="w")
-entry_id = tk.Entry(frame_inputs)
-entry_id.pack(fill="x", pady=5)
-
-tk.Label(frame_inputs, text="Password:").pack(anchor="w")
-entry_pass = tk.Entry(frame_inputs)
-entry_pass.pack(fill="x", pady=5)
-
-# Buttons
-btn_print = tk.Button(root, text="📄 Save & Print Receipt", bg="lightblue", font=("Arial", 10, "bold"), command=save_and_print)
-btn_print.pack(fill="x", padx=20, pady=5)
-
-btn_wa = tk.Button(root, text="📱 Send via WhatsApp", bg="lightgreen", font=("Arial", 10, "bold"), command=send_whatsapp)
-btn_wa.pack(fill="x", padx=20, pady=10)
-
-# Start the App
-root.mainloop()
+st.write("---")
+st.markdown("<p style='text-align: center; font-size: 12px; color: #888;'>Designed by Balaji Cyber Point, Mangaon</p>", unsafe_allow_html=True)
