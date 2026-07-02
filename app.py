@@ -5,11 +5,11 @@ from PIL import Image, ImageOps, ImageEnhance
 import io
 
 # ==========================================
-# 🌐 मुख्य पेज कॉन्फिगरेशन आणि थीम सेटिंग्ज
+# मुख्य पेज कॉन्फिगरेशन आणि थीम सेटिंग्ज
 # ==========================================
 st.set_page_config(page_title="बालाजी सायबर पॉईंट - होम", page_icon="🏠", layout="wide")
 
-# 🤫 मूळ साईडबार आणि डिफॉल्ट नेव्हिगेशन पूर्णपणे गायब करणे (CSS मॅजिक)
+# मूळ साईडबार आणि डिफॉल्ट नेव्हिगेशन पूर्णपणे गायब करणे (CSS मॅजिक)
 st.markdown("""
     <style>
         [data-testid="stSidebar"] {
@@ -36,12 +36,12 @@ if "c_bottom" not in st.session_state: st.session_state.c_bottom = 0
 if "r_angle" not in st.session_state: st.session_state.r_angle = 0
 
 # ==========================================
-# 🗺️ मुख्य स्क्रीनवर फक्त २ टॅब लेआउट
+# मुख्य स्क्रीनवर फक्त २ टॅब लेआउट
 # ==========================================
 main_tab1, main_tab2 = st.tabs(["🏠 Home", "🔒 Admin Desk"])
 
 # ------------------------------------------
-# 📢 १. सर्वांसाठी खुले असलेले होम谱ेज (व्यावसायिक मार्केटिंग)
+# १. सर्वांसाठी खुले असलेले होम पेज (व्यावसायिक मार्केटिंग)
 # ------------------------------------------
 with main_tab1:
     st.markdown("""
@@ -60,7 +60,7 @@ with main_tab1:
     
     st.write("")
     
-    # 🎯 लाइव्ह जाहिरात प्रदर्शन विभाग
+    # लाइव्ह जाहिरात प्रदर्शन विभाग
     st.markdown("### 📢 नवीन सरकारी नोकर भरती व जाहिराती")
     
     col_home_ad1, col_home_ad2 = st.columns([3, 2])
@@ -74,11 +74,11 @@ with main_tab1:
             
     st.write("---")
     
-    st.markdown("### 🌟 आमच्या प्रमुख सेवा:")
+    st.markdown("### 🌟 microcosm आमच्या प्रमुख सेवा:")
     st.markdown("""
     * **सर्व ऑनलाईन फॉर्म्स:** नोकरभरती, ॲडमिट कार्ड आणि हॉल तिकीट.
     * **शासकीय योजना:** घरकुल योजना, शबरी आवास योजना आणि इतर सरकारी अर्ज.
-    * **ट्रॅव्हल बुकिंग:** देश-विदेशातील फ्लाईट्स, हॉटेल्स आणिूर पॅकेजेस (MakeMyTrip).
+    * **ट्रॅव्हल बुकिंग:** देश-विदेशातील फ्लाईट्स, हॉटेल्स आणि टूर पॅकेजेस (MakeMyTrip).
     * **कर आणि महसूल:** नगरपंचायत प्रॉपर्टी टॅक्स, वीज बिल आणि महाआयटी सेवा.
     * **डिजिटल फोटो टूल्स:** जुने फोटो 4K मध्ये रिस्टोर करणे आणि कॉम्प्युटर रीसायझिंग.
     """)
@@ -113,7 +113,7 @@ with main_tab2:
         with col_header:
             st.markdown("#### ⚙️ बालाजी डिजिटल ऑपरेशन्स पॅनेल")
         with col_logout:
-            if st.button("🔒 | लॉग आऊट (Lock)", type="secondary", use_container_width=True):
+            if st.button("🔒 लॉग आऊट (Lock)", type="secondary", use_container_width=True):
                 st.session_state.authenticated = False
                 st.rerun()
             
@@ -121,13 +121,13 @@ with main_tab2:
         
         # ५ मुख्य टॅब्स
         app_tab1, app_tab2, app_tab3, app_tab4, app_tab5 = st.tabs([
-            "🖨️ app (Ayushman)", "📊 Bill Manager", "📁 Cyber Data", "📸 Image Tool & Scanner", "📢 जाहिरात मॅनेजर (Ads Setup)"
+            "app (Ayushman)", "Bill Manager", "Cyber Data", "Image Tool & Scanner", "जाहिरात मॅनेजर"
         ])
         
         # --- ॲप ५: जाहिरात व्यवस्थापक ---
         with app_tab5:
             st.markdown("##### 📢 होम पेजवरील जाहिरात आणि इमेज बदला")
-            st.write("इथे नवीन जाहिरात भरून 'लाईव्ह करा' बटनावर क्लिक करा.")
+            st.write("इथे नवीन जाहिरात भरून ' can live करा' बटनावर क्लिक करा.")
             
             with st.form("ads_update_form", clear_on_submit=False):
                 new_ad_text = st.text_area("📝 जाहिरातीचा मजकूर प्रविष्ट करा (मराठीत):", value=st.session_state.ad_text, height=100)
@@ -139,10 +139,10 @@ with main_tab2:
                     st.session_state.ad_text = new_ad_text
                     if uploaded_ad_img is not None:
                         st.session_state.ad_image = Image.open(uploaded_ad_img)
-                    st.success("✅ जाहिरात यशस्वीरित्या सेव्ह झाली! वरील '🏠 Home' टॅबवर क्लिक करून तपासा.")
+                    st.success("✅ जाहिरात यशस्वीरित्या सेव्ह झाली! वरील 'Home' टॅबवर क्लिक करून तपासा.")
             
             st.write("")
-            if st.button("🔄 जाहिरात रिसेट करा (मूळ जाहिरात सेट करा)", type="secondary"):
+            if st.button("🔄 जाहिरात रिसेट करा", type="secondary"):
                 st.session_state.ad_text = "📌 **महाभरती २०२६:** विविध सरकारी विभागांमध्ये नवीन जागा उपलब्ध झाल्या आहेत. ऑनलाईन अर्ज भरण्यासाठी आजच दुकानात आवश्यक कागदपत्रांसह भेट द्या."
                 st.session_state.ad_image = None
                 st.success("🔄 मूळ जाहिरात रिसेट झाली!")
@@ -155,7 +155,7 @@ with main_tab2:
             st.info("तुमची आयुष्मान भारत सिस्टीम सुरक्षितपणे कनेक्टेड आहे...")
 
         with app_tab2:
-            st.markdown("##### 📊 दैनिक बिल मॅनेजर आणि हिशोब खाते")
+            st.markdown("##### 📊 दैनिक bill मॅनेजर आणि हिशोब खाते")
             st.info("हिशोब डेटा सुरक्षितपणे चालू आहे...")
 
         with app_tab3:
@@ -177,7 +177,7 @@ with main_tab2:
                     st.image(img, width=150)
                     DPI = 300
                     id_w, id_h = int(3.5 / 2.54 * DPI), int(4.5 / 2.54 * DPI)
-                    paper_option = st.radio("पेपर साईझ निवडा:", ("४x६ inch फोटो पेपर (4x6 Sheet)", "पूर्ण A4 सरकारी paper (Full A4 Sheet)"), key="paper_opt")
+                    paper_option = st.radio("पेपर साईझ निवडा:", ("४x६ inch फोटो पेपर", "पूर्ण A4 सरकारी paper"), key="paper_opt")
                     if st.button("🚀 पासपोर्ट साईझ फोटो SHEET तयार करा", type="primary", use_container_width=True, key="pp_btn_sheet"):
                         try:
                             canvas_w, canvas_h = (int(4 * DPI), int(6 * DPI)) if "४x६" in paper_option else (int(8.27 * DPI), int(11.69 * DPI))
@@ -195,7 +195,7 @@ with main_tab2:
             # ब) फोटो-सही रीसायझर
             with sub_tool_tab2:
                 st.markdown("###### 📝 सरकारी फॉर्म - फोटो व सही कॉम्प्रेसर")
-                tool_mode = st.radio("रीसाईझ प्रकार निवडा:", ("फोटो (Photo - 20KB)", "सही (Signature - 10KB)"), key="mode_form")
+                tool_mode = st.radio("रीसाईझ प्रकार निवडा:", ("फोटो", "सही"), key="mode_form")
                 uploaded_file = st.file_uploader("फाईल अपलोड करा:", type=["jpg", "jpeg", "png"], key="form_uploader")
                 if uploaded_file is not None:
                     raw_img = Image.open(uploaded_file).convert("RGB")
@@ -238,26 +238,27 @@ with main_tab2:
                             st.download_button(label="📥 प्रिंट फाईल (PNG) डाऊनलोड करा", data=id_buffer.getvalue(), file_name="Balaji_ID_Print.png", mime="image/png", use_container_width=True, key="dl_id_canvas_final")
                         except Exception as e: st.error(f"❌ चूक: {e}")
 
-            # ड) सुपर-फास्ट स्कॅनर
+            # ड)िजीटल सुपर-फास्ट स्कॅनर
             with sub_tool_tab4:
-                st.markdown("###### 📸 बालाजी सुपर-फास्ट कॅम-स्कॅनर")
+                st.markdown("##### 📸 बालाजी सुपर-फास्ट कॅम-स्कॅनर")
                 scan_file = st.file_uploader("स्कॅन करण्यासाठी फोटो अपलोड करा:", type=["jpg", "jpeg", "png"], key="scanner_upload")
                 if scan_file is not None:
                     original_image = Image.open(scan_file)
-                    st.markdown("####### ⚡ वन-क्लिक फास्ट कंट्रोल्स:")
+                    st.markdown("####### ⚡ वन-क्लिक कंट्रोल्स:")
+                    
                     col_b1, col_b2, col_b3, col_b4, col_b5 = st.columns(5)
                     with col_b1:
-                        if st.button("⬅️ डावीकडून कापा", use_container_width=True, key="l_crop"): st.session_state.c_left += 5
+                        if st.button("डावीकडून कापा", use_container_width=True, key="l_crop"): st.session_state.c_left += 5
                     with col_b2:
-                        if st.button("➡️ उजवीकडून कापा", use_container_width=True, key="r_crop"): st.session_state.c_right += 5
+                        if st.button("उजवीकडून कापा", use_container_width=True, key="r_crop"): st.session_state.c_right += 5
                     with col_b3:
-                        if st.button("⬆️ वरून कापा", use_container_width=True, key="t_crop"): st.session_state.c_top += 5
+                        if st.button("वरून कापा", use_container_width=True, key="t_crop"): st.session_state.c_top += 5
                     with col_b4:
                         if st.button("⬇️ खालून कापा", use_container_width=True, key="b_crop"): st.session_state.c_bottom += 5
                     with col_b5:
-                        if st.button("🔄 ९०° फिरवा", use_container_width=True, key="rot_crop"): st.session_state.r_angle = (st.session_state.r_angle + 90) % 360
+                        if st.button("९० डिग्री फिरवा", use_container_width=True, key="rot_crop"): st.session_state.r_angle = (st.session_state.r_angle + 90) % 360
 
-                    if st.button("🔄 सर्व नियंत्रणे रिसेट करा (Reset All)", type="secondary", use_container_width=True, key="rst_all_scan"):
+                    if st.button("सर्व नियंत्रणे रिसेट करा", type="secondary", use_container_width=True, key="rst_all_scan"):
                         st.session_state.c_left = 0; st.session_state.c_right = 0; st.session_state.c_top = 0; st.session_state.c_bottom = 0; st.session_state.r_angle = 0
                         st.rerun()
 
