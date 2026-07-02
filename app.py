@@ -3,14 +3,13 @@ import cv2
 import numpy as np
 from PIL import Image, ImageOps, ImageEnhance
 import io
-import pypdfum2 as pdfium
 
 # ==========================================
-# मुख्य पेज कॉन्फिगरेशन आणि थीम सेटिंग्ज
+# 🌐 मुख्य पेज कॉन्फिगरेशन आणि थीम सेटिंग्ज
 # ==========================================
 st.set_page_config(page_title="बालाजी सायबर पॉईंट - होम", page_icon="🏠", layout="wide")
 
-# मूळ साईडबार आणि डिफॉल्ट नेव्हिगेशन पूर्णपणे गायब करणे (CSS मॅजिक)
+# 🤫 मूळ साईडबार आणि डिफॉल्ट नेव्हिगेशन पूर्णपणे गायब करणे (CSS मॅजिक)
 st.markdown("""
     <style>
         [data-testid="stSidebar"] {
@@ -18,6 +17,10 @@ st.markdown("""
         }
         [data-testid="collapsedControl"] {
             display: none !important;
+        }
+        div.stTabs [data-baseweb="tab-list"] {
+            display: flex !important;
+            justify-content: center !important;
         }
     </style>
 """, unsafe_allow_html=True)
@@ -37,12 +40,12 @@ if "c_bottom" not in st.session_state: st.session_state.c_bottom = 0
 if "r_angle" not in st.session_state: st.session_state.r_angle = 0
 
 # ==========================================
-# मुख्य स्क्रीनवर फक्त २ टॅब लेआउट
+# 🗺️ मुख्य स्क्रीनवर फक्त २ टॅब लेआउट
 # ==========================================
 main_tab1, main_tab2 = st.tabs(["🏠 Home", "🔒 Admin Desk"])
 
 # ------------------------------------------
-# १. सर्वांसाठी खुले असलेले होम पेज (व्यावसायिक मार्केटिंग)
+# 📢 १. सर्वांसाठी खुले असलेले होम पेज (व्यावसायिक मार्केटिंग)
 # ------------------------------------------
 with main_tab1:
     st.markdown("""
@@ -61,7 +64,7 @@ with main_tab1:
     
     st.write("")
     
-    # लाइव्ह जाहिरात प्रदर्शन विभाग
+    # 🎯 लाइव्ह जाहिरात प्रदर्शन विभाग
     st.markdown("### 📢 नवीन सरकारी नोकर भरती व जाहिराती")
     
     col_home_ad1, col_home_ad2 = st.columns([3, 2])
@@ -79,7 +82,7 @@ with main_tab1:
     st.markdown("""
     * **सर्व ऑनलाईन फॉर्म्स:** नोकरभरती, ॲडमिट कार्ड आणि हॉल तिकीट.
     * **शासकीय योजना:** घरकुल योजना, शबरी आवास योजना आणि इतर सरकारी अर्ज.
-    * **ट्रॅव्हल बुकिंग:** देश-विदेशातील फ्लाईट्स, हॉटेल्स आणि टूर पॅकेजेस (MakeMyTrip).
+    * **ट्रॅव्हल बुकिंग:** देश-विदेशातील फ्लाईट्स, हॉटेल्स आणिूर पॅकेजेस (MakeMyTrip).
     * **कर आणि महसूल:** नगरपंचायत प्रॉपर्टी टॅक्स, वीज बिल आणि महाआयटी सेवा.
     * **डिजिटल फोटो टूल्स:** जुने फोटो 4K मध्ये रिस्टोर करणे आणि कॉम्प्युटर रीसायझिंग.
     """)
@@ -125,57 +128,54 @@ with main_tab2:
             "app (Ayushman)", "Bill Manager", "Cyber Data", "Image Tool & Scanner", "जाहिरात मॅनेजर"
         ])
         
-        # --- ॲप १: app (Ayushman - १००% चालू कोडिंगसह) ---
+        # --- ॲप १: app (Ayushman - सुरक्षित पर्यायी मॅनेजमेंटसह) ---
         with app_tab1:
             st.markdown("##### 🖨️ आयुष्मान भारत ४x६ ऑटो-प्रिंट सिस्टीम")
-            uploaded_pdf = st.file_uploader("सरकारी आयुष्मान PDF फाईल अपलोड करा:", type=["pdf"], key="ayushman_pdf_uploader")
+            uploaded_pdf = st.file_uploader("सरकारी आयुष्मान PDF किंवा प्रतिमेची (Image) फाईल अपलोड करा:", type=["pdf", "jpg", "png", "jpeg"], key="ayushman_pdf_uploader")
             
             if uploaded_pdf is not None:
                 if st.button("⚙️ आयुष्मान कार्ड ४x६ साईझमध्ये रूपांतरित करा", type="primary", use_container_width=True):
-                    with st.spinner("⏳ आयुष्मान कार्ड ऑटो-ट्रिम होत आहे..."):
+                    with st.spinner("⏳ आयुष्मान कार्ड ऑटो-लेआउट तयार होत आहे..."):
                         try:
-                            # pypdfum2 द्वारे PDF चे इमेजमध्ये रूपांतर
-                            pdf_bytes = uploaded_pdf.read()
-                            doc = pdfium.PdfDocument(pdf_bytes)
-                            page = doc[0]  # पहिले पान निवडले
+                            # जर फाईल इमेज असेल किंवा pdf असेल तर सुरक्षित हाताळणी
+                            if uploaded_pdf.name.lower().endswith(('.png', '.jpg', '.jpeg')):
+                                pil_img = Image.open(uploaded_pdf).convert("RGB")
+                            else:
+                                # PDF असल्यास अंतर्गत एरर न येण्यासाठी सुरक्षित मेसेज व प्रक्रिया
+                                try:
+                                    from pdf2image import convert_from_bytes
+                                    pages = convert_from_bytes(uploaded_pdf.read(), 300)
+                                    pil_img = pages[0].convert("RGB")
+                                except:
+                                    st.error("❌ सर्व्हरवर PDF टूल अपूर्ण आहे. कृपया आयुष्मान कार्डचा फोटो किंवा JPG/PNG फाईल अपलोड करा, ती १ सेकंदात ४x६ वर सेट होईल!")
+                                    pil_img = None
                             
-                            # ३०० DPI मध्ये हाय-क्वालिटी इमेज रेंडर
-                            bitmap = page.render(scale=300/72)
-                            pil_img = bitmap.to_pil().convert("RGB")
-                            
-                            # ४x६ इंच कागदाचे पिक्सेल परिमाण (३०० DPI वर)
-                            PAPER_W, PAPER_HEIGHT = 1200, 1800
-                            final_canvas = Image.new("RGB", (PAPER_W, PAPER_HEIGHT), "white")
-                            
-                            # मूळ आयुष्मान भारत कार्डचे क्रॉपिंग आणि रीसायझिंग परिमाणे
-                            w, h = pil_img.size
-                            
-                            # कार्डचा मुख्य भाग ट्रिम करणे (डिफॉल्ट सरकारी आयुष्मान फॉरमॅटनुसार)
-                            card_img = pil_img.resize((1130, 710), Image.Resampling.LANCZOS)
-                            card_with_border = ImageOps.expand(card_img, border=6, fill='black')
-                            
-                            # ४x६ कॅनव्हासच्या मध्यभागी कार्ड पेस्ट करणे
-                            paste_x = (PAPER_W - card_with_border.width) // 2
-                            final_canvas.paste(card_with_border, (paste_x, 500))
-                            
-                            # रिझल्ट दाखवणे
-                            st.success("✅ आयुष्मान कार्ड प्रिंटिंगसाठी तयार आहे!")
-                            st.image(final_canvas, caption="४x६ प्रिंट प्रिव्ह्यू", use_container_width=True)
-                            
-                            # डाऊनलोड बटन
-                            id_buffer = io.BytesIO()
-                            final_canvas.save(id_buffer, format="PNG", dpi=(300, 300))
-                            st.download_button(
-                                label="📥 ४x६ आयुष्मान कार्ड प्रिंट फाईल डाऊनलोड करा",
-                                data=id_buffer.getvalue(),
-                                file_name="Balaji_Ayushman_4x6.png",
-                                mime="image/png",
-                                use_container_width=True
-                            )
+                            if pil_img is not None:
+                                PAPER_W, PAPER_HEIGHT = 1200, 1800
+                                final_canvas = Image.new("RGB", (PAPER_W, PAPER_HEIGHT), "white")
+                                
+                                card_img = pil_img.resize((1130, 710), Image.Resampling.LANCZOS)
+                                card_with_border = ImageOps.expand(card_img, border=6, fill='black')
+                                
+                                paste_x = (PAPER_W - card_with_border.width) // 2
+                                final_canvas.paste(card_with_border, (paste_x, 500))
+                                
+                                st.success("✅ आयुष्मान कार्ड प्रिंटिंगसाठी तयार आहे!")
+                                st.image(final_canvas, caption="४x६ प्रिंट प्रिव्ह्यू", use_container_width=True)
+                                
+                                id_buffer = io.BytesIO()
+                                final_canvas.save(id_buffer, format="PNG", dpi=(300, 300))
+                                st.download_button(
+                                    label="📥 ४x६ आयुष्मान कार्ड प्रिंट फाईल डाऊनलोड करा",
+                                    data=id_buffer.getvalue(),
+                                    file_name="Balaji_Ayushman_4x6.png",
+                                    mime="image/png",
+                                    use_container_width=True
+                                )
                         except Exception as e:
-                            st.error(f"❌ आयुष्मान भारत प्रोसेस करताना चूक झाली: {e}")
+                            st.error(f"❌ प्रोसेस करताना चूक झाली: {e}")
             else:
-                st.info("तुमची आयुष्मान भारत सिस्टीम सुरक्षितपणे कनेक्टेड आहे... कृपया वरून PDF फाईल अपलोड करा.")
+                st.info("तुमची आयुष्मान भारत सिस्टीम सुरक्षितपणे कनेक्टेड आहे... कृपया वरून फाईल अपलोड करा.")
 
         # --- ॲप २: Bill Manager ---
         with app_tab2:
@@ -184,7 +184,7 @@ with main_tab2:
 
         # --- ॲप ३: Cyber Data ---
         with app_tab3:
-            st.markdown("##### 📁 सायबर डेटा आणि दस्तऐवज स्टोरेज")
+            st.markdown("##### 📁 सायबर डेटा आणि दस्तऐवज儲存")
             st.info("सायबर डेटाबेस सर्व्हर सुरू आहे...")
 
         # --- ॲप ४: Image Tool & Scanner ---
@@ -264,7 +264,7 @@ with main_tab2:
                             st.download_button(label="📥 प्रिंट फाईल (PNG) डाऊनलोड करा", data=id_buffer.getvalue(), file_name="Balaji_ID_Print.png", mime="image/png", use_container_width=True, key="dl_id_canvas_final")
                         except Exception as e: st.error(f"❌ चूक: {e}")
 
-            # ड) सुपर-फास्ट स्कॅनर
+            # ड) डिजिटल सुपर-फास्ट स्कॅनर
             with sub_tool_tab4:
                 st.markdown("##### 📸 बालाजी सुपर-फास्ट कॅम-स्कॅनर")
                 scan_file = st.file_uploader("स्कॅन करण्यासाठी फोटो अपलोड करा:", type=["jpg", "jpeg", "png"], key="scanner_upload")
@@ -288,7 +288,7 @@ with main_tab2:
                         st.session_state.c_left = 0; st.session_state.c_right = 0; st.session_state.c_top = 0; st.session_state.c_bottom = 0; st.session_state.r_angle = 0
                         st.rerun()
 
-                    scan_mode = st.selectbox("🎨 कलर मोड निवडा:", ["मॅजिक कलर (Magic Color)", "कडक ब्लॅक & व्हाईट (B&W)", "मूळ कलर"], key="scanner_mode_select")
+                    scan_mode = st.selectbox("🎨ळर मोड निवडा:", ["मॅजिक कलर (Magic Color)", "कडक ब्लॅक & व्हाईट (B&W)", "मूळ कलर"], key="scanner_mode_select")
                     
                     if st.session_state.r_angle != 0:
                         if st.session_state.r_angle == 90: working_img = original_image.transpose(Image.ROTATE_270)
@@ -333,7 +333,6 @@ with main_tab2:
         # --- ॲप ५: जाहिरात व्यवस्थापक ---
         with app_tab5:
             st.markdown("##### 📢 होम पेजवरील जाहिरात आणि इमेज बदला")
-            st.write("इथे नवीन जाहिरात भरून 'मजकूर आणि इमेज' लाईव्ह करा.")
             
             with st.form("ads_update_form", clear_on_submit=False):
                 new_ad_text = st.text_area("📝 जाहिरातीचा मजकूर प्रविष्ट करा (मराठीत):", value=st.session_state.ad_text, height=100)
@@ -349,7 +348,7 @@ with main_tab2:
             
             st.write("")
             if st.button("🔄 जाहिरात रिसेट करा", type="secondary"):
-                st.session_state.ad_text = "📌 **महाभरती २०२६:** विविध सरकारी विभागांमध्ये नवीन जागा उपलब्ध झाल्या आहेत. ऑनलाईन अर्ज भरण्यासाठी आजच दुकानात आवश्यक कागदपत्रांसह भेट द्या."
+                st.session_state.ad_text = "📌 **महाभर體 २०२६:** विविध सरकारी विभागांमध्ये नवीन जागा उपलब्ध झाल्या आहेत. ऑनलाईन अर्ज भरण्यासाठी आजच दुकानात आवश्यक कागदपत्रांसह भेट द्या."
                 st.session_state.ad_image = None
                 st.success("🔄 मूळ जाहिरात रिसेट झाली!")
                 st.rerun()
