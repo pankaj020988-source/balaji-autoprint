@@ -3,6 +3,7 @@ from PIL import Image, ImageOps, ImageEnhance
 import io
 import cv2
 import numpy as np
+from streamlit_cropper import st_cropper
 
 # पेजचे नाव आणि लेआउट सेट करणे
 st.set_page_config(page_title="बालाजी सायबर पॉइंट - इमेज टूल्स", page_icon="📸", layout="centered")
@@ -15,7 +16,7 @@ tab1, tab2, tab3, tab4 = st.tabs([
     "📸 पासपोर्ट फोटो शीट मेकर", 
     "📝 सरकारी फॉर्म फोटो-सही रीसायझर", 
     "🖨️ स्मार्ट आयडी कार्ड प्रिंटर (Aadhaar/PAN)",
-    "📸 कॅम-स्कॅनर (CamScanner Master)"
+    "📸 कॅम-स्कॅनर (CamScanner Movable)"
 ])
 
 # ==========================================
@@ -23,7 +24,7 @@ tab1, tab2, tab3, tab4 = st.tabs([
 # ==========================================
 with tab1:
     st.markdown("<h4 style='color: #0078D7;'>पासपोर्ट साईझ फोटो ऑटो-शीट जनरेटर (३.५ x ४.५ सेमी)</h4>", unsafe_allow_html=True)
-    uploaded_image = st.file_uploader("ज्या फोटोचे पासपोर्ट साईझ शेड्स बनवायचे आहेत तो फोटो अपलोड करा:", type=["jpg", "jpeg", "png"], key="pp_uploader")
+    uploaded_image = st.file_uploader("ज्या फोटोचे पासपोर्ट साईझ बनवायचे आहेत तो फोटो अपलोड करा:", type=["jpg", "jpeg", "png"], key="pp_uploader")
 
     if uploaded_image is not None:
         img = Image.open(uploaded_image)
@@ -61,7 +62,7 @@ with tab1:
                     sheet.save(buffer, format="PNG", dpi=(DPI, DPI))
                     buffer.seek(0)
                     
-                    st.success("✅ обществе पासपोर्ट फोटो शीट एकदम हाय-क्वालिटीमध्ये तयार झाले आहे!")
+                    st.success("✅ तुमचे पासपोर्ट फोटो शीट तयार झाले आहे!")
                     st.image(sheet, caption="⚙️ प्रिंट प्रिव्ह्यू", use_container_width=True)
                     
                     st.download_button(
@@ -107,7 +108,7 @@ with tab2:
                     final_bytes = img_buffer.getvalue()
                     final_size_kb = len(final_bytes) // 1024
                     
-                    st.success(f"✅ {label} यशस्वीरित्या रीसाईझ झाला आहे! (फायनल साईझ: {final_size_kb} KB)")
+                    st.success(f"✅ {label} यशस्वीरित्या रीसाईझ झाला आहे! (साईझ: {final_size_kb} KB)")
                     st.image(final_bytes, caption=f"रीसाईझ केलेला {label}")
                     
                     st.download_button(
@@ -134,7 +135,7 @@ with tab3:
 
     if front_file is not None and back_file is not None:
         if st.button("⚙️ ४x६ कडक प्रिंट लेआउट तयार करा", type="primary", use_container_width=True, key="btn_id_generate"):
-            with st.spinner("⏳ दोन्ही बाजूंची साईझ एकसमान करून बॉर्डर सेट होत आहे..."):
+            with st.spinner("⏳ लेआउट तयार होत आहे..."):
                 try:
                     img_f = Image.open(front_file).convert("RGB")
                     img_b = Image.open(back_file).convert("RGB")
@@ -159,7 +160,7 @@ with tab3:
                     id_buffer.seek(0)
                     
                     st.success("✅ आयडी कार्ड प्रिंट sheet एकदम रेडी आहे!")
-                    st.image(id_canvas, caption="४x६ प्रिंट प्रिव्ह्यू (फ्रंट वर, बॅक खाली)", use_container_width=True)
+                    st.image(id_canvas, caption="४x६ प्रिंट प्रिव्ह्यू", use_container_width=True)
                     
                     st.download_button(
                         label="📥 ४x६ कडक आयडी कार्ड प्रिंट (PNG) डाऊनलोड करा",
@@ -172,63 +173,44 @@ with tab3:
                     st.error(f"❌ चूक झाली: {e}")
 
 # ==========================================
-# 📸 टॅब ४: मॅन्युअल क्रॉप आणि रोटेशनसह कडक स्कॅनर
+# 📸 टॅब ४: हलणारा क्रॉप बॉक्स (Movable Cropper) आणि स्कॅनर
 # ==========================================
 with tab4:
-    st.markdown("<h4 style='color: #E65100;'>📸 बालाजी स्मार्ट कॅम-स्कॅनर (Manual Deskew & Crop)</h4>", unsafe_allow_html=True)
-    st.write("जर फोटो जास्त तिरपा असेल किंवा बाजूला जास्त टेबलचा भाग असेल, तर खालील स्लायडर्स वापरून फोटो १ सेकंदात सरळ आणि क्रॉप करा.")
+    st.markdown("<h4 style='color: #E65100;'>📸 बालाजी मूव्हेबल कॅम-स्कॅनर (Movable Crop Tool)</h4>", unsafe_allow_html=True)
+    st.write("१. फोटो तिरपा असल्यास प्रथम रोटेट करा. २. फोटोवर दिसणारा बॉक्स माऊसने ओढून अचूक सेट करा.")
     st.write("---")
     
-    scan_file = st.file_uploader("स्कॅन करण्यासाठी डॉक्युमेंटचा फोटो अपलोड करा (JPG/PNG):", type=["jpg", "jpeg", "png"], key="scanner_upload")
+    scan_file = st.file_uploader("स्कॅन करण्यासाठी प्रतिमेचा फोटो अपलोड करा (JPG/PNG):", type=["jpg", "jpeg", "png"], key="scanner_upload")
 
     if scan_file is not None:
-        # मूळ प्रतिमा उघडणे
         original_image = Image.open(scan_file)
-        orig_w, orig_h = original_image.size
         
-        # ⚙️ नियंत्रण पॅनेल (कंट्रोल टूल्स)
-        st.markdown("##### 🛠️ फोटो सरळ आणि क्रॉप करण्याचे कडक टूल्स:")
+        # 🔄 रोटेशन टूल्स आधी (जेणेकरून क्रॉप करण्यापूर्वी फोटो सरळ दिसेल)
+        rotation_angle = st.slider("🔄 १. फोटो सरळ करा (Rotate Degree):", -180, 180, 0, step=1, key="rotate_slider")
         
-        # १. अचूक रोटेशन (फोटो सरळ करण्यासाठी डिग्री स्लायडर)
-        rotation_angle = st.slider("🔄 फोटो सरळ करा (Rotate Degree):", -180, 180, 0, step=1, key="rotate_slider")
-        
-        # २. मॅन्युअल क्रॉपिंग स्लायडर्स (टक्केवारीनुसार चारी कडा छाटणे)
-        st.write("📐 आजूबाजूचा पांढरा/फालतू भाग कापण्यासाठी कडा सेट करा (Crop Borders %):")
-        col_c1, col_c2 = st.columns(2)
-        with col_c1:
-            crop_left = st.slider("⬅️ डावीकडून कापा (Left):", 0, 50, 0, key="c_left")
-            crop_right = st.slider("➡️ उजवीकडून कापा (Right):", 0, 50, 0, key="c_right")
-        with col_c2:
-            crop_top = st.slider("⬆️ वरून कापा (Top):", 0, 50, 0, key="c_top")
-            crop_bottom = st.slider("⬇️ खालून कापा (Bottom):", 0, 50, 0, key="c_bottom")
+        if rotation_angle != 0:
+            rotated_image = original_image.rotate(-rotation_angle, resample=Image.Resampling.BICUBIC, expand=True)
+        else:
+            rotated_image = original_image
             
+        st.write("---")
+        st.markdown("##### 📐 २. खालील फोटोवरील क्रॉप बॉक्स माऊसने ओढून परफेक्ट सेट करा (Movable Box):")
+        
+        # 🎯 जादुई हलणारा क्रॉप बॉक्स - बॉक्सचे प्रमाण मोकळे ठेवले आहे (box_aspect=None)
+        cropped_image = st_cropper(rotated_image, realtime_update=True, box_aspect=None, key="movable_cropper")
+        
+        st.write("---")
         scan_mode = st.selectbox(
-            "🎨 स्कॅनरचा कलर मोड निवडा:", 
+            "🎨 ३. स्कॅनरचा कलर मोड निवडा:", 
             ["मॅजिक कलर (Magic Color)", "कडक ब्लॅक & व्हाईट (B&W)", "मूळ कलर"],
             key="scanner_mode_select"
         )
         
-        if st.button("🚀 मॅजिक स्कॅनिंग सुरू करा", type="primary", use_container_width=True, key="scan_btn"):
-            with st.spinner("⏳ सिस्टीम फोटो सरळ करून एन्हान्स करत आहे..."):
+        if st.button("🚀 ४. मॅजिक स्कॅनिंग आणि डाऊनलोड तयार करा", type="primary", use_container_width=True, key="scan_btn"):
+            with st.spinner("⏳ सिस्टीम निवडलेला भाग कडक साफ करत आहे..."):
                 try:
-                    # १. प्रथम फोटो रोटेट (सरळ) करणे
-                    processed_img = original_image
-                    if rotation_angle != 0:
-                        processed_img = processed_img.rotate(-rotation_angle, resample=Image.Resampling.BICUBIC, expand=True)
-                    
-                    # २. क्रॉपिंग क्षेत्र निश्चित करणे
-                    w, h = processed_img.size
-                    left_px = int(w * (crop_left / 100))
-                    right_px = w - int(w * (crop_right / 100))
-                    top_px = int(h * (crop_top / 100))
-                    bottom_px = h - int(h * (crop_bottom / 100))
-                    
-                    # सुरक्षित क्रॉपिंग
-                    if right_px > left_px and bottom_px > top_px:
-                        processed_img = processed_img.crop((left_px, top_px, right_px, bottom_px))
-                    
-                    # ३. OpenCV मॅजिक कलर फिल्टर (चेहरा सुरक्षित ठेवून सावली साफ करणे)
-                    img_np = np.array(processed_img.convert('RGB'))
+                    # OpenCV द्वारे एन्हान्समेंट लॉजिक (चेहरा आणि मूळ रंग सुरक्षित)
+                    img_np = np.array(cropped_image.convert('RGB'))
                     img_cv = cv2.cvtColor(img_np, cv2.COLOR_RGB2BGR)
                     
                     if scan_mode == "कडक ब्लॅक & व्हाईट (B&W)":
@@ -237,7 +219,6 @@ with tab4:
                         final_res = Image.fromarray(scanned)
                         
                     elif scan_mode == "मॅजिक कलर (Magic Color)":
-                        # चॅनेल्स स्वतंत्रपणे स्वच्छ करून सावली धुणे
                         channels = cv2.split(img_cv)
                         result_channels = []
                         for ch in channels:
@@ -249,12 +230,11 @@ with tab4:
                             result_channels.append(norm)
                         
                         merged_bg = cv2.merge(result_channels)
-                        # मूळ चेहरा आणि गडद रंग टिकवण्यासाठी ६०-४०% सॉफ्ट ब्लेंडिंग
                         blended = cv2.addWeighted(img_cv, 0.60, merged_bg, 0.40, 0)
                         
                         enhanced_pil = Image.fromarray(cv2.cvtColor(blended, cv2.COLOR_BGR2RGB))
                         
-                        # कडक अक्षरांसाठी हलका कॉन्ट्रास्ट आणि शार्पनेस
+                        # कॉन्ट्रास्ट आणि शार्पनेस एकदम कडक करणे
                         enhancer = ImageEnhance.Contrast(enhanced_pil)
                         enhanced_pil = enhancer.enhance(1.3)
                         sharp = ImageEnhance.Sharpness(enhanced_pil)
@@ -262,16 +242,10 @@ with tab4:
                     else:
                         final_res = Image.fromarray(cv2.cvtColor(img_cv, cv2.COLOR_BGR2RGB))
                     
-                    # प्रिव्ह्यू स्क्रीन लेआउट
-                    col_scan1, col_scan2 = st.columns(2)
-                    with col_scan1:
-                        st.markdown("**📱 मूळ फोटो:**")
-                        st.image(original_image, use_container_width=True)
-                    with col_scan2:
-                        st.markdown("**🖨️ स्कॅन झालेला रिझल्ट:**")
-                        st.image(final_res, use_container_width=True)
-                        
-                    # डाऊनलोड पर्याय
+                    # अंतिम निकाल दाखवणे
+                    st.markdown("#### 🖨️ तुमचा फायनल स्कॅन झालेला रिझल्ट:")
+                    st.image(final_res, use_container_width=True)
+                    
                     img_byte_arr = io.BytesIO()
                     final_res.save(img_byte_arr, format='JPEG', quality=95)
                     
@@ -279,7 +253,7 @@ with tab4:
                     st.download_button(
                         label="📥 स्कॅन झालेली परफेक्ट इमेज डाऊनलोड करा",
                         data=img_byte_arr.getvalue(),
-                        file_name="Balaji_Perfect_Scan.jpg",
+                        file_name="Balaji_Movable_Scan.jpg",
                         mime="image/jpeg",
                         use_container_width=True,
                         key="scan_dl_btn"
