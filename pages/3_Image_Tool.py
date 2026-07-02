@@ -1,6 +1,8 @@
 import streamlit as st
-from PIL import Image, ImageOps
+from PIL import Image, ImageOps, ImageEnhance
 import io
+import cv2
+import numpy as np
 
 # पेजचे नाव आणि लेआउट सेट करणे
 st.set_page_config(page_title="बालाजी सायबर पॉइंट - इमेज टूल्स", page_icon="📸", layout="centered")
@@ -8,11 +10,12 @@ st.set_page_config(page_title="बालाजी सायबर पॉइं�
 st.markdown("<h2 style='text-align: center; color: #0078D7;'>📸 श्री बालाजी सायबर पॉईंट - इमेज पोर्टल्स</h2>", unsafe_allow_html=True)
 st.write("---")
 
-# मुख्य तीन टॅब्स तयार करणे (सर्व टूल्स एकाच जागी)
-tab1, tab2, tab3 = st.tabs([
+# 🎯 मुख्य चार टॅब्स तयार करणे (स्कॅनर सुरक्षितपणे समाविष्ट केला आहे)
+tab1, tab2, tab3, tab4 = st.tabs([
     "📸 पासपोर्ट फोटो शीट मेकर", 
     "📝 सरकारी फॉर्म फोटो-सही रीसायझर", 
-    "🖨️ स्मार्ट आयडी कार्ड प्रिंटर (Aadhaar/PAN)"
+    "🖨️ स्मार्ट आयडी कार्ड प्रिंटर (Aadhaar/PAN)",
+    "📸 कॅम-स्कॅनर (CamScanner)"
 ])
 
 # ==========================================
@@ -37,7 +40,7 @@ with tab1:
         )
         
         if st.button("🚀 पासपोर्ट साईझ फोटो शीट तयार करा", type="primary", use_container_width=True, key="btn_pp"):
-            with st.spinner("⏳ परफेक्ट हाय-क्वालिटी लेआउट तयार होत आहे..."):
+            with st.spinner("⏳ कडक हाय-क्वालिटी लेआउट तयार होत आहे..."):
                 try:
                     if "४x६" in paper_option:
                         canvas_w, canvas_h = int(4 * DPI), int(6 * DPI)
@@ -136,16 +139,13 @@ with tab3:
                     img_f = Image.open(front_file).convert("RGB")
                     img_b = Image.open(back_file).convert("RGB")
                     
-                    # दोन्ही बाजूंची साईझ शंभर टक्के एकसमान आणि कडक फिट
                     final_w, final_h = 1130, 710
                     img_f = img_f.resize((final_w, final_h), Image.Resampling.LANCZOS)
                     img_b = img_b.resize((final_w, final_h), Image.Resampling.LANCZOS)
                     
-                    # चारी बाजूंना ६ पिक्सेलची काळी बॉर्डर
                     img_f = ImageOps.expand(img_f, border=6, fill='black')
                     img_b = ImageOps.expand(img_b, border=6, fill='black')
                     
-                    # ४x६ मुख्य कॅनव्हास (१२०० x १८०० pixels)
                     PAPER_WIDTH, PAPER_HEIGHT = 1200, 1800
                     id_canvas = Image.new("RGB", (PAPER_WIDTH, PAPER_HEIGHT), "white")
                     
@@ -158,7 +158,7 @@ with tab3:
                     id_canvas.save(id_buffer, format="PNG", dpi=(300, 300))
                     id_buffer.seek(0)
                     
-                    st.success("✅ आयडी कार्ड प्रिंट शीट एकदम रेडी आहे!")
+                    st.success("✅ आयडी कार्ड प्रिंट sheet एकदम रेडी आहे!")
                     st.image(id_canvas, caption="४x६ प्रिंट प्रिव्ह्यू (फ्रंट वर, बॅक खाली)", use_container_width=True)
                     
                     st.download_button(
@@ -167,6 +167,83 @@ with tab3:
                         file_name="Balaji_Smart_ID_Print.png",
                         mime="image/png",
                         use_container_width=True
+                    )
+                except Exception as e:
+                    st.error(f"❌ चूक झाली: {e}")
+
+# ==========================================
+# 📸 नवीन टॅब ४: कॅम-स्कॅनर (CamScanner टूल)
+# ==========================================
+with tab4:
+    st.markdown("<h4 style='color: #E65100;'>📸 बालाजी डिजिटल कॅम-स्कॅनर (CamScanner)</h4>", unsafe_allow_html=True)
+    st.write("मोबाईलने तिरपे किंवा अंधारात काढलेले डॉक्युमेंट्स इथे अपलोड करा, हे टूल त्यांना सरळ करून पांढरे-शुभ्र स्कॅन करेल.")
+    st.write("---")
+    
+    # मॅजिक फिल्टर फंक्शन
+    def apply_magic_color(pil_image, mode):
+        img = np.array(pil_image.convert('RGB'))
+        img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+        
+        if mode == "कडक ब्लॅक & व्हाईट (B&W)":
+            gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+            scanned = cv2.adaptiveThreshold(
+                gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 21, 10
+            )
+            return Image.fromarray(scanned)
+            
+        elif mode == "मॅजिक कलर (Magic Color)":
+            gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+            dilated_img = cv2.dilate(gray, np.ones((7,7), np.uint8))
+            bg_img = cv2.medianBlur(dilated_img, 21)
+            diff_img = cv2.absdiff(gray, bg_img)
+            diff_img = 255 - diff_img
+            normalized_img = cv2.normalize(diff_img, None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_8UC1)
+            
+            result_bgr = cv2.cvtColor(normalized_img, cv2.COLOR_GRAY2BGR)
+            enhanced_pil = Image.fromarray(cv2.cvtColor(result_bgr, cv2.COLOR_BGR2RGB))
+            
+            enhancer = ImageEnhance.Contrast(enhanced_pil)
+            return enhancer.enhance(1.4)
+            
+        return pil_image
+
+    scan_file = st.file_uploader("स्कॅन करण्यासाठी प्रतिमेचा फोटो अपलोड करा (JPG/PNG):", type=["jpg", "jpeg", "png"], key="scanner_upload")
+
+    if scan_file is not None:
+        original_image = Image.open(scan_file)
+        
+        col_scan1, col_scan2 = st.columns(2)
+        
+        with col_scan1:
+            st.markdown("**📱 मूळ फोटो:**")
+            st.image(original_image, use_container_width=True)
+            
+        scan_mode = st.selectbox(
+            "स्कॅनर मोड निवडा:", 
+            ["मॅजिक कलर (Magic Color)", "कडक ब्लॅक & व्हाईट (B&W)", "मूळ कलर"],
+            key="scanner_mode_select"
+        )
+        
+        if st.button("🚀 मॅजिक स्कॅनिंग सुरू करा", type="primary", use_container_width=True, key="scan_btn"):
+            with st.spinner("⏳ CamScanner मॅजिक इफेक्ट लागू होत आहे..."):
+                try:
+                    scanned_result = apply_magic_color(original_image, mode=scan_mode)
+                    
+                    with col_scan2:
+                        st.markdown("**🖨️ स्कॅन झालेला रिझल्ट:**")
+                        st.image(scanned_result, use_container_width=True)
+                        
+                    img_byte_arr = io.BytesIO()
+                    scanned_result.save(img_byte_arr, format='JPEG', quality=95)
+                    
+                    st.write("")
+                    st.download_button(
+                        label="📥 स्कॅन झालेली कडक इमेज डाऊनलोड करा",
+                        data=img_byte_arr.getvalue(),
+                        file_name="Balaji_Scanned.jpg",
+                        mime="image/jpeg",
+                        use_container_width=True,
+                        key="scan_dl_btn"
                     )
                 except Exception as e:
                     st.error(f"❌ चूक झाली: {e}")
