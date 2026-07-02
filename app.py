@@ -25,17 +25,17 @@ st.sidebar.write("---")
 st.sidebar.markdown(f"👤 **चालू युझर:** `{st.session_state.user_role}`")
 
 # ==========================================
-# 🚀 १००% काठोकाठ कडक क्रॉप लेआउट (No Margins)
+# 🚀 अजिबात कट न होणारा आणि कडांना बॉर्डर लॉक करणारा कोड
 # ==========================================
 st.markdown("<h2 style='text-align: center; color: #0056b3;'>🌐 श्री बालाजी सायबर पॉईंट, माणगाव</h2>", unsafe_allow_html=True)
-st.markdown("<h4 style='text-align: center; color: #28a745;'>आयुष्मान भारत PDF ते 4X6 कडक प्रिंट कंव्हर्टर</h4>", unsafe_allow_html=True)
+st.markdown("<h4 style='text-align: center; color: #28a745;'>आयुष्मान भारत PDF ते 4X6 कडक PRINT कंव्हर्टर</h4>", unsafe_allow_html=True)
 st.write("---")
 
 uploaded_file = st.file_uploader("तुमची आयुष्मान भारत सरकारी PDF फाईल इथे अपलोड करा:", type=["pdf"])
 
 if uploaded_file is not None:
     if st.button("🚀 कडक ४x६ प्रिंट लेआउट तयार करा", type="primary", use_container_width=True):
-        with st.spinner("⏳ फालतू पांढरा भाग काढून तंतोतंत बॉर्डर मॅच होत आहे..."):
+        with st.spinner("⏳ कार्ड सुरक्षित ठेवून काठोकाठ बॉर्डर सेट होत आहे..."):
             try:
                 pdf_bytes = uploaded_file.read()
                 doc = fitz.open(stream=pdf_bytes, filetype="pdf")
@@ -50,47 +50,52 @@ if uploaded_file is not None:
                     
                     width, height = img.size
                     
-                    # 🎯 अत्यंत कडक क्रॉपिंग (Extreme Tight Crop) - पांढऱ्या कडा पूर्णपणे गाळल्या आहेत!
-                    front_box = (int(width * 0.052), int(height * 0.282), int(width * 0.478), int(height * 0.722))
-                    back_box = (int(width * 0.522), int(height * 0.282), int(width * 0.948), int(height * 0.722))
+                    # 🎯 सुरक्षित क्रॉपिंग - कार्ड अजिबात कट होणार नाही याची पूर्ण खात्री (उंची भरपूर ठेवली आहे)
+                    front_box = (int(width * 0.040), int(height * 0.14), int(width * 0.492), int(height * 0.86))
+                    back_box = (int(width * 0.508), int(height * 0.14), int(width * 0.960), int(height * 0.86))
                     
                     img_front = img.crop(front_box)
                     img_back = img.crop(back_box)
                     
-                    # 📏 ४x६ पेपरच्या रुंदीनुसार (१२०0 पिक्सेल) पूर्ण भरून येण्यासाठी कडक साईझ
-                    card_w, card_h = 1200, 755
+                    # 📏 ४x६ पेपरची मुख्य स्टँडर्ड साईझ (१२०० x १८००)
+                    PAPER_WIDTH, PAPER_HEIGHT = 1200, 1800
+                    
+                    # कार्डचा आकार एकदम प्रमाणबद्ध (चपटं किंवा कट न दिसण्यासाठी)
+                    card_w, card_h = 1120, 715
                     img_front = img_front.resize((card_w, card_h), Image.Resampling.LANCZOS)
                     img_back = img_back.resize((card_w, card_h), Image.Resampling.LANCZOS)
                     
-                    # ४x६ मुख्य कॅनव्हास (१२०० x १८०० pixels - उभा फोटो पेपर)
-                    PAPER_WIDTH, PAPER_HEIGHT = 1200, 1800
                     final_canvas = Image.new("RGB", (PAPER_WIDTH, PAPER_HEIGHT), "white")
                     
-                    # 🎯 डाव्या आणि उजव्या कडेला शंभर टक्के चिकटवून पेस्ट (० मार्जिन!)
-                    final_canvas.paste(img_front, (0, 70))
-                    final_canvas.paste(img_back, (0, 930))
+                    # 🎯 कॅनव्हासवर कार्ड्स एकदम मध्यभागी पेस्ट करणे
+                    paste_x = (PAPER_WIDTH - card_w) // 2
                     
-                    # 🔲 काठोकाठ कडक ४ पिक्सेलची काळी बॉर्डर - थेट कार्डच्या कडांना तंतोतंत चिकटून!
+                    final_canvas.paste(img_front, (paste_x, 100))
+                    final_canvas.paste(img_back, (paste_x, 950))
+                    
+                    # 🔲 🎯 कडक बदल: काळी बॉर्डर बाहेरच्या मोठ्या पांढऱ्या भागाला न मारता थेट कार्डच्या कडांना चिकटून मारणे!
                     from PIL import ImageDraw
                     draw = ImageDraw.Draw(final_canvas)
-                    draw.rectangle([0, 70, PAPER_WIDTH - 1, 70 + card_h], outline="black", width=4)
-                    draw.rectangle([0, 930, PAPER_WIDTH - 1, 930 + card_h], outline="black", width=4)
+                    
+                    # यामुळे कात्रीने कापताना काळी रेघ थेट कार्डच्या काठावर मिळेल, पांढरा भाग कापायचा टेन्शन मिटेल!
+                    draw.rectangle([paste_x, 100, paste_x + card_w, 100 + card_h], outline="black", width=5)
+                    draw.rectangle([paste_x, 950, paste_x + card_w, 950 + card_h], outline="black", width=5)
                     
                     img_byte_arr = io.BytesIO()
                     final_canvas.save(img_byte_arr, format='PNG', dpi=(300, 300))
                     img_byte_arr_raw = img_byte_arr.getvalue()
                     
-                    st.success(f"✅ आयुष्मान भारत कार्ड आता काठोकाठ कडांना चिकटून बॉक्समध्ये फिट झाले आहे! (User: {st.session_state.user_role})")
+                    st.success(f"✅ आयुष्मान भारत कार्ड आता न कट होता बॉक्समध्ये परफेक्ट फिट झाले आहे! (User: {st.session_state.user_role})")
                     
-                    # स्क्रीनवर कडक सुरक्षित प्रिव्ह्यू
-                    st.image(final_canvas, caption="४x६ कडक प्रिंट प्रिव्ह्यू (No Margins - Tight Fit)", width=620)
+                    # सुरक्षित स्क्रीन प्रिव्ह्यू
+                    st.image(final_canvas, caption="४x६ कडक प्रिंट प्रिव्ह्यू (परफेक्ट फिट बॉर्डर)", width=620)
                     st.write("")
                     
                     unique_time = int(time.time())
                     st.download_button(
                         label="📥 कडक ४x६ प्रिंट इमेज (PNG) डाऊनलोड करा",
                         data=img_byte_arr_raw,
-                        file_name=f"Ayushman_TightFit_{unique_time}.png",
+                        file_name=f"Ayushman_Perfect_NoCut_{unique_time}.png",
                         mime="image/png",
                         use_container_width=True
                     )
