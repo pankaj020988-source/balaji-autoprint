@@ -21,9 +21,14 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# ऑथेंटिकेशन आणि स्कॅनर मेमरी स्टेट मॅनेजमेंट
+# ऑथेंटिकेशन, स्कॅनर आणि जाहिरात सिस्टीम मेमरी स्टेट मॅनेजमेंट
 if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
+if "ad_text" not in st.session_state:
+    st.session_state.ad_text = "📌 **महाभरती २०२६:** विविध सरकारी विभागांमध्ये नवीन जागा उपलब्ध झाल्या आहेत. ऑनलाईन अर्ज भरण्यासाठी आजच दुकानात आवश्यक कागदपत्रांसह भेट द्या."
+if "ad_image" not in st.session_state:
+    st.session_state.ad_image = None
+
 if "c_left" not in st.session_state: st.session_state.c_left = 0
 if "c_right" not in st.session_state: st.session_state.c_right = 0
 if "c_top" not in st.session_state: st.session_state.c_top = 0
@@ -55,11 +60,25 @@ with main_tab1:
     
     st.write("")
     
+    # 🎯 लाइव्ह जाहिरात प्रदर्शन विभाग (मॅनेजरने बदललेला मजकूर आणि इमेज इथे दिसेल)
+    st.markdown("### 📢 नवीन सरकारी नोकर भरती व जाहिराती")
+    
+    col_home_ad1, col_home_ad2 = st.columns([3, 2])
+    with col_home_ad1:
+        st.info(st.session_state.ad_text)
+    with col_home_ad2:
+        if st.session_state.ad_image is not None:
+            st.image(st.session_state.ad_image, caption="चालू जाहिरात / अधिकृत पत्रक", use_container_width=True)
+        else:
+            st.warning("📌 **परीक्षा प्रवेशपत्र (Admit Card):** चालू महिन्यातील स्पर्धा परीक्षांचे हॉल तिकीट आणि विविध सरकारी परीक्षांचे प्रवेशपत्र डाऊनलोड करणे सुरू आहे.")
+            
+    st.write("---")
+    
     st.markdown("### 🌟 आमच्या प्रमुख सेवा:")
     st.markdown("""
     * **सर्व ऑनलाईन फॉर्म्स:** नोकरभरती, ॲडमिट कार्ड आणि हॉल तिकीट.
     * **शासकीय योजना:** घरकुल योजना, शबरी आवास योजना आणि इतर सरकारी अर्ज.
-    * **ट्रॅव्हल बुकिंग:** देश-विदेशातील फ्लाईट्स, हॉटेल्स आणि टूर पॅकेजेस (MakeMyTrip).
+    * **ट्रॅव्हल बुकिंग:** देश-विदेशातील फ्लाईट्स, हॉटेल्स आणिूर पॅकेजेस (MakeMyTrip).
     * **कर आणि महसूल:** नगरपंचायत प्रॉपर्टी टॅक्स, वीज बिल आणि महाआयटी सेवा.
     * **डिजिटल फोटो टूल्स:** जुने फोटो 4K मध्ये रिस्टोर करणे आणि कॉम्प्युटर रीसायझिंग.
     """)
@@ -67,17 +86,17 @@ with main_tab1:
     st.write("")
     st.markdown("""
     <div style="background-color: #154c8c; color: white; padding: 12px; border-radius: 5px; text-align: center; font-size: 16px; font-weight: bold;">
-        📍 पत्ता: बालाजी कॉम्प्लेक्स, माणगाव, रायगड, महाराष्ट्र
+        📍 पत्ता: बालाजी कॉम्प्लेक्स, माणगाव, रायगड,充हाराष्ट
     </div>
     """, unsafe_allow_html=True)
 
 # ------------------------------------------
-# 🔐 २. पासवर्ड प्रोटेक्टेड ॲडमीन डेस्क (सर्व अंतर्गत ॲप्स)
+# 🔐 २. पासवर्ड प्रोटेक्टेड ॲडमीन डेस्क (सर्व अंतर्गत ॲप्स + जाहिरात मॅनेजर)
 # ------------------------------------------
 with main_tab2:
     if not st.session_state.authenticated:
         st.markdown("<h3 style='color: #D32F2F;'>🔐 सायबर ऑपरेशन्स लॉगिन</h3>", unsafe_allow_html=True)
-        st.write("अंतर्गत टूल्स आणि हिशोब मॅनेजमेंट वापरण्यासाठी तुमचा सुरक्षित पासवर्ड प्रविष्ट करा.")
+        st.write("अंतर्गत टूल्स, हिशोब आणि जाहिराती बदलण्यासाठी तुमचा सुरक्षित पासवर्ड प्रविष्ट करा.")
         
         access_password = st.text_input("🔑 मॅनेजर/स्टाफ पासवर्ड प्रविष्ट करा:", type="password", key="main_admin_password")
         
@@ -100,29 +119,50 @@ with main_tab2:
             
         st.write("---")
         
-        # 🎯 सर्व ४ मूळ ॲप्स एकाच ठिकाणी टॅबच्या स्वरूपात सुरक्षित!
-        app_tab1, app_tab2, app_tab3, app_tab4 = st.tabs([
-            "🖨️ app (Ayushman)", "📊 Bill Manager", "📁 Cyber Data", "📸 Image Tool & Scanner"
+        # 🎯 ५ टॅब्स: पहिले ४ जुने ॲप्स आणि ५ वा "📢 जाहिरात व्यवस्थापक" टॅब
+        app_tab1, app_tab2, app_tab3, app_tab4, app_tab5 = st.tabs([
+            "🖨️ app (Ayushman)", "📊 Bill Manager", "📁 Cyber Data", "📸 Image Tool & Scanner", "📢 जाहिरात मॅनेजर (Ads Setup)"
         ])
         
-        # --- ॲप १: app (Ayushman) ---
+        # --- ॲप ५: जाहिरात व्यवस्थापक (Live Banner & Text Updater) ---
+        with app_tab5:
+            st.markdown("##### 📢 होम पेजवरील जाहिरात आणि इमेज बदला")
+            st.write("इथे बदललेला मजकूर आणि अपलोड केलेली इमेज थेट तुमच्या होम पेजवर दिसेल.")
+            
+            # १. मजकूर बदलण्याचा मोठा बॉक्स
+            new_ad_text = st.text_area("📝 जाहिरातीचा मजकूर प्रविष्ट करा (मराठीत):", value=st.session_state.ad_text, height=100)
+            
+            # २. इमेज अपलोडर बॉक्स
+            uploaded_ad_img = st.file_uploader("🖼️ नवीन जाहिरातीचा फोटो/बॅनर अपलोड करा (JPG/PNG):", type=["jpg", "jpeg", "png"], key="mkt_banner_uploader")
+            
+            if st.button("🚀 जाहिरात होम पेजवर लाईव्ह करा", type="primary", use_container_width=True):
+                st.session_state.ad_text = new_ad_text
+                if uploaded_ad_img is not None:
+                    st.session_state.ad_image = Image.open(uploaded_ad_img)
+                st.success("✅ जाहिरात आणि इमेज यशस्वीरित्या अपडेट झाली आहे! होम पेजवर जाऊन तपासा.")
+                st.rerun()
+                
+            if st.button("🔄 जाहिरात रिसेट करा (मूळ जाहिरात सेट करा)", type="secondary"):
+                st.session_state.ad_text = "📌 **महाभरती २०२६:** विविध सरकारी विभागांमध्ये नवीन जागा उपलब्ध झाल्या आहेत. ऑनलाईन अर्ज भरण्यासाठी आजच दुकानात आवश्यक कागदपत्रांसह भेट द्या."
+                st.session_state.ad_image = None
+                st.rerun()
+
+        # --- बाकीचे ४ ॲप्स जसेच्या तसे सुरक्षित ---
         with app_tab1:
             st.markdown("##### 🖨️ आयुष्मान भारत ४x६ ऑटो-प्रिंट सिस्टीम")
             uploaded_pdf = st.file_uploader("सरकारी आयुष्मान PDF फाईल अपलोड करा:", type=["pdf"], key="ayushman_pdf")
-            st.info("आयुष्मान भारत सिस्टीम सुरक्षितपणे कनेक्टेड आहे...")
+            st.info("तुमची आयुष्मान भारत सिस्टीम सुरक्षितपणे कनेक्टेड आहे...")
 
-        # --- ॲप २: Bill Manager ---
         with app_tab2:
             st.markdown("##### 📊 दैनिक बिल मॅनेजर आणि हिशोब खाते")
             st.info("हिशोब डेटा सुरक्षितपणे चालू आहे...")
 
-        # --- ॲप ३: Cyber Data ---
         with app_tab3:
             st.markdown("##### 📁 सायबर डेटा आणि दस्तऐवज स्टोरेज")
             st.info("सायबर डेटाबेस सर्व्हर सुरू आहे...")
 
-        # --- ॲप ४: Image Tool (पासपोर्ट, रीसायझर, आयडी आणि कॅम-स्कॅनर) ---
         with app_tab4:
+            st.markdown("##### 📸 प्रगत इमेज टूल्स आणि सुपर-फास्ट स्कॅनर")
             sub_tool_tab1, sub_tool_tab2, sub_tool_tab3, sub_tool_tab4 = st.tabs([
                 "📸 पासपोर्ट मेकर", "📝 फोटो-सही रीसायझर", "🖨️ स्मार्ट आयडी प्रिंटर", "📸 सुपर-फास्ट स्कॅनर"
             ])
@@ -137,7 +177,7 @@ with main_tab2:
                     DPI = 300
                     id_w, id_h = int(3.5 / 2.54 * DPI), int(4.5 / 2.54 * DPI)
                     paper_option = st.radio("पेपर साईझ निवडा:", ("४x६ inch फोटो पेपर (4x6 Sheet)", "पूर्ण A4 सरकारी paper (Full A4 Sheet)"), key="paper_opt")
-                    if st.button("🚀 पासपोर्ट साईझ फोटो शीट तयार करा", type="primary", use_container_width=True):
+                    if st.button("🚀 पासपोर्ट साईझ फोटो शीट तयार करा", type="primary", use_container_width=True, key="pp_btn_sheet"):
                         try:
                             canvas_w, canvas_h = (int(4 * DPI), int(6 * DPI)) if "४x६" in paper_option else (int(8.27 * DPI), int(11.69 * DPI))
                             resized_id = ImageOps.fit(img, (id_w, id_h), Image.Resampling.LANCZOS)
@@ -148,7 +188,7 @@ with main_tab2:
                             buffer = io.BytesIO()
                             sheet.save(buffer, format="PNG", dpi=(DPI, DPI))
                             st.image(sheet, use_container_width=True)
-                            st.download_button(label="📥 HD फोटो शीट डाऊनलोड करा", data=buffer.getvalue(), file_name="Balaji_Passport.png", mime="image/png", use_container_width=True)
+                            st.download_button(label="📥 HD फोटो शीट डाऊनलोड करा", data=buffer.getvalue(), file_name="Balaji_Passport.png", mime="image/png", use_container_width=True, key="dl_pp_btn")
                         except Exception as e: st.error(f"❌ चूक: {e}")
 
             # ब) फोटो-सही रीसायझर
@@ -159,7 +199,7 @@ with main_tab2:
                 if uploaded_file is not None:
                     raw_img = Image.open(uploaded_file).convert("RGB")
                     t_width, t_height, max_kb, label = (160, 200, 20, "Photo") if "फोटो" in tool_mode else (256, 64, 10, "Signature")
-                    if st.button(f"⚡ {label} रीसाईझ करा", type="primary", use_container_width=True):
+                    if st.button(f"⚡ {label} रीसाईझ करा", type="primary", use_container_width=True, key="compress_btn_form"):
                         try:
                             resized_img = raw_img.resize((t_width, t_height), Image.Resampling.LANCZOS)
                             quality = 95
@@ -171,7 +211,7 @@ with main_tab2:
                                 resized_img.save(img_buffer, "JPEG", optimize=True, quality=quality)
                             st.success(f"✅ यशस्वी! साईझ: {len(img_buffer.getvalue()) // 1024} KB")
                             st.image(img_buffer.getvalue())
-                            st.download_button(label="📥 कॉम्प्रेस फाईल डाऊनलोड करा", data=img_buffer.getvalue(), file_name=f"balaji_{label.lower()}.jpg", mime="image/jpeg", use_container_width=True)
+                            st.download_button(label="📥 कॉम्प्रेस फाईल डाऊनलोड करा", data=img_buffer.getvalue(), file_name=f"balaji_{label.lower()}.jpg", mime="image/jpeg", use_container_width=True, key="dl_compress_form")
                         except Exception as e: st.error(f"❌ चूक: {e}")
 
             # क) स्मार्ट आयडी प्रिंटर
@@ -181,7 +221,7 @@ with main_tab2:
                 with col_id1: front_file = st.file_uploader("१. फ्रंट बाजू फोटो:", type=["jpg", "jpeg", "png"], key="id_front")
                 with col_id2: back_file = st.file_uploader("२. बॅक बाजू फोटो:", type=["jpg", "jpeg", "png"], key="id_back")
                 if front_file and back_file:
-                    if st.button("⚙️ ४x६ प्रिंट लेआउट तयार करा", type="primary", use_container_width=True):
+                    if st.button("⚙️ ४x६ प्रिंट लेआउट तयार करा", type="primary", use_container_width=True, key="id_layout_generate"):
                         try:
                             img_f, img_b = Image.open(front_file).convert("RGB"), Image.open(back_file).convert("RGB")
                             img_f = img_f.resize((1130, 710), Image.Resampling.LANCZOS)
@@ -194,7 +234,7 @@ with main_tab2:
                             id_buffer = io.BytesIO()
                             id_canvas.save(id_buffer, format="PNG", dpi=(300, 300))
                             st.image(id_canvas, use_container_width=True)
-                            st.download_button(label="📥 प्रिंट फाईल (PNG) डाऊनलोड करा", data=id_buffer.getvalue(), file_name="Balaji_ID_Print.png", mime="image/png", use_container_width=True)
+                            st.download_button(label="📥 प्रिंट फाईल (PNG) डाऊनलोड करा", data=id_buffer.getvalue(), file_name="Balaji_ID_Print.png", mime="image/png", use_container_width=True, key="dl_id_canvas_final")
                         except Exception as e: st.error(f"❌ चूक: {e}")
 
             # ड) सुपर-फास्ट स्कॅनर
@@ -203,7 +243,7 @@ with main_tab2:
                 scan_file = st.file_uploader("स्कॅन करण्यासाठी फोटो अपलोड करा:", type=["jpg", "jpeg", "png"], key="scanner_upload")
                 if scan_file is not None:
                     original_image = Image.open(scan_file)
-                    st.markdown("####### ⚡ वन-क्लिक फास्ट कंट्रोल्स:")
+                    st.markdown("####### ⚡ वन-क्लिक賦ास्ट कंट्रोल्स:")
                     col_b1, col_b2, col_b3, col_b4, col_b5 = st.columns(5)
                     with col_b1:
                         if st.button("⬅️ डावीकडून कापा", use_container_width=True, key="l_crop"): st.session_state.c_left += 5
@@ -220,7 +260,7 @@ with main_tab2:
                         st.session_state.c_left = 0; st.session_state.c_right = 0; st.session_state.c_top = 0; st.session_state.c_bottom = 0; st.session_state.r_angle = 0
                         st.rerun()
 
-                    scan_mode = st.selectbox("🎨 कलर मोड निवडा:", ["मॅजिक कलर (Magic Color)", "कडक ब्लॅक & व्हाई特 (B&W)", "मूळ कलर"], key="scanner_mode_select")
+                    scan_mode = st.selectbox("🎨 कलर मोड निवडा:", ["मॅजिक कलर (Magic Color)", "कडक ब्लॅक & व्हाईट (B&W)", "मूळ कलर"], key="scanner_mode_select")
                     
                     if st.session_state.r_angle != 0:
                         if st.session_state.r_angle == 90: working_img = original_image.transpose(Image.ROTATE_270)
@@ -259,7 +299,7 @@ with main_tab2:
                                 st.image(final_res, caption="फायनल रिझल्ट", use_container_width=True)
                                 img_byte_arr = io.BytesIO()
                                 final_res.save(img_byte_arr, format='JPEG', quality=95)
-                                st.download_button(label="📥 परफेक्ट इमेज डाऊनलोड करा", data=img_byte_arr.getvalue(), file_name="Balaji_Perfect_Scan.jpg", mime="image/jpeg", use_container_width=True)
+                                st.download_button(label="📥 परफेक्ट इमेज डाऊनलोड करा", data=img_byte_arr.getvalue(), file_name="Balaji_Perfect_Scan.jpg", mime="image/jpeg", use_container_width=True, key="dl_final_scan_img")
                             except Exception as e: st.error(f"❌ चूक: {e}")
 
 st.write("---")
