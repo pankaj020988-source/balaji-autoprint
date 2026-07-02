@@ -1,18 +1,17 @@
 import streamlit as st
 import fitz  # PyMuPDF
-from PIL import Image, ImageOps
+from PIL import Image
 import io
 
 # पेज सेटिंग
 st.set_page_config(page_title="बालाजी सायबर पॉईंट - होम", page_icon="🌐", layout="centered")
 
 # ==========================================
-# 👤 साईडबार युझर सिलेक्शन सिस्टीम (पासवर्ड शिवाय)
+# 👤 साईडबार युझर सिलेक्शन सिस्टीम
 # ==========================================
 if "user_role" not in st.session_state:
     st.session_state.user_role = "Manager (Pankajji)"
 
-# डाव्या बाजूला (Sidebar) युझर निवडण्याचा कडक पर्याय
 st.sidebar.markdown("### 👥 सिस्टीम युझर")
 current_user = st.sidebar.radio(
     "कॉम्प्युटर कोण वापरत आहे?",
@@ -25,7 +24,7 @@ st.sidebar.write("---")
 st.sidebar.markdown(f"👤 **चालू युझर:** `{st.session_state.user_role}`")
 
 # ==========================================
-# 🚀 मुख्य आयुष्मान भारत कोड
+# 🚀 मुख्य आयुष्मान भारत कोड (दुरुस्त केलेला)
 # ==========================================
 st.markdown("<h2 style='text-align: center; color: #0056b3;'>🌐 श्री बालाजी सायबर पॉईंट, माणगाव</h2>", unsafe_allow_html=True)
 st.markdown("<h4 style='text-align: center; color: #28a745;'>आयुष्मान भारत PDF ते 4X6 कडक प्रिंट कंव्हर्टर</h4>", unsafe_allow_html=True)
@@ -44,29 +43,53 @@ if uploaded_file is not None:
                     st.error("मजकूर सापडला नाही! कृपया खरी पीडीएफ अपलोड करा.")
                 else:
                     page = doc[0]
+                    # ३०० DPI वर रेंडर करणे जेणेकरून मजकूर एकदम साफ दिसेल
                     pix = page.get_pixmap(dpi=300)
                     img_data = pix.tobytes("png")
                     img = Image.open(io.BytesIO(img_data))
                     
                     width, height = img.size
                     
-                    crop_left = int(width * 0.05)
-                    crop_top = int(height * 0.45)
-                    crop_right = int(width * 0.95)
-                    crop_bottom = int(height * 0.88)
+                    # 🎯 आयुष्मान भारत कार्ड क्रॉपिंगचे परफेक्ट कोऑर्डिनेट्स
+                    # १. फ्रंट बाजू (डावीकडील हिस्सा)
+                    front_box = (int(width * 0.05), int(height * 0.15), int(width * 0.50), int(height * 0.85))
+                    # २. बॅक बाजू (उजवीकडील हिस्सा)
+                    back_box = (int(width * 0.50), int(height * 0.15), int(width * 0.95), int(height * 0.85))
                     
-                    cropped_id = img.crop((crop_left, crop_top, crop_right, crop_bottom))
+                    img_front = img.crop(front_box)
+                    img_back = img.crop(back_box)
                     
-                    target_w, target_h = 1200, 1800
-                    cropped_id = cropped_id.resize((target_w, target_h), Image.Resampling.LANCZOS)
-                    cropped_id = ImageOps.expand(cropped_id, border=6, fill='black')
+                    # 📏 आयडी कार्डची एकसमान प्रिंट साईझ (११३० x ७१० पिक्सेल)
+                    card_w, card_h = 1130, 710
+                    img_front = img_front.resize((card_w, card_h), Image.Resampling.LANCZOS)
+                    img_back = img_back.resize((card_w, card_h), Image.Resampling.LANCZOS)
                     
+                    # 🖼️ ४x६ इंच मुख्य कॅनव्हास तयार करणे (१२०० x १८०० उभा पेपर)
+                    canvas_w, canvas_h = 1200, 1800
+                    final_canvas = Image.new("RGB", (canvas_w, canvas_h), "white")
+                    
+                    # चारी बाजूंनी कात्रीने कापण्यासाठी कडक २ पिक्सेलची काळी बॉर्डर मारणे
+                    from PIL import ImageDraw
+                    
+                    # फ्रंट पेस्ट करणे (वरून १५० पिक्सेल अंतर)
+                    paste_x = (canvas_w - card_w) // 2
+                    final_canvas.paste(img_front, (paste_x, 150))
+                    
+                    # बॅक पेस्ट करणे (दोन्हींमध्ये योग्य अंतर ठेवून)
+                    final_canvas.paste(img_back, (paste_x, 950))
+                    
+                    # कडक कटिंग गाईडसाठी काळ्या बॉर्डर्स ड्रॉ करणे
+                    draw = ImageDraw.Draw(final_canvas)
+                    draw.rectangle([paste_x, 150, paste_x + card_w, 150 + card_h], outline="black", width=4)
+                    draw.rectangle([paste_x, 950, paste_x + card_w, 950 + card_h], outline="black", width=4)
+                    
+                    # हाय-क्वालिटी पीएनजी मेमरी सेव्हिंग
                     img_byte_arr = io.BytesIO()
-                    cropped_id.save(img_byte_arr, format='PNG', dpi=(300, 300))
+                    final_canvas.save(img_byte_arr, format='PNG', dpi=(300, 300))
                     img_byte_arr = img_byte_arr.getvalue()
                     
-                    st.success(f"✅ आयुष्मान कार्ड लेआउट एकदम कडक तयार झाले आहे! (User: {st.session_state.user_role})")
-                    st.image(cropped_id, caption="४x६ प्रिंट प्रिव्ह्यू", use_container_width=True)
+                    st.success(f"✅ आयुष्मान कार्ड लेआउट एकदम कडक सरळ तयार झाले आहे! (User: {st.session_state.user_role})")
+                    st.image(final_canvas, caption="४x६ प्रिंट प्रिव्ह्यू (फ्रंट वर, बॅक खाली)", use_container_width=True)
                     
                     st.download_button(
                         label="📥 कडक ४x६ प्रिंट इमेज (PNG) डाऊनलोड करा",
