@@ -25,7 +25,7 @@ st.sidebar.write("---")
 st.sidebar.markdown(f"👤 **चालू युझर:** `{st.session_state.user_role}`")
 
 # ==========================================
-# 🚀 हाय-क्वालिटी नो-मार्जिन कडक ४x६ कोड
+# 🚀 ४०० DPI हाय-क्वालिटी नो-मार्जिन कडक कोड
 # ==========================================
 st.markdown("<h2 style='text-align: center; color: #0056b3;'>🌐 श्री बालाजी सायबर पॉईंट, माणगाव</h2>", unsafe_allow_html=True)
 st.markdown("<h4 style='text-align: center; color: #28a745;'>आयुष्मान भारत PDF ते 4X6 कडक प्रिंट कंव्हर्टर</h4>", unsafe_allow_html=True)
@@ -37,6 +37,9 @@ if uploaded_file is not None:
     if st.button("🚀 कडक ४x६ प्रिंट लेआउट तयार करा", type="primary", use_container_width=True):
         with st.spinner("⏳ क्वालिटी वाढवून काठोकाठ बॉक्स फिक्स केला जात आहे..."):
             try:
+                # सर्व्हरची जुनी मेमरी क्लिअर करण्यासाठी फाईल वाचन
+                st.cache_data.clear()
+                
                 pdf_bytes = uploaded_file.read()
                 doc = fitz.open(stream=pdf_bytes, filetype="pdf")
                 
@@ -44,38 +47,38 @@ if uploaded_file is not None:
                     st.error("मजकूर सापडला नाही! कृपया खरी पीडीएफ अपलोड करा.")
                 else:
                     page = doc[0]
-                    # क्वालिटी एकदम कडक करण्यासाठी ४०० DPI वर रेंडरिंग (अक्षरे स्पष्ट दिसतील)
+                    # क्वालिटी एकदम कडक आणि अक्षरे स्पष्ट ठेवण्यासाठी ४०० DPI वर रेंडरिंग
                     pix = page.get_pixmap(dpi=400)
                     img_data = pix.tobytes("png")
                     img = Image.open(io.BytesIO(img_data))
                     
                     width, height = img.size
                     
-                    # 🎯 चारी बाजूने तंतोतंत बॉर्डर मिळवण्यासाठी कडक सेफ क्रॉपिंग
+                    # 🎯 चारी बाजूंनी नको असलेली पांढरी जागा छाटण्यासाठी अचूक क्रॉपिंग
                     front_box = (int(width * 0.035), int(height * 0.13), int(width * 0.495), int(height * 0.86))
                     back_box = (int(width * 0.505), int(height * 0.13), int(width * 0.965), int(height * 0.86))
                     
                     img_front = img.crop(front_box)
                     img_back = img.crop(back_box)
                     
-                    # 📏 ४x६ पेपरचा आकार (कॅनव्हास) आणि कार्डची साईझ एकाच पिक्सेलवर लॉक केली!
-                    # यामुळे बाहेर फालतू पांढरी जागा शिल्लक राहणारच नाही
+                    # 📏 ४x६ कॅनव्हास आणि कार्डची रुंदी एकाच पिक्सेलवर लॉक (० मार्जिन!)
+                    # यामुळे बाहेर कोणतीही अतिरिक्त पांढरी जागा शिल्लक राहूच शकत नाही
                     card_w = 1200
                     card_h = 790
                     
                     img_front = img_front.resize((card_w, card_h), Image.Resampling.LANCZOS)
                     img_back = img_back.resize((card_w, card_h), Image.Resampling.LANCZOS)
                     
-                    # मुख्य ४x६ कॅनव्हास (Exact Card Width)
+                    # मुख्य ४x६ मास्टर कॅनव्हास (Exact Paper Ratio)
                     PAPER_WIDTH = 1200
                     PAPER_HEIGHT = 1800
                     final_canvas = Image.new("RGB", (PAPER_WIDTH, PAPER_HEIGHT), "white")
                     
-                    # 🎯 डाव्या-उजव्या कडेला ० पिक्सेलवर घट्ट चिकटवून पेस्ट (No White Margins)
+                    # डाव्या-उजव्या बाजूला थेट ० पिक्सेलवर चिकटवून पेस्ट (No Left/Right Margins)
                     final_canvas.paste(img_front, (0, 60))
                     final_canvas.paste(img_back, (0, 950))
                     
-                    # 🔲 काठोकाठ कडक ५ पिक्सेलची काळी बॉर्डर - थेट कार्डच्या शेवटच्या रेषेवर फिक्स!
+                    # 🔲 काठोकाठ कडक ५ पिक्सेलची काळी बॉर्डर - थेट कार्डच्या कडांवर फिक्स!
                     from PIL import ImageDraw
                     draw = ImageDraw.Draw(final_canvas)
                     draw.rectangle([0, 60, PAPER_WIDTH - 1, 60 + card_h], outline="black", width=5)
