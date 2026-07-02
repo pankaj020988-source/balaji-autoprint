@@ -16,7 +16,7 @@ tab1, tab2, tab3, tab4 = st.tabs([
     "📸 पासपोर्ट फोटो शीट मेकर", 
     "📝 सरकारी फॉर्म फोटो-सही रीसायझर", 
     "🖨️ स्मार्ट आयडी कार्ड प्रिंटर (Aadhaar/PAN)",
-    "📸 कॅम-स्कॅनर (CamScanner)"
+    "📸 कॅम-स्कॅनर (CamScanner Movable)"
 ])
 
 # ==========================================
@@ -173,30 +173,46 @@ with tab3:
                     st.error(f"❌ चूक झाली: {e}")
 
 # ==========================================
-# 📸 टॅब ४: कॅम-स्कॅनर (दुरुस्त केलेला सुरक्षित कोड)
+# 📸 टॅब ४: कॅम-स्कॅनर (रोटेशन बटनांसह कडक क्रॉपिंग)
 # ==========================================
 with tab4:
-    st.markdown("<h4 style='color: #E65100;'>📸 बालाजी मूव्हेबल कॅम-स्कॅनर</h4>", unsafe_allow_html=True)
-    st.write("१. फोटो तिरपा असल्यास फिरवून सरळ करा. २. फोटोवरील बॉक्स माऊसने ओढून क्रॉप करा.")
+    st.markdown("<h4 style='color: #E65100;'>📸 बालाजी मूव्हेबल कॅम-स्कॅनर (Rotation Fix)</h4>", unsafe_allow_html=True)
+    st.write("१. फोटो तिरपा/आडवा असल्यास खालील बटणांनी सरळ करा. २. त्यानंतर क्रॉप बॉक्स सेट करा.")
     st.write("---")
     
+    # रोटेशन स्टेट मेमरी मॅनेजमेंट
+    if "rotate_state" not in st.session_state:
+        st.session_state.rotate_state = 0
+
     scan_file = st.file_uploader("स्कॅन करण्यासाठी प्रतिमेचा फोटो अपलोड करा (JPG/PNG):", type=["jpg", "jpeg", "png"], key="scanner_upload")
 
     if scan_file is not None:
         original_image = Image.open(scan_file)
         
-        # रोटेशन टूल
-        rotation_angle = st.slider("🔄 १. फोटो सरळ करा (Rotate Degree):", -180, 180, 0, step=1, key="rotate_slider")
+        # 🔄 कडक रोटेशन बटन्स पॅनेल
+        st.markdown("##### 🔄 १. फोटो दिशा बदला (Rotate Tool):")
+        col_r1, col_r2, col_r3 = st.columns([1, 1, 2])
         
-        if rotation_angle != 0:
-            rotated_image = original_image.rotate(-rotation_angle, resample=Image.Resampling.BICUBIC, expand=True)
+        with col_r1:
+            if st.button("⬅️ डावीकडे फिरवा (90°)", use_container_width=True):
+                st.session_state.rotate_state = (st.session_state.rotate_state + 90) % 360
+        with col_r2:
+            if st.button("➡️ उजवीकडे फिरवा (90°)", use_container_width=True):
+                st.session_state.rotate_state = (st.session_state.rotate_state - 90) % 360
+        with col_r3:
+            if st.button("🔄 रिसेट करा (Reset)", use_container_width=True):
+                st.session_state.rotate_state = 0
+                
+        # रोटेशन अप्लाय करणे
+        if st.session_state.rotate_state != 0:
+            rotated_image = original_image.rotate(st.session_state.rotate_state, expand=True)
         else:
             rotated_image = original_image
             
         st.write("---")
-        st.markdown("##### 📐 २. खालील फोटोवरील क्रॉप बॉक्स माऊसने ओढून परफेक्ट सेट करा:")
+        st.markdown("##### 📐 २. खालील फोटोवरील क्रॉप बॉक्स ओढून परफेक्ट सेट करा:")
         
-        # 🎯 एरर फिक्स: box_aspect काढले जेणेकरून व्हर्जन मॅचिंगचा त्रास पूर्ण संपेल
+        # जादुई हलणारा क्रॉप बॉक्स
         cropped_image = st_cropper(rotated_image, realtime_update=True, key="movable_cropper")
         
         st.write("---")
@@ -217,7 +233,7 @@ with tab4:
                         scanned = cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 25, 12)
                         final_res = Image.fromarray(scanned)
                         
-                    elif scan_mode == "मॅजिक कलर (Magic Color)":
+                    elif scan_mode == "मॅजिक Color (Magic Color)":
                         channels = cv2.split(img_cv)
                         result_channels = []
                         for ch in channels:
@@ -240,7 +256,7 @@ with tab4:
                     else:
                         final_res = Image.fromarray(cv2.cvtColor(img_cv, cv2.COLOR_BGR2RGB))
                     
-                    st.markdown("#### 🖨️ तुमचा फायनल स्कॅन झालेला रिझ刻त:")
+                    st.markdown("#### 🖨️ तुमचा फायनल स्कॅन झालेला रिझल्ट:")
                     st.image(final_res, use_container_width=True)
                     
                     img_byte_arr = io.BytesIO()
@@ -250,7 +266,7 @@ with tab4:
                     st.download_button(
                         label="📥 स्कॅन झालेली परफेक्ट इमेज डाऊनलोड करा",
                         data=img_byte_arr.getvalue(),
-                        file_name="Balaji_Movable_Scan.jpg",
+                        file_name="Balaji_Perfect_Scan.jpg",
                         mime="image/jpeg",
                         use_container_width=True,
                         key="scan_dl_btn"
