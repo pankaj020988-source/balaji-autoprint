@@ -5,7 +5,7 @@ import io
 import time
 import base64
 
-# 🎯 १. लेआउट 'wide' (फुल स्क्रीन) केला जेणेकरून साईड मार्जिन्स पूर्ण गायब होतील
+# पेज सेटिंग (Full Wide Layout)
 st.set_page_config(page_title="बालाजी सायबर पॉईंट - होम", page_icon="🌐", layout="wide")
 
 # ==========================================
@@ -26,26 +26,11 @@ st.sidebar.write("---")
 st.sidebar.markdown(f"👤 **चालू युझर:** `{st.session_state.user_role}`")
 
 # ==========================================
-# 🚀 डेस्कटॉप ओरिजिनल मास्टर लॉजिक कोड
+# 🚀 डेस्कटॉप मास्टर पिक्सेल मॅपिंग कोड (१००% कडक फिट)
 # ==========================================
 st.markdown("<h2 style='text-align: center; color: #0056b3;'>🌐 श्री बालाजी सायबर पॉईंट, माणगाव</h2>", unsafe_allow_html=True)
-st.markdown("<h4 style='text-align: center; color: #28a745;'>आयुष्मान भारत PDF ते 4X6 कडक प्रिंट कंव्हर्टर (डेस्कटॉप स्टाईल)</h4>", unsafe_allow_html=True)
+st.markdown("<h4 style='text-align: center; color: #28a745;'>आयुष्मान भारत PDF ते 4X6 कडक प्रिंट कंव्हर्टर</h4>", unsafe_allow_html=True)
 st.write("---")
-
-# मुख्य स्क्रीनची रुंदी मर्यादित न ठेवता मध्यभागी आणण्यासाठी CSS
-st.markdown(
-    """
-    <style>
-    .block-container {
-        padding-top: 2rem;
-        padding-bottom: 2rem;
-        padding-left: 5rem;
-        padding-right: 5rem;
-    }
-    </style>
-    """,
-    unsafe_allow_html=True
-)
 
 uploaded_file = st.file_uploader("तुमची आयुष्मान भारत सरकारी PDF फाईल इथे अपलोड करा:", type=["pdf"])
 
@@ -66,53 +51,51 @@ if uploaded_file is not None:
                     
                     width, height = img.size
                     
-                    # 🎯 काठोकाठ कडक क्रॉपिंग (No White Borders)
-                    front_box = (int(width * 0.04), int(height * 0.258), int(width * 0.49), int(height * 0.745))
-                    back_box = (int(width * 0.51), int(height * 0.258), int(width * 0.96), int(height * 0.745))
+                    # 🎯 कडक आणि टाईट क्रॉपिंग - नको असलेला सर्व पांढरा भाग काढून टाकणे
+                    front_box = (int(width * 0.042), int(height * 0.27), int(width * 0.485), int(height * 0.735))
+                    back_box = (int(width * 0.515), int(height * 0.27), int(width * 0.958), int(height * 0.735))
                     
                     img_front = img.crop(front_box)
                     img_back = img.crop(back_box)
                     
-                    # 📏 ४x६ पेपरच्या रुंदीला (१२०० पिक्सेल) लॉक करणे
+                    # 📏 ४x६ पेपरच्या कडांना चिकटवण्यासाठी पूर्ण १२०० पिक्सेल रुंदी वापरणे (० मार्जिन)
+                    PAPER_WIDTH, PAPER_HEIGHT = 1200, 1800
                     card_w, card_h = 1200, 765
+                    
                     img_front = img_front.resize((card_w, card_h), Image.Resampling.LANCZOS)
                     img_back = img_back.resize((card_w, card_h), Image.Resampling.LANCZOS)
                     
-                    # ४x६ मुख्य कॅनव्हास (१२०० x १८०० उभा फोटो पेपर)
-                    PAPER_WIDTH, PAPER_HEIGHT = 1200, 1800
                     final_canvas = Image.new("RGB", (PAPER_WIDTH, PAPER_HEIGHT), "white")
                     
-                    # 🎯 डाव्या आणि उजव्या कडेला शंभर टक्के चिकटवून पेस्ट (० मार्जिन)
-                    final_canvas.paste(img_front, (0, 50))
+                    # 🎯 डाव्या-उजव्या कडेला ० पिक्सेल (Edge-to-Edge पेस्ट)
+                    final_canvas.paste(img_front, (0, 60))
                     final_canvas.paste(img_back, (0, 930))
                     
-                    # 🔲 काठोकाठ कडक ४ पिक्सेलची काळी बॉर्डर
+                    # 🔲 कटिंगसाठी काठोकाठ ४ पिक्सेलची कडक काळी बॉर्डर
                     from PIL import ImageDraw
                     draw = ImageDraw.Draw(final_canvas)
-                    draw.rectangle([0, 50, card_w - 1, 50 + card_h], outline="black", width=4)
-                    draw.rectangle([0, 930, card_w - 1, 930 + card_h], outline="black", width=4)
+                    draw.rectangle([0, 60, PAPER_WIDTH - 1, 60 + card_h], outline="black", width=4)
+                    draw.rectangle([0, 930, PAPER_WIDTH - 1, 930 + card_h], outline="black", width=4)
                     
-                    # हाय-क्वालिटी पीएनजी मेमरी सेव्हिंग
                     img_byte_arr = io.BytesIO()
                     final_canvas.save(img_byte_arr, format='PNG', dpi=(300, 300))
                     img_byte_arr_raw = img_byte_arr.getvalue()
                     
                     st.success(f"✅ आयुष्मान कार्ड शंभर टक्के काठोकाठ फिट झाले आहे! (User: {st.session_state.user_role})")
                     
-                    # 🎯 ब्राउझरला भाग पाडून एकदम कडक १००% फुल विड्थ प्रिव्ह्यू दाखवण्यासाठी HTML मॅजिक
+                    # 🎯 स्क्रीनवर प्रिव्ह्यू मोठ्या रुंदीत दाखवणे
                     encoded = base64.b64encode(img_byte_arr_raw).decode()
                     st.markdown(
-                        f'<div style="text-align: center;"><img src="data:image/png;base64,{encoded}" style="width: 100%; max-width: 650px; border: 1px solid #ccc; border-radius: 4px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);"/></div>',
+                        f'<div style="text-align: center;"><img src="data:image/png;base64,{encoded}" style="width: 100%; max-width: 650px; border: 1px solid #000; border-radius: 2px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);"/></div>',
                         unsafe_allow_html=True
                     )
                     st.write("")
                     
-                    # डाऊनलोड बटण
                     unique_time = int(time.time())
                     st.download_button(
                         label="📥 कडक ४x६ प्रिंट इमेज (PNG) डाऊनलोड करा",
                         data=img_byte_arr_raw,
-                        file_name=f"Ayushman_FullWidth_{unique_time}.png",
+                        file_name=f"Ayushman_PerfectFit_{unique_time}.png",
                         mime="image/png",
                         use_container_width=True
                     )
