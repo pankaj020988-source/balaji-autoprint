@@ -1,8 +1,8 @@
 import streamlit as st
-from PIL import Image, ImageOps, ImageEnhance
-import io
 import cv2
 import numpy as np
+from PIL import Image, ImageOps, ImageEnhance
+import io
 
 # पेजचे नाव आणि लेआउट सेट करणे
 st.set_page_config(page_title="बालाजी सायबर पॉइंट - इमेज टूल्स", page_icon="📸", layout="centered")
@@ -14,7 +14,7 @@ st.write("---")
 tab1, tab2, tab3, tab4 = st.tabs([
     "📸 पासपोर्ट फोटो शीट मेकर", 
     "📝 सरकारी फॉर्म फोटो-सही रीसायझर", 
-    "🖨️ स्मार्ट आयडी कार्ड प्रिंटर (Aadhaar/PAN)",
+    "🖨️ स्मार्ट आयडी कार्ड प्रिंटर",
     "📸 कॅम-स्कॅनर (CamScanner Perfect)"
 ])
 
@@ -121,10 +121,10 @@ with tab2:
                     st.error(f"❌ चूक झाली: {e}")
 
 # ==========================================
-# 🖨️ टॅब ३: स्मार्ट आयडी कार्ड प्रिंटर (Aadhaar/PAN/Voter)
+# 🖨️ टॅब ३: स्मार्ट आयडी कार्ड प्रिंटर
 # ==========================================
 with tab3:
-    st.markdown("<h4 style='color: #0056b3;'>स्मार्ट आयडी कार्ड प्रिंटर (Aadhaar/PAN/Voter)</h4>", unsafe_allow_html=True)
+    st.markdown("<h4 style='color: #0056b3;'>स्मार्ट आयडी कार्ड प्रिंटर</h4>", unsafe_allow_html=True)
     
     col_id1, col_id2 = st.columns(2)
     with col_id1:
@@ -205,9 +205,7 @@ with tab4:
         )
         
         # --- इमेज प्रोसेसिंग (रोटेशन आणि क्रॉप लाइव्ह प्रिव्ह्यूसह) ---
-        # प्रथम रोटेशन लागू करणे
         if rotation_angle != 0:
-            # ९० डिग्रीच्या पटीत अचूक फिरवण्यासाठी PIL चा वापर (No Blue Lines)
             if rotation_angle == 90:
                 working_img = original_image.transpose(Image.ROTATE_270)
             elif rotation_angle == 180:
@@ -219,7 +217,6 @@ with tab4:
         else:
             working_img = original_image
             
-        # क्रॉपिंग परिमाणे निश्चित करणे
         w, h = working_img.size
         l_px = int(w * (crop_left / 100))
         r_px = w - int(w * (crop_right / 100))
@@ -229,7 +226,6 @@ with tab4:
         if r_px > l_px and b_px > t_px:
             working_img = working_img.crop((l_px, t_px, r_px, b_px))
             
-        # लाइव्ह क्रॉपिंग आणि रोटेशन प्रिव्ह्यू दाखवणे
         st.write("---")
         st.markdown("##### 📐 २. तुमचा लाईव्ह क्रॉप प्रिव्ह्यू (Live Crop Preview):")
         st.image(working_img, caption="स्लायडरनुसार बदललेला फोटो", use_container_width=True)
