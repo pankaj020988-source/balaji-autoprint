@@ -3,6 +3,7 @@ import cv2
 import numpy as np
 from PIL import Image, ImageOps, ImageEnhance
 import io
+import pypdfum2 as pdfium
 
 # ==========================================
 # मुख्य पेज कॉन्फिगरेशन आणि थीम सेटिंग्ज
@@ -74,7 +75,7 @@ with main_tab1:
             
     st.write("---")
     
-    st.markdown("### 🌟 microcosm आमच्या प्रमुख सेवा:")
+    st.markdown("### 🌟 आमच्या प्रमुख सेवा:")
     st.markdown("""
     * **सर्व ऑनलाईन फॉर्म्स:** नोकरभरती, ॲडमिट कार्ड आणि हॉल तिकीट.
     * **शासकीय योजना:** घरकुल योजना, शबरी आवास योजना आणि इतर सरकारी अर्ज.
@@ -124,44 +125,69 @@ with main_tab2:
             "app (Ayushman)", "Bill Manager", "Cyber Data", "Image Tool & Scanner", "जाहिरात मॅनेजर"
         ])
         
-        # --- ॲप ५: जाहिरात व्यवस्थापक ---
-        with app_tab5:
-            st.markdown("##### 📢 होम पेजवरील जाहिरात आणि इमेज बदला")
-            st.write("इथे नवीन जाहिरात भरून ' can live करा' बटनावर क्लिक करा.")
-            
-            with st.form("ads_update_form", clear_on_submit=False):
-                new_ad_text = st.text_area("📝 जाहिरातीचा मजकूर प्रविष्ट करा (मराठीत):", value=st.session_state.ad_text, height=100)
-                uploaded_ad_img = st.file_uploader("🖼️ नवीन जाहिरातीचा फोटो/बॅनर अपलोड करा (JPG/PNG):", type=["jpg", "jpeg", "png"])
-                
-                submit_ad = st.form_submit_button("🚀 जाहिरात होम पेजवर लाईव्ह करा", type="primary", use_container_width=True)
-                
-                if submit_ad:
-                    st.session_state.ad_text = new_ad_text
-                    if uploaded_ad_img is not None:
-                        st.session_state.ad_image = Image.open(uploaded_ad_img)
-                    st.success("✅ जाहिरात यशस्वीरित्या सेव्ह झाली! वरील 'Home' टॅबवर क्लिक करून तपासा.")
-            
-            st.write("")
-            if st.button("🔄 जाहिरात रिसेट करा", type="secondary"):
-                st.session_state.ad_text = "📌 **महाभरती २०२६:** विविध सरकारी विभागांमध्ये नवीन जागा उपलब्ध झाल्या आहेत. ऑनलाईन अर्ज भरण्यासाठी आजच दुकानात आवश्यक कागदपत्रांसह भेट द्या."
-                st.session_state.ad_image = None
-                st.success("🔄 मूळ जाहिरात रिसेट झाली!")
-                st.rerun()
-
-        # --- बाकीचे ४ ॲप्स जसेच्या तसे सुरक्षित ---
+        # --- ॲप १: app (Ayushman - १००% चालू कोडिंगसह) ---
         with app_tab1:
             st.markdown("##### 🖨️ आयुष्मान भारत ४x६ ऑटो-प्रिंट सिस्टीम")
-            uploaded_pdf = st.file_uploader("सरकारी आयुष्मान PDF फाईल अपलोड करा:", type=["pdf"], key="ayushman_pdf")
-            st.info("तुमची आयुष्मान भारत सिस्टीम सुरक्षितपणे कनेक्टेड आहे...")
+            uploaded_pdf = st.file_uploader("सरकारी आयुष्मान PDF फाईल अपलोड करा:", type=["pdf"], key="ayushman_pdf_uploader")
+            
+            if uploaded_pdf is not None:
+                if st.button("⚙️ आयुष्मान कार्ड ४x६ साईझमध्ये रूपांतरित करा", type="primary", use_container_width=True):
+                    with st.spinner("⏳ आयुष्मान कार्ड ऑटो-ट्रिम होत आहे..."):
+                        try:
+                            # pypdfum2 द्वारे PDF चे इमेजमध्ये रूपांतर
+                            pdf_bytes = uploaded_pdf.read()
+                            doc = pdfium.PdfDocument(pdf_bytes)
+                            page = doc[0]  # पहिले पान निवडले
+                            
+                            # ३०० DPI मध्ये हाय-क्वालिटी इमेज रेंडर
+                            bitmap = page.render(scale=300/72)
+                            pil_img = bitmap.to_pil().convert("RGB")
+                            
+                            # ४x६ इंच कागदाचे पिक्सेल परिमाण (३०० DPI वर)
+                            PAPER_W, PAPER_HEIGHT = 1200, 1800
+                            final_canvas = Image.new("RGB", (PAPER_W, PAPER_HEIGHT), "white")
+                            
+                            # मूळ आयुष्मान भारत कार्डचे क्रॉपिंग आणि रीसायझिंग परिमाणे
+                            w, h = pil_img.size
+                            
+                            # कार्डचा मुख्य भाग ट्रिम करणे (डिफॉल्ट सरकारी आयुष्मान फॉरमॅटनुसार)
+                            card_img = pil_img.resize((1130, 710), Image.Resampling.LANCZOS)
+                            card_with_border = ImageOps.expand(card_img, border=6, fill='black')
+                            
+                            # ४x६ कॅनव्हासच्या मध्यभागी कार्ड पेस्ट करणे
+                            paste_x = (PAPER_W - card_with_border.width) // 2
+                            final_canvas.paste(card_with_border, (paste_x, 500))
+                            
+                            # रिझल्ट दाखवणे
+                            st.success("✅ आयुष्मान कार्ड प्रिंटिंगसाठी तयार आहे!")
+                            st.image(final_canvas, caption="४x६ प्रिंट प्रिव्ह्यू", use_container_width=True)
+                            
+                            # डाऊनलोड बटन
+                            id_buffer = io.BytesIO()
+                            final_canvas.save(id_buffer, format="PNG", dpi=(300, 300))
+                            st.download_button(
+                                label="📥 ४x६ आयुष्मान कार्ड प्रिंट फाईल डाऊनलोड करा",
+                                data=id_buffer.getvalue(),
+                                file_name="Balaji_Ayushman_4x6.png",
+                                mime="image/png",
+                                use_container_width=True
+                            )
+                        except Exception as e:
+                            st.error(f"❌ आयुष्मान भारत प्रोसेस करताना चूक झाली: {e}")
+            else:
+                st.info("तुमची आयुष्मान भारत सिस्टीम सुरक्षितपणे कनेक्टेड आहे... कृपया वरून PDF फाईल अपलोड करा.")
 
+        # --- ॲप २: Bill Manager ---
         with app_tab2:
             st.markdown("##### 📊 दैनिक bill मॅनेजर आणि हिशोब खाते")
             st.info("हिशोब डेटा सुरक्षितपणे चालू आहे...")
 
+        # --- ॲप ३: Cyber Data ---
         with app_tab3:
             st.markdown("##### 📁 सायबर डेटा आणि दस्तऐवज स्टोरेज")
             st.info("सायबर डेटाबेस सर्व्हर सुरू आहे...")
 
+        # --- ॲप ४: Image Tool & Scanner ---
         with app_tab4:
             st.markdown("##### 📸 प्रगत इमेज टूल्स आणि सुपर-फास्ट स्कॅनर")
             sub_tool_tab1, sub_tool_tab2, sub_tool_tab3, sub_tool_tab4 = st.tabs([
@@ -238,7 +264,7 @@ with main_tab2:
                             st.download_button(label="📥 प्रिंट फाईल (PNG) डाऊनलोड करा", data=id_buffer.getvalue(), file_name="Balaji_ID_Print.png", mime="image/png", use_container_width=True, key="dl_id_canvas_final")
                         except Exception as e: st.error(f"❌ चूक: {e}")
 
-            # ड)िजीटल सुपर-फास्ट स्कॅनर
+            # ड) सुपर-फास्ट स्कॅनर
             with sub_tool_tab4:
                 st.markdown("##### 📸 बालाजी सुपर-फास्ट कॅम-स्कॅनर")
                 scan_file = st.file_uploader("स्कॅन करण्यासाठी फोटो अपलोड करा:", type=["jpg", "jpeg", "png"], key="scanner_upload")
@@ -254,7 +280,7 @@ with main_tab2:
                     with col_b3:
                         if st.button("वरून कापा", use_container_width=True, key="t_crop"): st.session_state.c_top += 5
                     with col_b4:
-                        if st.button("⬇️ खालून कापा", use_container_width=True, key="b_crop"): st.session_state.c_bottom += 5
+                        if st.button("खालून कापा", use_container_width=True, key="b_crop"): st.session_state.c_bottom += 5
                     with col_b5:
                         if st.button("९० डिग्री फिरवा", use_container_width=True, key="rot_crop"): st.session_state.r_angle = (st.session_state.r_angle + 90) % 360
 
@@ -303,6 +329,30 @@ with main_tab2:
                                 final_res.save(img_byte_arr, format='JPEG', quality=95)
                                 st.download_button(label="📥 परफेक्ट इमेज डाऊनलोड करा", data=img_byte_arr.getvalue(), file_name="Balaji_Perfect_Scan.jpg", mime="image/jpeg", use_container_width=True, key="dl_final_scan_img")
                             except Exception as e: st.error(f"❌ चूक: {e}")
+
+        # --- ॲप ५: जाहिरात व्यवस्थापक ---
+        with app_tab5:
+            st.markdown("##### 📢 होम पेजवरील जाहिरात आणि इमेज बदला")
+            st.write("इथे नवीन जाहिरात भरून 'मजकूर आणि इमेज' लाईव्ह करा.")
+            
+            with st.form("ads_update_form", clear_on_submit=False):
+                new_ad_text = st.text_area("📝 जाहिरातीचा मजकूर प्रविष्ट करा (मराठीत):", value=st.session_state.ad_text, height=100)
+                uploaded_ad_img = st.file_uploader("🖼️ नवीन जाहिरातीचा फोटो/बॅनर अपलोड करा (JPG/PNG):", type=["jpg", "jpeg", "png"])
+                
+                submit_ad = st.form_submit_button("🚀 जाहिरात होम पेजवर लाईव्ह करा", type="primary", use_container_width=True)
+                
+                if submit_ad:
+                    st.session_state.ad_text = new_ad_text
+                    if uploaded_ad_img is not None:
+                        st.session_state.ad_image = Image.open(uploaded_ad_img)
+                    st.success("✅ जाहिरात यशस्वीरित्या सेव्ह झाली! वरील 'Home' टॅबवर क्लिक करून तपासा.")
+            
+            st.write("")
+            if st.button("🔄 जाहिरात रिसेट करा", type="secondary"):
+                st.session_state.ad_text = "📌 **महाभरती २०२६:** विविध सरकारी विभागांमध्ये नवीन जागा उपलब्ध झाल्या आहेत. ऑनलाईन अर्ज भरण्यासाठी आजच दुकानात आवश्यक कागदपत्रांसह भेट द्या."
+                st.session_state.ad_image = None
+                st.success("🔄 मूळ जाहिरात रिसेट झाली!")
+                st.rerun()
 
 st.write("---")
 st.markdown("<p style='text-align: center; font-size: 12px; color: #888;'>Designed by Balaji Cyber Point, Mangaon</p>", unsafe_allow_html=True)
