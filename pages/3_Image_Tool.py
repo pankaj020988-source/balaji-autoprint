@@ -15,7 +15,7 @@ tab1, tab2, tab3, tab4 = st.tabs([
     "📸 पासपोर्ट फोटो शीट मेकर", 
     "📝 सरकारी फॉर्म फोटो-सही रीसायझर", 
     "🖨️ स्मार्ट आयडी कार्ड प्रिंटर",
-    "📸 कॅम-स्कॅनर (CamScanner Perfect)"
+    "📸 कॅम-स्कॅनर (Super Fast)"
 ])
 
 # ==========================================
@@ -172,63 +172,77 @@ with tab3:
                     st.error(f"❌ चूक झाली: {e}")
 
 # ==========================================
-# 📸 टॅब ४: १००% अचूक प्रिव्ह्यू कॅम-स्कॅनर (No Glitch)
+# 📸 टॅब ४: वेगवान वन-क्लिक कॅम-स्कॅनर (Super Fast Automation)
 # ==========================================
 with tab4:
-    st.markdown("<h4 style='color: #E65100;'>📸 बालाजी हाय-टेक कॅम-स्कॅनर (Perfect Preview)</h4>", unsafe_allow_html=True)
-    st.write("१. रोटेशन स्लायडरने फोटो सरळ करा. २. कडा छाटताना तुम्हाला खाली रिअल-टाइममध्ये बदल दिसतील.")
+    st.markdown("<h4 style='color: #E65100;'>📸 बालाजी सुपर-फास्ट कॅम-स्कॅनर</h4>", unsafe_allow_html=True)
+    st.write("झटपट क्रॉप आणि सरळ करण्यासाठी फक्त खालील बटनांवर क्लिक करा. स्लायडर्स सरकवण्याची गरज नाही!")
     st.write("---")
     
+    # क्रॉप आणि रोटेशनसाठी मेमरी स्टेट मॅनेजमेंट
+    if "c_left" not in st.session_state: st.session_state.c_left = 0
+    if "c_right" not in st.session_state: st.session_state.c_right = 0
+    if "c_top" not in st.session_state: st.session_state.c_top = 0
+    if "c_bottom" not in st.session_state: st.session_state.c_bottom = 0
+    if "r_angle" not in st.session_state: st.session_state.r_angle = 0
+
     scan_file = st.file_uploader("स्कॅन करण्यासाठी डॉक्युमेंटचा फोटो अपलोड करा (JPG/PNG):", type=["jpg", "jpeg", "png"], key="scanner_upload")
 
     if scan_file is not None:
         original_image = Image.open(scan_file)
         
-        st.markdown("##### ⚙️ १. सरळ आणि क्रॉप करण्यासाठी नियंत्रणे:")
+        # ⚡ वन-क्लिक कंट्रोल बटन्स पॅनेल
+        st.markdown("##### ⚡ १. वन-क्लिक फास्ट कंट्रोल्स:")
         
-        # १. अचूक रोटेशन स्लायडर (0 ते 360 डिग्री)
-        rotation_angle = st.slider("🔄 फोटो योग्य कोनात फिरवा (Rotate Degree):", 0, 360, 0, step=90, key="rotate_slider_perfect")
-        
-        # २. सुरक्षित लाइव्ह क्रॉपिंग टूल्स
-        col_cp1, col_cp2 = st.columns(2)
-        with col_cp1:
-            crop_left = st.slider("⬅️ डावीकडून कापा (Left %):", 0, 80, 0, key="cp_left")
-            crop_right = st.slider("➡️ उजवीकडून कापा (Right %):", 0, 80, 0, key="cp_right")
-        with col_cp2:
-            crop_top = st.slider("⬆️ वरून कापा (Top %):", 0, 80, 0, key="cp_top")
-            crop_bottom = st.slider("⬇️ खालून कापा (Bottom %):", 0, 80, 0, key="cp_bottom")
-            
+        col_b1, col_b2, col_b3, col_b4, col_b5 = st.columns(5)
+        with col_b1:
+            if st.button("⬅️ डावीकडून कापा", use_container_width=True): st.session_state.c_left += 5
+        with col_b2:
+            if st.button("➡️ उजवीकडून कापा", use_container_width=True): st.session_state.c_right += 5
+        with col_b3:
+            if st.button("⬆️ वरून कापा", use_container_width=True): st.session_state.c_top += 5
+        with col_b4:
+            if st.button("⬇️ खालून कापा", use_container_width=True): st.session_state.c_bottom += 5
+        with col_b5:
+            if st.button("🔄 ९०° फिरवा", use_container_width=True): st.session_state.r_angle = (st.session_state.r_angle + 90) % 360
+
+        if st.button("🔄 सर्व नियंत्रणे रिसेट करा (Reset All)", type="secondary", use_container_width=True):
+            st.session_state.c_left = 0
+            st.session_state.c_right = 0
+            st.session_state.c_top = 0
+            st.session_state.c_bottom = 0
+            st.session_state.r_angle = 0
+            st.rerun()
+
         scan_mode = st.selectbox(
             "🎨 कलर मोड निवडा:", 
             ["मॅजिक कलर (Magic Color)", "कडक ब्लॅक & व्हाईट (B&W)", "मूळ कलर"],
             key="scanner_mode_select"
         )
         
-        # --- इमेज प्रोसेसिंग (रोटेशन आणि क्रॉप लाइव्ह प्रिव्ह्यूसह) ---
-        if rotation_angle != 0:
-            if rotation_angle == 90:
-                working_img = original_image.transpose(Image.ROTATE_270)
-            elif rotation_angle == 180:
-                working_img = original_image.transpose(Image.ROTATE_180)
-            elif rotation_angle == 270:
-                working_img = original_image.transpose(Image.ROTATE_90)
-            else:
-                working_img = original_image
+        # --- फास्ट इमेज प्रोसेसिंग ---
+        # रोटेशन अप्लाय करणे
+        if st.session_state.r_angle != 0:
+            if st.session_state.r_angle == 90: working_img = original_image.transpose(Image.ROTATE_270)
+            elif st.session_state.r_angle == 180: working_img = original_image.transpose(Image.ROTATE_180)
+            elif st.session_state.r_angle == 270: working_img = original_image.transpose(Image.ROTATE_90)
+            else: working_img = original_image
         else:
             working_img = original_image
             
+        # क्रॉपिंग अप्लाय करणे
         w, h = working_img.size
-        l_px = int(w * (crop_left / 100))
-        r_px = w - int(w * (crop_right / 100))
-        t_px = int(h * (crop_top / 100))
-        b_px = h - int(h * (crop_bottom / 100))
+        l_px = int(w * (st.session_state.c_left / 100))
+        r_px = w - int(w * (st.session_state.c_right / 100))
+        t_px = int(h * (st.session_state.c_top / 100))
+        b_px = h - int(h * (st.session_state.c_bottom / 100))
         
         if r_px > l_px and b_px > t_px:
             working_img = working_img.crop((l_px, t_px, r_px, b_px))
             
         st.write("---")
         st.markdown("##### 📐 २. तुमचा लाईव्ह क्रॉप प्रिव्ह्यू (Live Crop Preview):")
-        st.image(working_img, caption="स्लायडरनुसार बदललेला फोटो", use_container_width=True)
+        st.image(working_img, caption="सध्याचा दस्तऐवज आकार", use_container_width=True)
         st.write("---")
         
         if st.button("🚀 ३. मॅजिक स्कॅनिंग फिनिश करा", type="primary", use_container_width=True, key="scan_btn"):
