@@ -3,9 +3,10 @@ import cv2
 import numpy as np
 from PIL import Image, ImageOps, ImageEnhance
 import io
+import PyPDF2
 
 # ==========================================
-# 🌐 मुख्य पेज कॉन्फिगरेशन आणि थीम सेटिंग्ज
+# 🌐 मुख्य पेज कॉन्फिगरेशन आणि थीम設置
 # ==========================================
 st.set_page_config(page_title="बालाजी सायबर पॉईंट - होम", page_icon="🏠", layout="wide")
 
@@ -82,7 +83,7 @@ with main_tab1:
     st.markdown("""
     * **सर्व ऑनलाईन फॉर्म्स:** नोकरभरती, ॲडमिट कार्ड आणि हॉल तिकीट.
     * **शासकीय योजना:** घरकुल योजना, शबरी आवास योजना आणि इतर सरकारी अर्ज.
-    * **ट्रॅव्हल बुकिंग:** देश-विदेशातील फ्लाईट्स, हॉटेल्स आणिूर पॅकेजेस (MakeMyTrip).
+    * **ट्रॅव्हल बुकिंग:** देश-विदेशातील फ्लाईट्स, हॉटेल्स आणि टूर पॅकेजेस (MakeMyTrip).
     * **कर आणि महसूल:** नगरपंचायत प्रॉपर्टी टॅक्स, वीज बिल आणि महाआयटी सेवा.
     * **डिजिटल फोटो टूल्स:** जुने फोटो 4K मध्ये रिस्टोर करणे आणि कॉम्प्युटर रीसायझिंग.
     """)
@@ -99,7 +100,7 @@ with main_tab1:
 # ------------------------------------------
 with main_tab2:
     if not st.session_state.authenticated:
-        st.markdown("<h3 style='color: #D32F2F;'>🔐 सायबर ऑपरेशन्स लॉगिन</h3>", unsafe_allow_html=True)
+        st.markdown("<h3 style='color: #D32F2F;'>🔐 सायबर ऑपरेशन्सログイン</h3>", unsafe_allow_html=True)
         st.write("अंतर्गत टूल्स, हिशोब आणि जाहिराती बदलण्यासाठी तुमचा सुरक्षित पासवर्ड प्रविष्ट करा.")
         
         access_password = st.text_input("🔑 मॅनेजर/स्टाफ पासवर्ड प्रविष्ट करा:", type="password", key="main_admin_password")
@@ -128,7 +129,7 @@ with main_tab2:
             "app (Ayushman)", "Bill Manager", "Cyber Data", "Image Tool & Scanner", "जाहिरात मॅनेजर"
         ])
         
-        # --- ॲप १: app (Ayushman - सुरक्षित पर्यायी मॅनेजमेंटसह) ---
+        # --- ॲप १: app (Ayushman - PyPDF2 वापरून सुरक्षित आणि खात्रीशीर) ---
         with app_tab1:
             st.markdown("##### 🖨️ आयुष्मान भारत ४x६ ऑटो-प्रिंट सिस्टीम")
             uploaded_pdf = st.file_uploader("सरकारी आयुष्मान PDF किंवा प्रतिमेची (Image) फाईल अपलोड करा:", type=["pdf", "jpg", "png", "jpeg"], key="ayushman_pdf_uploader")
@@ -137,28 +138,39 @@ with main_tab2:
                 if st.button("⚙️ आयुष्मान कार्ड ४x६ साईझमध्ये रूपांतरित करा", type="primary", use_container_width=True):
                     with st.spinner("⏳ आयुष्मान कार्ड ऑटो-लेआउट तयार होत आहे..."):
                         try:
-                            # जर फाईल इमेज असेल किंवा pdf असेल तर सुरक्षित हाताळणी
+                            pil_img = None
+                            
+                            # १. जर फाईल थेट इमेज असेल तर
                             if uploaded_pdf.name.lower().endswith(('.png', '.jpg', '.jpeg')):
                                 pil_img = Image.open(uploaded_pdf).convert("RGB")
                             else:
-                                # PDF असल्यास अंतर्गत एरर न येण्यासाठी सुरक्षित मेसेज व प्रक्रिया
-                                try:
-                                    from pdf2image import convert_from_bytes
-                                    pages = convert_from_bytes(uploaded_pdf.read(), 300)
-                                    pil_img = pages[0].convert("RGB")
-                                except:
-                                    st.error("❌ सर्व्हरवर PDF टूल अपूर्ण आहे. कृपया आयुष्मान कार्डचा फोटो किंवा JPG/PNG फाईल अपलोड करा, ती १ सेकंदात ४x६ वर सेट होईल!")
-                                    pil_img = None
+                                # २. जर फाईल PDF असेल तर अंतर्गत PyPDF2 मेमरी वापरून इमेज काढणे
+                                reader = PyPDF2.PdfReader(uploaded_pdf)
+                                first_page = reader.pages[0]
+                                
+                                # PDF मधील पहिली इमेज शोधणे
+                                if "/XObject" in first_page["/Resources"]:
+                                    xObject = first_page["/Resources"]["/XObject"].get_object()
+                                    for obj in xObject:
+                                        if xObject[obj]["/Subtype"] == "/Image":
+                                            data = xObject[obj].get_data()
+                                            pil_img = Image.open(io.BytesIO(data)).convert("RGB")
+                                            break
+                                
+                                # जर वरील पद्धतीने इमेज मिळाली नाही तर मूळ फाईल रीडर बॅकअप
+                                if pil_img is None:
+                                    pil_img = Image.open(uploaded_pdf).convert("RGB")
                             
                             if pil_img is not None:
                                 PAPER_W, PAPER_HEIGHT = 1200, 1800
                                 final_canvas = Image.new("RGB", (PAPER_W, PAPER_HEIGHT), "white")
                                 
+                                # आयुष्मान कार्ड अचूक परिमाणात रीसायझ करणे
                                 card_img = pil_img.resize((1130, 710), Image.Resampling.LANCZOS)
                                 card_with_border = ImageOps.expand(card_img, border=6, fill='black')
                                 
                                 paste_x = (PAPER_W - card_with_border.width) // 2
-                                final_canvas.paste(card_with_border, (paste_x, 500))
+                                final_canvas.paste(card_with_border, (paste_x, 540))
                                 
                                 st.success("✅ आयुष्मान कार्ड प्रिंटिंगसाठी तयार आहे!")
                                 st.image(final_canvas, caption="४x६ प्रिंट प्रिव्ह्यू", use_container_width=True)
@@ -172,6 +184,8 @@ with main_tab2:
                                     mime="image/png",
                                     use_container_width=True
                                 )
+                            else:
+                                st.error("❌ या PDF मधील डेटा वाचता आला नाही. कृपया आयुष्मान कार्डचा सरळ फोटो किंवा स्कॅन कॉपी (JPG/PNG) अपलोड करा!")
                         except Exception as e:
                             st.error(f"❌ प्रोसेस करताना चूक झाली: {e}")
             else:
@@ -184,12 +198,12 @@ with main_tab2:
 
         # --- ॲप ३: Cyber Data ---
         with app_tab3:
-            st.markdown("##### 📁 सायबर डेटा आणि दस्तऐवज儲存")
+            st.markdown("##### 📁 सायबर डेटा आणि दस्तऐवज स्टोरेज")
             st.info("सायबर डेटाबेस सर्व्हर सुरू आहे...")
 
         # --- ॲप ४: Image Tool & Scanner ---
         with app_tab4:
-            st.markdown("##### 📸 प्रगत इमेज टूल्स आणि सुपर-फास्ट स्कॅनर")
+            st.markdown("##### 📸 प्रगत इमेज टूल्स आणि謀ुपर-फास्ट स्कॅनर")
             sub_tool_tab1, sub_tool_tab2, sub_tool_tab3, sub_tool_tab4 = st.tabs([
                 "📸 पासपोर्ट मेकर", "📝 फोटो-सही रीसायझर", "🖨️ स्मार्ट आयडी प्रिंटर", "📸 सुपर-फास्ट स्कॅनर"
             ])
@@ -264,7 +278,7 @@ with main_tab2:
                             st.download_button(label="📥 प्रिंट फाईल (PNG) डाऊनलोड करा", data=id_buffer.getvalue(), file_name="Balaji_ID_Print.png", mime="image/png", use_container_width=True, key="dl_id_canvas_final")
                         except Exception as e: st.error(f"❌ चूक: {e}")
 
-            # ड) डिजिटल सुपर-फास्ट स्कॅनर
+            # ड) सुपर-फास्ट स्कॅनर
             with sub_tool_tab4:
                 st.markdown("##### 📸 बालाजी सुपर-फास्ट कॅम-स्कॅनर")
                 scan_file = st.file_uploader("स्कॅन करण्यासाठी फोटो अपलोड करा:", type=["jpg", "jpeg", "png"], key="scanner_upload")
@@ -288,7 +302,7 @@ with main_tab2:
                         st.session_state.c_left = 0; st.session_state.c_right = 0; st.session_state.c_top = 0; st.session_state.c_bottom = 0; st.session_state.r_angle = 0
                         st.rerun()
 
-                    scan_mode = st.selectbox("🎨ळर मोड निवडा:", ["मॅजिक कलर (Magic Color)", "कडक ब्लॅक & व्हाईट (B&W)", "मूळ कलर"], key="scanner_mode_select")
+                    scan_mode = st.selectbox("🎨 कलर मोड निवडा:", ["मॅजिक收藏 कलर (Magic Color)", "कडक ब्लॅक & व्हाईट (B&W)", "मूळ कलर"], key="scanner_mode_select")
                     
                     if st.session_state.r_angle != 0:
                         if st.session_state.r_angle == 90: working_img = original_image.transpose(Image.ROTATE_270)
@@ -348,7 +362,7 @@ with main_tab2:
             
             st.write("")
             if st.button("🔄 जाहिरात रिसेट करा", type="secondary"):
-                st.session_state.ad_text = "📌 **महाभर體 २०२६:** विविध सरकारी विभागांमध्ये नवीन जागा उपलब्ध झाल्या आहेत. ऑनलाईन अर्ज भरण्यासाठी आजच दुकानात आवश्यक कागदपत्रांसह भेट द्या."
+                st.session_state.ad_text = "📌 **महाभरती २०२६:** विविध सरकारी विभागांमध्ये नवीन जागा उपलब्ध झाल्या आहेत. ऑनलाईन अर्ज भरण्यासाठी आजच दुकानात आवश्यक कागदपत्रांसह भेट द्या."
                 st.session_state.ad_image = None
                 st.success("🔄 मूळ जाहिरात रिसेट झाली!")
                 st.rerun()
