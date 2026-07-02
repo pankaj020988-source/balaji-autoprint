@@ -22,7 +22,7 @@ tab1, tab2, tab3, tab4 = st.tabs([
 # 📸 टॅब १: पासपोर्ट साईझ फोटो शीट मेकर
 # ==========================================
 with tab1:
-    st.markdown("<h4 style='color: #0078D7;'>पासपोर्ट साईझ फोटो ऑटो-शीट जनरेटर (३.५ x ४.५ सेमी)</h4>", unsafe_allow_html=True)
+    st.markdown("<h4 style='color: #0078D7;'>पासपोर्ट साईझ फोटो批次 जनरेटर (३.५ x ४.५ सेमी)</h4>", unsafe_allow_html=True)
     uploaded_image = st.file_uploader("ज्या फोटोचे पासपोर्ट साईझ शेड्स बनवायचे आहेत तो फोटो अपलोड करा:", type=["jpg", "jpeg", "png"], key="pp_uploader")
 
     if uploaded_image is not None:
@@ -172,48 +172,89 @@ with tab3:
                     st.error(f"❌ चूक झाली: {e}")
 
 # ==========================================
-# 📸 नवीन टॅब ४: कॅम-स्कॅनर (CamScanner ओरीजनल कलर)
+# 📸 टॅब ४: प्रगत कॅम-स्कॅनर टूल (ऑटो-सरळ आणि कडक कलर)
 # ==========================================
 with tab4:
-    st.markdown("<h4 style='color: #E65100;'>📸 बालाजी डिजिटल कॅम-स्कॅनर (CamScanner)</h4>", unsafe_allow_html=True)
-    st.write("मोबाईलने काढलेले फोटो अपलोड करा; हे टूल सावली आणि अंधार काढून ओरिजिनल रंग कडक करेल.")
+    st.markdown("<h4 style='color: #E65100;'>📸 प्रगत डिजिटल कॅम-स्कॅनर (CamScanner Master)</h4>", unsafe_allow_html=True)
+    st.write("हे टूल तिरपा आलेला फोटो स्वयंचलितपणे शोधून सरळ करेल आणि मूळ फोटोमधील चेहरा व रंग सुरक्षित ठेवून मागचा अंधार साफ करेल.")
     st.write("---")
     
-    # 🎯 नवीन सुधारित मॅजिक कलर फिल्टर (रंग जिवंत ठेवणारी सिस्टीम)
-    def apply_magic_color(pil_image, mode):
+    def scan_and_straighten_image(pil_image, mode):
+        # PIL चे OpenCV मध्ये रूपांतर करणे
         img = np.array(pil_image.convert('RGB'))
-        img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+        img_bgr = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+        orig = img_bgr.copy()
         
+        # 🎯 १. कडा शोधून फोटो सरळ करणे (Perspective Auto-Crop)
+        gray = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2GRAY)
+        blurred = cv2.GaussianBlur(gray, (5, 5), 0)
+        edged = cv2.Canny(blurred, 30, 120)
+        
+        contours, _ = cv2.findContours(edged, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        contours = sorted(contours, key=cv2.contourArea, reverse=True)
+        
+        warped = orig
+        for c in contours:
+            peri = cv2.arcLength(c, True)
+            approx = cv2.approxPolyDP(c, 0.02 * peri, True)
+            
+            # ४ कडा सापडल्यास आणि तो एरिया पुरेसा मोठा असल्यास सरळ करणे
+            if len(approx) == 4 and cv2.contourArea(c) > (img_bgr.shape[0] * img_bgr.shape[1] * 0.15):
+                pts = approx.reshape(4, 2)
+                rect = np.zeros((4, 2), dtype="float32")
+                
+                s = pts.sum(axis=1)
+                rect[0] = pts[np.argmin(s)]
+                rect[2] = pts[np.argmax(s)]
+                
+                diff = np.diff(pts, axis=1)
+                rect[1] = pts[np.argmin(diff)]
+                rect[3] = pts[np.argmax(diff)]
+                
+                (tl, tr, br, bl) = rect
+                widthA = np.sqrt(((br[0] - bl[0]) ** 2) + ((br[1] - bl[1]) ** 2))
+                widthB = np.sqrt(((tr[0] - tl[0]) ** 2) + ((tr[1] - tl[1]) ** 2))
+                maxWidth = max(int(widthA), int(widthB))
+                
+                heightA = np.sqrt(((tr[0] - br[0]) ** 2) + ((tr[1] - br[1]) ** 2))
+                heightB = np.sqrt(((tl[0] - bl[0]) ** 2) + ((tl[1] - bl[1]) ** 2))
+                maxHeight = max(int(heightA), int(heightB))
+                
+                dst = np.array([
+                    [0, 0],
+                    [maxWidth - 1, 0],
+                    [maxWidth - 1, maxHeight - 1],
+                    [0, maxHeight - 1]], dtype="float32")
+                
+                M = cv2.getPerspectiveTransform(rect, dst)
+                warped = cv2.warpPerspective(orig, M, (maxWidth, maxHeight))
+                break
+        
+        # 🎯 २. फिल्टर आणि एन्हान्समेंट लॉजिक (चेहरा न उडवता कडक स्कॅनिंग)
         if mode == "कडक ब्लॅक & व्हाईट (B&W)":
-            gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-            scanned = cv2.adaptiveThreshold(
-                gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 21, 10
-            )
+            gray_w = cv2.cvtColor(warped, cv2.COLOR_BGR2GRAY)
+            scanned = cv2.adaptiveThreshold(gray_w, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 25, 12)
             return Image.fromarray(scanned)
             
         elif mode == "मॅजिक कलर (Magic Color)":
-            # प्रत्येक चॅनेल (R, G, B) स्वतंत्रपणे स्कॅन करून बॅकग्राउंड पांढरे करणे (सावली नष्ट)
-            channels = cv2.split(img)
-            result_channels = []
-            for ch in channels:
-                dilated = cv2.dilate(ch, np.ones((7,7), np.uint8))
-                bg = cv2.medianBlur(dilated, 21)
-                diff = cv2.absdiff(ch, bg)
-                diff = 255 - diff
-                norm = cv2.normalize(diff, None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_8UC1)
-                result_channels.append(norm)
+            # सौम्य बॅकग्राउंड इल्युमिनेशन कॉम्पेन्सेशन (सावली धुवून काढणे)
+            dilated = cv2.dilate(warped, np.ones((11,11), np.uint8))
+            bg = cv2.GaussianBlur(dilated, (51, 51), 0)
+            diff = cv2.absdiff(warped, bg)
+            clean_bg = 255 - diff
             
-            # चॅनेल्स पुन्हा एकत्र करणे (ओरिजिनल रंग परत आले!)
-            result_img = cv2.merge(result_channels)
-            enhanced_pil = Image.fromarray(cv2.cvtColor(result_img, cv2.COLOR_BGR2RGB))
+            # मूळ फोटोचे टोन टिकवून ठेवण्यासाठी ओरिजिनल आणि क्लीन प्रतिमेचे कडक मिश्रण (Soft Blend)
+            blended = cv2.addWeighted(warped, 0.45, clean_bg, 0.55, 0)
             
-            # कॉन्ट्रास्ट आणि ब्राइटनेस कडक करणे
+            enhanced_pil = Image.fromarray(cv2.cvtColor(blended, cv2.COLOR_BGR2RGB))
+            
+            # अक्षरे ठळक करण्यासाठी हलका कॉन्ट्रास्ट आणि शार्पनेस वाढवणे
             enhancer = ImageEnhance.Contrast(enhanced_pil)
-            enhanced_pil = enhancer.enhance(1.4)
-            brightness = ImageEnhance.Brightness(enhanced_pil)
-            return brightness.enhance(1.1)
+            enhanced_pil = enhancer.enhance(1.25)
+            sharp = ImageEnhance.Sharpness(enhanced_pil)
+            return sharp.enhance(1.2)
             
-        return pil_image
+        return Image.fromarray(cv2.cvtColor(warped, cv2.COLOR_BGR2RGB))
 
     scan_file = st.file_uploader("स्कॅन करण्यासाठी प्रतिमेचा फोटो अपलोड करा (JPG/PNG):", type=["jpg", "jpeg", "png"], key="scanner_upload")
 
@@ -233,9 +274,9 @@ with tab4:
         )
         
         if st.button("🚀 मॅजिक स्कॅनिंग सुरू करा", type="primary", use_container_width=True, key="scan_btn"):
-            with st.spinner("⏳ CamScanner मॅजिक कलर इफेक्ट लागू होत आहे..."):
+            with st.spinner("⏳ सिस्टीम फोटो सरळ करून सावली साफ करत आहे..."):
                 try:
-                    scanned_result = apply_magic_color(original_image, mode=scan_mode)
+                    scanned_result = scan_and_straighten_image(original_image, mode=scan_mode)
                     
                     with col_scan2:
                         st.markdown("**🖨️ स्कॅन झालेला रिझल्ट:**")
@@ -246,9 +287,9 @@ with tab4:
                     
                     st.write("")
                     st.download_button(
-                        label="📥 स्कॅन झालेली कडक रंगीत इमेज डाऊनलोड करा",
+                        label="📥 स्कॅन झालेली कडक इमेज डाऊनलोड करा",
                         data=img_byte_arr.getvalue(),
-                        file_name="Balaji_Magic_Color_Scan.jpg",
+                        file_name="Balaji_Perfect_Scan.jpg",
                         mime="image/jpeg",
                         use_container_width=True,
                         key="scan_dl_btn"
