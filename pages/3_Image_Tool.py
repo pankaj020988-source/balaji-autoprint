@@ -3,7 +3,6 @@ from PIL import Image, ImageOps, ImageEnhance
 import io
 import cv2
 import numpy as np
-from streamlit_cropper import st_cropper
 
 # पेजचे नाव आणि लेआउट सेट करणे
 st.set_page_config(page_title="बालाजी सायबर पॉइंट - इमेज टूल्स", page_icon="📸", layout="centered")
@@ -16,7 +15,7 @@ tab1, tab2, tab3, tab4 = st.tabs([
     "📸 पासपोर्ट फोटो शीट मेकर", 
     "📝 सरकारी फॉर्म फोटो-सही रीसायझर", 
     "🖨️ स्मार्ट आयडी कार्ड प्रिंटर (Aadhaar/PAN)",
-    "📸 कॅम-स्कॅनर (CamScanner Movable)"
+    "📸 कॅम-स्कॅनर (CamScanner Perfect)"
 ])
 
 # ==========================================
@@ -36,7 +35,7 @@ with tab1:
         
         paper_option = st.radio(
             "कोणत्या साईझच्या paper वर फोटो सेट करायचे आहेत?",
-            ("४x६ inch फोटो पेपर (4x6 Sheet)", "पूर्ण A4 सरकारी पेपर (Full A4 Sheet)"),
+            ("४x६ inch फोटो पेपर (4x6 Sheet)", "पूर्ण A4 सरकारी paper (Full A4 Sheet)"),
             key="paper_opt"
         )
         
@@ -173,59 +172,73 @@ with tab3:
                     st.error(f"❌ चूक झाली: {e}")
 
 # ==========================================
-# 📸 टॅब ४: कॅम-स्कॅनर (रोटेशन बटनांसह कडक क्रॉपिंग)
+# 📸 टॅब ४: १००% अचूक प्रिव्ह्यू कॅम-स्कॅनर (No Glitch)
 # ==========================================
 with tab4:
-    st.markdown("<h4 style='color: #E65100;'>📸 बालाजी मूव्हेबल कॅम-स्कॅनर (Rotation Fix)</h4>", unsafe_allow_html=True)
-    st.write("१. फोटो तिरपा/आडवा असल्यास खालील बटणांनी सरळ करा. २. त्यानंतर क्रॉप बॉक्स सेट करा.")
+    st.markdown("<h4 style='color: #E65100;'>📸 बालाजी हाय-टेक कॅम-स्कॅनर (Perfect Preview)</h4>", unsafe_allow_html=True)
+    st.write("१. रोटेशन स्लायडरने फोटो सरळ करा. २. कडा छाटताना तुम्हाला खाली रिअल-टाइममध्ये बदल दिसतील.")
     st.write("---")
     
-    # रोटेशन स्टेट मेमरी मॅनेजमेंट
-    if "rotate_state" not in st.session_state:
-        st.session_state.rotate_state = 0
-
-    scan_file = st.file_uploader("स्कॅन करण्यासाठी प्रतिमेचा फोटो अपलोड करा (JPG/PNG):", type=["jpg", "jpeg", "png"], key="scanner_upload")
+    scan_file = st.file_uploader("स्कॅन करण्यासाठी डॉक्युमेंटचा फोटो अपलोड करा (JPG/PNG):", type=["jpg", "jpeg", "png"], key="scanner_upload")
 
     if scan_file is not None:
         original_image = Image.open(scan_file)
         
-        # 🔄 कडक रोटेशन बटन्स पॅनेल
-        st.markdown("##### 🔄 १. फोटो दिशा बदला (Rotate Tool):")
-        col_r1, col_r2, col_r3 = st.columns([1, 1, 2])
+        st.markdown("##### ⚙️ १. सरळ आणि क्रॉप करण्यासाठी नियंत्रणे:")
         
-        with col_r1:
-            if st.button("⬅️ डावीकडे फिरवा (90°)", use_container_width=True):
-                st.session_state.rotate_state = (st.session_state.rotate_state + 90) % 360
-        with col_r2:
-            if st.button("➡️ उजवीकडे फिरवा (90°)", use_container_width=True):
-                st.session_state.rotate_state = (st.session_state.rotate_state - 90) % 360
-        with col_r3:
-            if st.button("🔄 रिसेट करा (Reset)", use_container_width=True):
-                st.session_state.rotate_state = 0
-                
-        # रोटेशन अप्लाय करणे
-        if st.session_state.rotate_state != 0:
-            rotated_image = original_image.rotate(st.session_state.rotate_state, expand=True)
-        else:
-            rotated_image = original_image
+        # १. अचूक रोटेशन स्लायडर (0 ते 360 डिग्री)
+        rotation_angle = st.slider("🔄 फोटो योग्य कोनात फिरवा (Rotate Degree):", 0, 360, 0, step=90, key="rotate_slider_perfect")
+        
+        # २. सुरक्षित लाइव्ह क्रॉपिंग टूल्स
+        col_cp1, col_cp2 = st.columns(2)
+        with col_cp1:
+            crop_left = st.slider("⬅️ डावीकडून कापा (Left %):", 0, 80, 0, key="cp_left")
+            crop_right = st.slider("➡️ उजवीकडून कापा (Right %):", 0, 80, 0, key="cp_right")
+        with col_cp2:
+            crop_top = st.slider("⬆️ वरून कापा (Top %):", 0, 80, 0, key="cp_top")
+            crop_bottom = st.slider("⬇️ खालून कापा (Bottom %):", 0, 80, 0, key="cp_bottom")
             
-        st.write("---")
-        st.markdown("##### 📐 २. खालील फोटोवरील क्रॉप बॉक्स ओढून परफेक्ट सेट करा:")
-        
-        # जादुई हलणारा क्रॉप बॉक्स
-        cropped_image = st_cropper(rotated_image, realtime_update=True, key="movable_cropper")
-        
-        st.write("---")
         scan_mode = st.selectbox(
-            "🎨 ३. स्कॅनरचा कलर मोड निवडा:", 
+            "🎨 कलर मोड निवडा:", 
             ["मॅजिक कलर (Magic Color)", "कडक ब्लॅक & व्हाईट (B&W)", "मूळ कलर"],
             key="scanner_mode_select"
         )
         
-        if st.button("🚀 ४. मॅजिक स्कॅनिंग आणि डाऊनलोड तयार करा", type="primary", use_container_width=True, key="scan_btn"):
-            with st.spinner("⏳ सिस्टीम निवडलेला भाग कडक साफ करत आहे..."):
+        # --- इमेज प्रोसेसिंग (रोटेशन आणि क्रॉप लाइव्ह प्रिव्ह्यूसह) ---
+        # प्रथम रोटेशन लागू करणे
+        if rotation_angle != 0:
+            # ९० डिग्रीच्या पटीत अचूक फिरवण्यासाठी PIL चा वापर (No Blue Lines)
+            if rotation_angle == 90:
+                working_img = original_image.transpose(Image.ROTATE_270)
+            elif rotation_angle == 180:
+                working_img = original_image.transpose(Image.ROTATE_180)
+            elif rotation_angle == 270:
+                working_img = original_image.transpose(Image.ROTATE_90)
+            else:
+                working_img = original_image
+        else:
+            working_img = original_image
+            
+        # क्रॉपिंग परिमाणे निश्चित करणे
+        w, h = working_img.size
+        l_px = int(w * (crop_left / 100))
+        r_px = w - int(w * (crop_right / 100))
+        t_px = int(h * (crop_top / 100))
+        b_px = h - int(h * (crop_bottom / 100))
+        
+        if r_px > l_px and b_px > t_px:
+            working_img = working_img.crop((l_px, t_px, r_px, b_px))
+            
+        # लाइव्ह क्रॉपिंग आणि रोटेशन प्रिव्ह्यू दाखवणे
+        st.write("---")
+        st.markdown("##### 📐 २. तुमचा लाईव्ह क्रॉप प्रिव्ह्यू (Live Crop Preview):")
+        st.image(working_img, caption="स्लायडरनुसार बदललेला फोटो", use_container_width=True)
+        st.write("---")
+        
+        if st.button("🚀 ३. मॅजिक स्कॅनिंग फिनिश करा", type="primary", use_container_width=True, key="scan_btn"):
+            with st.spinner("⏳ सिस्टीम सावली साफ करून रिझल्ट कडक करत आहे..."):
                 try:
-                    img_np = np.array(cropped_image.convert('RGB'))
+                    img_np = np.array(working_img.convert('RGB'))
                     img_cv = cv2.cvtColor(img_np, cv2.COLOR_RGB2BGR)
                     
                     if scan_mode == "कडक ब्लॅक & व्हाईट (B&W)":
@@ -233,7 +246,7 @@ with tab4:
                         scanned = cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 25, 12)
                         final_res = Image.fromarray(scanned)
                         
-                    elif scan_mode == "मॅजिक Color (Magic Color)":
+                    elif scan_mode == "मॅजिक कलर (Magic Color)":
                         channels = cv2.split(img_cv)
                         result_channels = []
                         for ch in channels:
