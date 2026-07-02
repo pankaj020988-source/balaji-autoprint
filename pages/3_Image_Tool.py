@@ -15,14 +15,14 @@ tab1, tab2, tab3, tab4 = st.tabs([
     "📸 पासपोर्ट फोटो शीट मेकर", 
     "📝 सरकारी फॉर्म फोटो-सही रीसायझर", 
     "🖨️ स्मार्ट आयडी कार्ड प्रिंटर (Aadhaar/PAN)",
-    "📸 कॅम-स्कॅनर (CamScanner)"
+    "📸 कॅम-स्कॅनर (CamScanner Master)"
 ])
 
 # ==========================================
 # 📸 टॅब १: पासपोर्ट साईझ फोटो शीट मेकर
 # ==========================================
 with tab1:
-    st.markdown("<h4 style='color: #0078D7;'>पासपोर्ट साईझ फोटो批次 जनरेटर (३.५ x ४.५ सेमी)</h4>", unsafe_allow_html=True)
+    st.markdown("<h4 style='color: #0078D7;'>पासपोर्ट साईझ फोटो ऑटो-शीट जनरेटर (३.५ x ४.५ सेमी)</h4>", unsafe_allow_html=True)
     uploaded_image = st.file_uploader("ज्या फोटोचे पासपोर्ट साईझ शेड्स बनवायचे आहेत तो फोटो अपलोड करा:", type=["jpg", "jpeg", "png"], key="pp_uploader")
 
     if uploaded_image is not None:
@@ -61,7 +61,7 @@ with tab1:
                     sheet.save(buffer, format="PNG", dpi=(DPI, DPI))
                     buffer.seek(0)
                     
-                    st.success("✅ तुमचे पासपोर्ट फोटो शीट एकदम हाय-क्वालिटीमध्ये तयार झाले आहे!")
+                    st.success("✅ обществе पासपोर्ट फोटो शीट एकदम हाय-क्वालिटीमध्ये तयार झाले आहे!")
                     st.image(sheet, caption="⚙️ प्रिंट प्रिव्ह्यू", use_container_width=True)
                     
                     st.download_button(
@@ -172,122 +172,112 @@ with tab3:
                     st.error(f"❌ चूक झाली: {e}")
 
 # ==========================================
-# 📸 टॅब ४: प्रगत कॅम-स्कॅनर टूल (ऑटो-सरळ आणि कडक कलर)
+# 📸 टॅब ४: मॅन्युअल क्रॉप आणि रोटेशनसह कडक स्कॅनर
 # ==========================================
 with tab4:
-    st.markdown("<h4 style='color: #E65100;'>📸 प्रगत डिजिटल कॅम-स्कॅनर (CamScanner Master)</h4>", unsafe_allow_html=True)
-    st.write("हे टूल तिरपा आलेला फोटो स्वयंचलितपणे शोधून सरळ करेल आणि मूळ फोटोमधील चेहरा व रंग सुरक्षित ठेवून मागचा अंधार साफ करेल.")
+    st.markdown("<h4 style='color: #E65100;'>📸 बालाजी स्मार्ट कॅम-स्कॅनर (Manual Deskew & Crop)</h4>", unsafe_allow_html=True)
+    st.write("जर फोटो जास्त तिरपा असेल किंवा बाजूला जास्त टेबलचा भाग असेल, तर खालील स्लायडर्स वापरून फोटो १ सेकंदात सरळ आणि क्रॉप करा.")
     st.write("---")
     
-    def scan_and_straighten_image(pil_image, mode):
-        # PIL चे OpenCV मध्ये रूपांतर करणे
-        img = np.array(pil_image.convert('RGB'))
-        img_bgr = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
-        orig = img_bgr.copy()
-        
-        # 🎯 १. कडा शोधून फोटो सरळ करणे (Perspective Auto-Crop)
-        gray = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2GRAY)
-        blurred = cv2.GaussianBlur(gray, (5, 5), 0)
-        edged = cv2.Canny(blurred, 30, 120)
-        
-        contours, _ = cv2.findContours(edged, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-        contours = sorted(contours, key=cv2.contourArea, reverse=True)
-        
-        warped = orig
-        for c in contours:
-            peri = cv2.arcLength(c, True)
-            approx = cv2.approxPolyDP(c, 0.02 * peri, True)
-            
-            # ४ कडा सापडल्यास आणि तो एरिया पुरेसा मोठा असल्यास सरळ करणे
-            if len(approx) == 4 and cv2.contourArea(c) > (img_bgr.shape[0] * img_bgr.shape[1] * 0.15):
-                pts = approx.reshape(4, 2)
-                rect = np.zeros((4, 2), dtype="float32")
-                
-                s = pts.sum(axis=1)
-                rect[0] = pts[np.argmin(s)]
-                rect[2] = pts[np.argmax(s)]
-                
-                diff = np.diff(pts, axis=1)
-                rect[1] = pts[np.argmin(diff)]
-                rect[3] = pts[np.argmax(diff)]
-                
-                (tl, tr, br, bl) = rect
-                widthA = np.sqrt(((br[0] - bl[0]) ** 2) + ((br[1] - bl[1]) ** 2))
-                widthB = np.sqrt(((tr[0] - tl[0]) ** 2) + ((tr[1] - tl[1]) ** 2))
-                maxWidth = max(int(widthA), int(widthB))
-                
-                heightA = np.sqrt(((tr[0] - br[0]) ** 2) + ((tr[1] - br[1]) ** 2))
-                heightB = np.sqrt(((tl[0] - bl[0]) ** 2) + ((tl[1] - bl[1]) ** 2))
-                maxHeight = max(int(heightA), int(heightB))
-                
-                dst = np.array([
-                    [0, 0],
-                    [maxWidth - 1, 0],
-                    [maxWidth - 1, maxHeight - 1],
-                    [0, maxHeight - 1]], dtype="float32")
-                
-                M = cv2.getPerspectiveTransform(rect, dst)
-                warped = cv2.warpPerspective(orig, M, (maxWidth, maxHeight))
-                break
-        
-        # 🎯 २. फिल्टर आणि एन्हान्समेंट लॉजिक (चेहरा न उडवता कडक स्कॅनिंग)
-        if mode == "कडक ब्लॅक & व्हाईट (B&W)":
-            gray_w = cv2.cvtColor(warped, cv2.COLOR_BGR2GRAY)
-            scanned = cv2.adaptiveThreshold(gray_w, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 25, 12)
-            return Image.fromarray(scanned)
-            
-        elif mode == "मॅजिक कलर (Magic Color)":
-            # सौम्य बॅकग्राउंड इल्युमिनेशन कॉम्पेन्सेशन (सावली धुवून काढणे)
-            dilated = cv2.dilate(warped, np.ones((11,11), np.uint8))
-            bg = cv2.GaussianBlur(dilated, (51, 51), 0)
-            diff = cv2.absdiff(warped, bg)
-            clean_bg = 255 - diff
-            
-            # मूळ फोटोचे टोन टिकवून ठेवण्यासाठी ओरिजिनल आणि क्लीन प्रतिमेचे कडक मिश्रण (Soft Blend)
-            blended = cv2.addWeighted(warped, 0.45, clean_bg, 0.55, 0)
-            
-            enhanced_pil = Image.fromarray(cv2.cvtColor(blended, cv2.COLOR_BGR2RGB))
-            
-            # अक्षरे ठळक करण्यासाठी हलका कॉन्ट्रास्ट आणि शार्पनेस वाढवणे
-            enhancer = ImageEnhance.Contrast(enhanced_pil)
-            enhanced_pil = enhancer.enhance(1.25)
-            sharp = ImageEnhance.Sharpness(enhanced_pil)
-            return sharp.enhance(1.2)
-            
-        return Image.fromarray(cv2.cvtColor(warped, cv2.COLOR_BGR2RGB))
-
-    scan_file = st.file_uploader("स्कॅन करण्यासाठी प्रतिमेचा फोटो अपलोड करा (JPG/PNG):", type=["jpg", "jpeg", "png"], key="scanner_upload")
+    scan_file = st.file_uploader("स्कॅन करण्यासाठी डॉक्युमेंटचा फोटो अपलोड करा (JPG/PNG):", type=["jpg", "jpeg", "png"], key="scanner_upload")
 
     if scan_file is not None:
+        # मूळ प्रतिमा उघडणे
         original_image = Image.open(scan_file)
+        orig_w, orig_h = original_image.size
         
-        col_scan1, col_scan2 = st.columns(2)
+        # ⚙️ नियंत्रण पॅनेल (कंट्रोल टूल्स)
+        st.markdown("##### 🛠️ फोटो सरळ आणि क्रॉप करण्याचे कडक टूल्स:")
         
-        with col_scan1:
-            st.markdown("**📱 मूळ फोटो:**")
-            st.image(original_image, use_container_width=True)
+        # १. अचूक रोटेशन (फोटो सरळ करण्यासाठी डिग्री स्लायडर)
+        rotation_angle = st.slider("🔄 फोटो सरळ करा (Rotate Degree):", -180, 180, 0, step=1, key="rotate_slider")
+        
+        # २. मॅन्युअल क्रॉपिंग स्लायडर्स (टक्केवारीनुसार चारी कडा छाटणे)
+        st.write("📐 आजूबाजूचा पांढरा/फालतू भाग कापण्यासाठी कडा सेट करा (Crop Borders %):")
+        col_c1, col_c2 = st.columns(2)
+        with col_c1:
+            crop_left = st.slider("⬅️ डावीकडून कापा (Left):", 0, 50, 0, key="c_left")
+            crop_right = st.slider("➡️ उजवीकडून कापा (Right):", 0, 50, 0, key="c_right")
+        with col_c2:
+            crop_top = st.slider("⬆️ वरून कापा (Top):", 0, 50, 0, key="c_top")
+            crop_bottom = st.slider("⬇️ खालून कापा (Bottom):", 0, 50, 0, key="c_bottom")
             
         scan_mode = st.selectbox(
-            "स्कॅनर मोड निवडा:", 
+            "🎨 स्कॅनरचा कलर मोड निवडा:", 
             ["मॅजिक कलर (Magic Color)", "कडक ब्लॅक & व्हाईट (B&W)", "मूळ कलर"],
             key="scanner_mode_select"
         )
         
         if st.button("🚀 मॅजिक स्कॅनिंग सुरू करा", type="primary", use_container_width=True, key="scan_btn"):
-            with st.spinner("⏳ सिस्टीम फोटो सरळ करून सावली साफ करत आहे..."):
+            with st.spinner("⏳ सिस्टीम फोटो सरळ करून एन्हान्स करत आहे..."):
                 try:
-                    scanned_result = scan_and_straighten_image(original_image, mode=scan_mode)
+                    # १. प्रथम फोटो रोटेट (सरळ) करणे
+                    processed_img = original_image
+                    if rotation_angle != 0:
+                        processed_img = processed_img.rotate(-rotation_angle, resample=Image.Resampling.BICUBIC, expand=True)
                     
+                    # २. क्रॉपिंग क्षेत्र निश्चित करणे
+                    w, h = processed_img.size
+                    left_px = int(w * (crop_left / 100))
+                    right_px = w - int(w * (crop_right / 100))
+                    top_px = int(h * (crop_top / 100))
+                    bottom_px = h - int(h * (crop_bottom / 100))
+                    
+                    # सुरक्षित क्रॉपिंग
+                    if right_px > left_px and bottom_px > top_px:
+                        processed_img = processed_img.crop((left_px, top_px, right_px, bottom_px))
+                    
+                    # ३. OpenCV मॅजिक कलर फिल्टर (चेहरा सुरक्षित ठेवून सावली साफ करणे)
+                    img_np = np.array(processed_img.convert('RGB'))
+                    img_cv = cv2.cvtColor(img_np, cv2.COLOR_RGB2BGR)
+                    
+                    if scan_mode == "कडक ब्लॅक & व्हाईट (B&W)":
+                        gray = cv2.cvtColor(img_cv, cv2.COLOR_BGR2GRAY)
+                        scanned = cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 25, 12)
+                        final_res = Image.fromarray(scanned)
+                        
+                    elif scan_mode == "मॅजिक कलर (Magic Color)":
+                        # चॅनेल्स स्वतंत्रपणे स्वच्छ करून सावली धुणे
+                        channels = cv2.split(img_cv)
+                        result_channels = []
+                        for ch in channels:
+                            dilated = cv2.dilate(ch, np.ones((7,7), np.uint8))
+                            bg = cv2.medianBlur(dilated, 21)
+                            diff = cv2.absdiff(ch, bg)
+                            diff = 255 - diff
+                            norm = cv2.normalize(diff, None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_8UC1)
+                            result_channels.append(norm)
+                        
+                        merged_bg = cv2.merge(result_channels)
+                        # मूळ चेहरा आणि गडद रंग टिकवण्यासाठी ६०-४०% सॉफ्ट ब्लेंडिंग
+                        blended = cv2.addWeighted(img_cv, 0.60, merged_bg, 0.40, 0)
+                        
+                        enhanced_pil = Image.fromarray(cv2.cvtColor(blended, cv2.COLOR_BGR2RGB))
+                        
+                        # कडक अक्षरांसाठी हलका कॉन्ट्रास्ट आणि शार्पनेस
+                        enhancer = ImageEnhance.Contrast(enhanced_pil)
+                        enhanced_pil = enhancer.enhance(1.3)
+                        sharp = ImageEnhance.Sharpness(enhanced_pil)
+                        final_res = sharp.enhance(1.2)
+                    else:
+                        final_res = Image.fromarray(cv2.cvtColor(img_cv, cv2.COLOR_BGR2RGB))
+                    
+                    # प्रिव्ह्यू स्क्रीन लेआउट
+                    col_scan1, col_scan2 = st.columns(2)
+                    with col_scan1:
+                        st.markdown("**📱 मूळ फोटो:**")
+                        st.image(original_image, use_container_width=True)
                     with col_scan2:
                         st.markdown("**🖨️ स्कॅन झालेला रिझल्ट:**")
-                        st.image(scanned_result, use_container_width=True)
+                        st.image(final_res, use_container_width=True)
                         
+                    # डाऊनलोड पर्याय
                     img_byte_arr = io.BytesIO()
-                    scanned_result.save(img_byte_arr, format='JPEG', quality=95)
+                    final_res.save(img_byte_arr, format='JPEG', quality=95)
                     
                     st.write("")
                     st.download_button(
-                        label="📥 स्कॅन झालेली कडक इमेज डाऊनलोड करा",
+                        label="📥 स्कॅन झालेली परफेक्ट इमेज डाऊनलोड करा",
                         data=img_byte_arr.getvalue(),
                         file_name="Balaji_Perfect_Scan.jpg",
                         mime="image/jpeg",
