@@ -16,7 +16,7 @@ tab1, tab2, tab3, tab4 = st.tabs([
     "📸 पासपोर्ट फोटो शीट मेकर", 
     "📝 सरकारी फॉर्म फोटो-सही रीसायझर", 
     "🖨️ स्मार्ट आयडी कार्ड प्रिंटर (Aadhaar/PAN)",
-    "📸 कॅम-स्कॅनर (CamScanner Movable)"
+    "📸 कॅम-स्कॅनर (CamScanner)"
 ])
 
 # ==========================================
@@ -173,11 +173,11 @@ with tab3:
                     st.error(f"❌ चूक झाली: {e}")
 
 # ==========================================
-# 📸 टॅब ४: हलणारा क्रॉप बॉक्स (Movable Cropper) आणि स्कॅनर
+# 📸 टॅब ४: कॅम-स्कॅनर (दुरुस्त केलेला सुरक्षित कोड)
 # ==========================================
 with tab4:
-    st.markdown("<h4 style='color: #E65100;'>📸 बालाजी मूव्हेबल कॅम-स्कॅनर (Movable Crop Tool)</h4>", unsafe_allow_html=True)
-    st.write("१. फोटो तिरपा असल्यास प्रथम रोटेट करा. २. फोटोवर दिसणारा बॉक्स माऊसने ओढून अचूक सेट करा.")
+    st.markdown("<h4 style='color: #E65100;'>📸 बालाजी मूव्हेबल कॅम-स्कॅनर</h4>", unsafe_allow_html=True)
+    st.write("१. फोटो तिरपा असल्यास फिरवून सरळ करा. २. फोटोवरील बॉक्स माऊसने ओढून क्रॉप करा.")
     st.write("---")
     
     scan_file = st.file_uploader("स्कॅन करण्यासाठी प्रतिमेचा फोटो अपलोड करा (JPG/PNG):", type=["jpg", "jpeg", "png"], key="scanner_upload")
@@ -185,7 +185,7 @@ with tab4:
     if scan_file is not None:
         original_image = Image.open(scan_file)
         
-        # 🔄 रोटेशन टूल्स आधी (जेणेकरून क्रॉप करण्यापूर्वी फोटो सरळ दिसेल)
+        # रोटेशन टूल
         rotation_angle = st.slider("🔄 १. फोटो सरळ करा (Rotate Degree):", -180, 180, 0, step=1, key="rotate_slider")
         
         if rotation_angle != 0:
@@ -194,10 +194,10 @@ with tab4:
             rotated_image = original_image
             
         st.write("---")
-        st.markdown("##### 📐 २. खालील फोटोवरील क्रॉप बॉक्स माऊसने ओढून परफेक्ट सेट करा (Movable Box):")
+        st.markdown("##### 📐 २. खालील फोटोवरील क्रॉप बॉक्स माऊसने ओढून परफेक्ट सेट करा:")
         
-        # 🎯 जादुई हलणारा क्रॉप बॉक्स - बॉक्सचे प्रमाण मोकळे ठेवले आहे (box_aspect=None)
-        cropped_image = st_cropper(rotated_image, realtime_update=True, box_aspect=None, key="movable_cropper")
+        # 🎯 एरर फिक्स: box_aspect काढले जेणेकरून व्हर्जन मॅचिंगचा त्रास पूर्ण संपेल
+        cropped_image = st_cropper(rotated_image, realtime_update=True, key="movable_cropper")
         
         st.write("---")
         scan_mode = st.selectbox(
@@ -209,7 +209,6 @@ with tab4:
         if st.button("🚀 ४. मॅजिक स्कॅनिंग आणि डाऊनलोड तयार करा", type="primary", use_container_width=True, key="scan_btn"):
             with st.spinner("⏳ सिस्टीम निवडलेला भाग कडक साफ करत आहे..."):
                 try:
-                    # OpenCV द्वारे एन्हान्समेंट लॉजिक (चेहरा आणि मूळ रंग सुरक्षित)
                     img_np = np.array(cropped_image.convert('RGB'))
                     img_cv = cv2.cvtColor(img_np, cv2.COLOR_RGB2BGR)
                     
@@ -234,7 +233,6 @@ with tab4:
                         
                         enhanced_pil = Image.fromarray(cv2.cvtColor(blended, cv2.COLOR_BGR2RGB))
                         
-                        # कॉन्ट्रास्ट आणि शार्पनेस एकदम कडक करणे
                         enhancer = ImageEnhance.Contrast(enhanced_pil)
                         enhanced_pil = enhancer.enhance(1.3)
                         sharp = ImageEnhance.Sharpness(enhanced_pil)
@@ -242,8 +240,7 @@ with tab4:
                     else:
                         final_res = Image.fromarray(cv2.cvtColor(img_cv, cv2.COLOR_BGR2RGB))
                     
-                    # अंतिम निकाल दाखवणे
-                    st.markdown("#### 🖨️ तुमचा फायनल स्कॅन झालेला रिझल्ट:")
+                    st.markdown("#### 🖨️ तुमचा फायनल स्कॅन झालेला रिझ刻त:")
                     st.image(final_res, use_container_width=True)
                     
                     img_byte_arr = io.BytesIO()
