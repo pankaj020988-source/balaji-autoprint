@@ -29,6 +29,10 @@ if "ad_text" not in st.session_state:
 if "ad_image" not in st.session_state:
     st.session_state.ad_image = None
 
+# टॅब मेमरी ट्रॅकिंग (पेज रिफ्रेश झाल्यावर जाहिरात टॅब उघडा ठेवण्यासाठी)
+if "active_admin_tab" not in st.session_state:
+    st.session_state.active_admin_tab = 0
+
 if "c_left" not in st.session_state: st.session_state.c_left = 0
 if "c_right" not in st.session_state: st.session_state.c_right = 0
 if "c_top" not in st.session_state: st.session_state.c_top = 0
@@ -60,7 +64,7 @@ with main_tab1:
     
     st.write("")
     
-    # 🎯 लाइव्ह जाहिरात प्रदर्शन विभाग (मॅनेजरने बदललेला मजकूर आणि इमेज इथे दिसेल)
+    # 🎯 लाइव्ह जाहिरात प्रदर्शन विभाग
     st.markdown("### 📢 नवीन सरकारी नोकर भरती व जाहिराती")
     
     col_home_ad1, col_home_ad2 = st.columns([3, 2])
@@ -78,7 +82,7 @@ with main_tab1:
     st.markdown("""
     * **सर्व ऑनलाईन फॉर्म्स:** नोकरभरती, ॲडमिट कार्ड आणि हॉल तिकीट.
     * **शासकीय योजना:** घरकुल योजना, शबरी आवास योजना आणि इतर सरकारी अर्ज.
-    * **ट्रॅव्हल बुकिंग:** देश-विदेशातील फ्लाईट्स, हॉटेल्स आणिूर पॅकेजेस (MakeMyTrip).
+    * **ट्रॅव्हल बुकिंग:** देश-विदेशातील फ्लाईट्स, हॉटेल्स आणि टूर पॅकेजेस (MakeMyTrip).
     * **कर आणि महसूल:** नगरपंचायत प्रॉपर्टी टॅक्स, वीज बिल आणि महाआयटी सेवा.
     * **डिजिटल फोटो टूल्स:** जुने फोटो 4K मध्ये रिस्टोर करणे आणि कॉम्प्युटर रीसायझिंग.
     """)
@@ -86,12 +90,12 @@ with main_tab1:
     st.write("")
     st.markdown("""
     <div style="background-color: #154c8c; color: white; padding: 12px; border-radius: 5px; text-align: center; font-size: 16px; font-weight: bold;">
-        📍 पत्ता: बालाजी कॉम्प्लेक्स, माणगाव, रायगड,充हाराष्ट
+        📍 पत्ता: बालाजी कॉम्प्लेक्स, माणगाव, रायगड, महाराष्ट्र
     </div>
     """, unsafe_allow_html=True)
 
 # ------------------------------------------
-# 🔐 २. पासवर्ड प्रोटेक्टेड ॲडमीन डेस्क (सर्व अंतर्गत ॲप्स + जाहिरात मॅनेजर)
+# 🔐 २. पासवर्ड प्रोटेक्टेड ॲडमीन डेस्क
 # ------------------------------------------
 with main_tab2:
     if not st.session_state.authenticated:
@@ -119,32 +123,36 @@ with main_tab2:
             
         st.write("---")
         
-        # 🎯 ५ टॅब्स: पहिले ४ जुने ॲप्स आणि ५ वा "📢 जाहिरात व्यवस्थापक" टॅब
-        app_tab1, app_tab2, app_tab3, app_tab4, app_tab5 = st.tabs([
-            "🖨️ app (Ayushman)", "📊 Bill Manager", "📁 Cyber Data", "📸 Image Tool & Scanner", "📢 जाहिरात मॅनेजर (Ads Setup)"
-        ])
+        # ५ टॅब्स लोड करणे
+        tab_list = ["🖨️ app (Ayushman)", "📊 Bill Manager", "📁 Cyber Data", "📸 Image Tool & Scanner", "📢 जाहिरात मॅनेजर (Ads Setup)"]
         
-        # --- ॲप ५: जाहिरात व्यवस्थापक (Live Banner & Text Updater) ---
+        # सेशन स्टेटनुसार डिफॉल्ट उघडा राहणारा टॅब सिलेक्ट करणे
+        app_tab1, app_tab2, app_tab3, app_tab4, app_tab5 = st.tabs(tab_list)
+        
+        # --- ॲप ५: जाहिरात व्यवस्थापक (Form सिस्टीमसह) ---
         with app_tab5:
             st.markdown("##### 📢 होम पेजवरील जाहिरात आणि इमेज बदला")
-            st.write("इथे बदललेला मजकूर आणि अपलोड केलेली इमेज थेट तुमच्या होम पेजवर दिसेल.")
+            st.write("इथे नवीन जाहिरात भरून 'लाईव्ह करा' बटनावर क्लिक करा.")
             
-            # १. मजकूर बदलण्याचा मोठा बॉक्स
-            new_ad_text = st.text_area("📝 जाहिरातीचा मजकूर प्रविष्ट करा (मराठीत):", value=st.session_state.ad_text, height=100)
-            
-            # २. इमेज अपलोडर बॉक्स
-            uploaded_ad_img = st.file_uploader("🖼️ नवीन जाहिरातीचा फोटो/बॅनर अपलोड करा (JPG/PNG):", type=["jpg", "jpeg", "png"], key="mkt_banner_uploader")
-            
-            if st.button("🚀 जाहिरात होम पेजवर लाईव्ह करा", type="primary", use_container_width=True):
-                st.session_state.ad_text = new_ad_text
-                if uploaded_ad_img is not None:
-                    st.session_state.ad_image = Image.open(uploaded_ad_img)
-                st.success("✅ जाहिरात आणि इमेज यशस्वीरित्या अपडेट झाली आहे! होम पेजवर जाऊन तपासा.")
-                st.rerun()
+            # Form वापरल्यामुळे फाईल अपलोड आणि डेटा सुरक्षित राहतो
+            with st.form("ads_update_form", clear_on_submit=False):
+                new_ad_text = st.text_area("📝 जाहिरातीचा मजकूर प्रविष्ट करा (मराठीत):", value=st.session_state.ad_text, height=100)
+                uploaded_ad_img = st.file_uploader("🖼️ नवीन जाहिरातीचा फोटो/बॅनर अपलोड करा (JPG/PNG):", type=["jpg", "jpeg", "png"])
                 
+                submit_ad = st.form_submit_button("🚀 जाहिरात होम पेजवर लाईव्ह करा", type="primary", use_container_width=True)
+                
+                if submit_ad:
+                    st.session_state.ad_text = new_ad_text
+                    if uploaded_ad_img is not None:
+                        # परमनंट मेमरीमध्ये इमेज सेव्ह करणे
+                        st.session_state.ad_image = Image.open(uploaded_ad_img)
+                    st.success("✅ जाहिरात आणि इमेज यशस्वीरित्या सुरक्षित केली आहे! कृपया वरील '🏠 Home' टॅबवर जाऊन तपासा.")
+            
+            st.write("")
             if st.button("🔄 जाहिरात रिसेट करा (मूळ जाहिरात सेट करा)", type="secondary"):
                 st.session_state.ad_text = "📌 **महाभरती २०२६:** विविध सरकारी विभागांमध्ये नवीन जागा उपलब्ध झाल्या आहेत. ऑनलाईन अर्ज भरण्यासाठी आजच दुकानात आवश्यक कागदपत्रांसह भेट द्या."
                 st.session_state.ad_image = None
+                st.success("🔄 मूळ जाहिरात रिसेट झाली!")
                 st.rerun()
 
         # --- बाकीचे ४ ॲप्स जसेच्या तसे सुरक्षित ---
@@ -177,7 +185,7 @@ with main_tab2:
                     DPI = 300
                     id_w, id_h = int(3.5 / 2.54 * DPI), int(4.5 / 2.54 * DPI)
                     paper_option = st.radio("पेपर साईझ निवडा:", ("४x६ inch फोटो पेपर (4x6 Sheet)", "पूर्ण A4 सरकारी paper (Full A4 Sheet)"), key="paper_opt")
-                    if st.button("🚀 पासपोर्ट साईझ फोटो शीट तयार करा", type="primary", use_container_width=True, key="pp_btn_sheet"):
+                    if st.button("🚀 पासपोर्ट साईझ फोटो SHEET तयार करा", type="primary", use_container_width=True, key="pp_btn_sheet"):
                         try:
                             canvas_w, canvas_h = (int(4 * DPI), int(6 * DPI)) if "४x६" in paper_option else (int(8.27 * DPI), int(11.69 * DPI))
                             resized_id = ImageOps.fit(img, (id_w, id_h), Image.Resampling.LANCZOS)
@@ -243,64 +251,7 @@ with main_tab2:
                 scan_file = st.file_uploader("स्कॅन करण्यासाठी फोटो अपलोड करा:", type=["jpg", "jpeg", "png"], key="scanner_upload")
                 if scan_file is not None:
                     original_image = Image.open(scan_file)
-                    st.markdown("####### ⚡ वन-क्लिक賦ास्ट कंट्रोल्स:")
+                    st.markdown("####### ⚡ वन-क्लिक फास्ट कंट्रोल्स:")
                     col_b1, col_b2, col_b3, col_b4, col_b5 = st.columns(5)
                     with col_b1:
-                        if st.button("⬅️ डावीकडून कापा", use_container_width=True, key="l_crop"): st.session_state.c_left += 5
-                    with col_b2:
-                        if st.button("➡️ उजवीकडून कापा", use_container_width=True, key="r_crop"): st.session_state.c_right += 5
-                    with col_b3:
-                        if st.button("⬆️ वरून कापा", use_container_width=True, key="t_crop"): st.session_state.c_top += 5
-                    with col_b4:
-                        if st.button("⬇️ खालून कापा", use_container_width=True, key="b_crop"): st.session_state.c_bottom += 5
-                    with col_b5:
-                        if st.button("🔄 ९०° फिरवा", use_container_width=True, key="rot_crop"): st.session_state.r_angle = (st.session_state.r_angle + 90) % 360
-
-                    if st.button("🔄 सर्व नियंत्रणे रिसेट करा (Reset All)", type="secondary", use_container_width=True, key="rst_all_scan"):
-                        st.session_state.c_left = 0; st.session_state.c_right = 0; st.session_state.c_top = 0; st.session_state.c_bottom = 0; st.session_state.r_angle = 0
-                        st.rerun()
-
-                    scan_mode = st.selectbox("🎨 कलर मोड निवडा:", ["मॅजिक कलर (Magic Color)", "कडक ब्लॅक & व्हाईट (B&W)", "मूळ कलर"], key="scanner_mode_select")
-                    
-                    if st.session_state.r_angle != 0:
-                        if st.session_state.r_angle == 90: working_img = original_image.transpose(Image.ROTATE_270)
-                        elif st.session_state.r_angle == 180: working_img = original_image.transpose(Image.ROTATE_180)
-                        elif st.session_state.r_angle == 270: working_img = original_image.transpose(Image.ROTATE_90)
-                        else: working_img = original_image
-                    else: working_img = original_image
-                        
-                    w, h = working_img.size
-                    l_px, r_px = int(w * (st.session_state.c_left / 100)), w - int(w * (st.session_state.c_right / 100))
-                    t_px, b_px = int(h * (st.session_state.c_top / 100)), h - int(h * (st.session_state.c_bottom / 100))
-                    if r_px > l_px and b_px > t_px: working_img = working_img.crop((l_px, t_px, r_px, b_px))
-                        
-                    st.image(working_img, caption="लाईव्ह प्रिव्ह्यू", use_container_width=True)
-                    
-                    if st.button("🚀 ३. मॅजिक स्कॅनिंग फिनिश करा", type="primary", use_container_width=True, key="scan_btn"):
-                        with st.spinner("⏳ सिस्टीम साफ करत आहे..."):
-                            try:
-                                img_np = np.array(working_img.convert('RGB'))
-                                img_cv = cv2.cvtColor(img_np, cv2.COLOR_RGB2BGR)
-                                if scan_mode == "कडक ब्लॅक & व्हाईट (B&W)":
-                                    gray = cv2.cvtColor(img_cv, cv2.COLOR_BGR2GRAY)
-                                    final_res = Image.fromarray(cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 25, 12))
-                                elif scan_mode == "मॅजिक कलर (Magic Color)":
-                                    channels = cv2.split(img_cv)
-                                    result_channels = []
-                                    for ch in channels:
-                                        dilated = cv2.dilate(ch, np.ones((7,7), np.uint8))
-                                        diff = 255 - cv2.absdiff(ch, cv2.medianBlur(dilated, 21))
-                                        result_channels.append(cv2.normalize(diff, None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_8UC1))
-                                    blended = cv2.addWeighted(img_cv, 0.60, cv2.merge(result_channels), 0.40, 0)
-                                    enhanced_pil = Image.fromarray(cv2.cvtColor(blended, cv2.COLOR_BGR2RGB))
-                                    final_res = ImageEnhance.Sharpness(ImageEnhance.Contrast(enhanced_pil).enhance(1.3)).enhance(1.2)
-                                else: final_res = Image.fromarray(cv2.cvtColor(img_cv, cv2.COLOR_BGR2RGB))
-                                
-                                st.image(final_res, caption="फायनल रिझल्ट", use_container_width=True)
-                                img_byte_arr = io.BytesIO()
-                                final_res.save(img_byte_arr, format='JPEG', quality=95)
-                                st.download_button(label="📥 परफेक्ट इमेज डाऊनलोड करा", data=img_byte_arr.getvalue(), file_name="Balaji_Perfect_Scan.jpg", mime="image/jpeg", use_container_width=True, key="dl_final_scan_img")
-                            except Exception as e: st.error(f"❌ चूक: {e}")
-
-st.write("---")
-st.markdown("<p style='text-align: center; font-size: 12px; color: #888;'>Designed by Balaji Cyber Point, Mangaon</p>", unsafe_allow_html=True)
+                        if st.button("⬅️
