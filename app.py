@@ -64,7 +64,6 @@ with main_tab1:
     
     st.write("")
     
-    # 🎯 लाइव्ह जाहिरात प्रदर्शन विभाग
     st.markdown("### 📢 नवीन सरकारी नोकर भरती व जाहिराती")
     
     col_home_ad1, col_home_ad2 = st.columns([3, 2])
@@ -123,37 +122,42 @@ with main_tab2:
             
         st.write("---")
         
-        # ५ मुख्य टॅब्स (थर्ड-पार्टी लायब्ररीमुक्त)
         app_tab1, app_tab2, app_tab3, app_tab4, app_tab5 = st.tabs([
             "app (Ayushman)", "Bill Manager", "Cyber Data", "Image Tool & Scanner", "जाहिरात मॅनेजर"
         ])
         
-        # --- ॲप १: app (Ayushman - १००% एरर-फ्री फोटो अपलोड सिस्टीम) ---
+        # --- ॲप १: app (Ayushman - ऑटो-ट्रिम आणि क्रॉप सिस्टीम) ---
         with app_tab1:
             st.markdown("##### 🖨️ आयुष्मान भारत ४x६ ऑटो-प्रिंट सिस्टीम")
-            st.write("सर्व्हरवरील तांत्रिक लायब्ररी त्रुटी टाळण्यासाठी, आयुष्मान कार्डचा स्क्रीनशॉट किंवा फोटो (JPG/PNG) अपलोड करा.")
-            uploaded_file = st.file_uploader("📸 आयुष्मान कार्डची इमेज (JPG/PNG) अपलोड करा:", type=["jpg", "png", "jpeg"], key="ayushman_img_uploader")
+            st.write("आयुष्मान कार्डचा फोटो किंवा स्कॅन कॉपी (JPG/PNG) अपलोड करा, सिस्टीम फक्त वरचा मुख्य कार्डचा भाग ट्रिम करून सेट करेल.")
+            uploaded_img_file = st.file_uploader("आयुष्मान कार्डची फाईल अपलोड करा:", type=["jpg", "png", "jpeg"], key="ayushman_img_uploader")
             
-            if uploaded_file is not None:
-                if st.button("⚙️ आयुष्मान कार्ड ४x६ साईझमध्ये सेट करा", type="primary", use_container_width=True):
-                    with st.spinner("⏳ ४x६ ऑटो-लेआउट तयार होत आहे..."):
+            if uploaded_img_file is not None:
+                if st.button("⚙️ आयुष्मान कार्ड ४x६ साईझमध्ये रूपांतरित करा", type="primary", use_container_width=True):
+                    with st.spinner("⏳ आयुष्मान कार्डचा वरचा भाग अचूक क्रॉप केला जात आहे..."):
                         try:
-                            pil_img = Image.open(uploaded_file).convert("RGB")
+                            pil_img = Image.open(uploaded_img_file).convert("RGB")
+                            w, h = pil_img.size
                             
-                            # ४x६ इंच कॅनव्हास (३०० DPI परिमाण)
+                            # 🎯 मॅजिक क्रॉपिंग: संपूर्ण प्रतिमेमधून फक्त वरचा ५२% भाग (मुख्य कार्ड) कापून घेणे
+                            # यामुळे खालचा माहितीचा भाग ऑटोमॅटिक पुसला जाईल
+                            crop_bottom = int(h * 0.52)
+                            card_cropped = pil_img.crop((0, 0, w, crop_bottom))
+                            
+                            # ४x६ इंच कागदाचे अचूक पिक्सेल परिमाण (३०० DPI वर)
                             PAPER_W, PAPER_HEIGHT = 1200, 1800
                             final_canvas = Image.new("RGB", (PAPER_W, PAPER_HEIGHT), "white")
                             
-                            # कार्ड अचूक आकारात ट्रिम आणि रीसायझ करणे
-                            card_img = pil_img.resize((1130, 710), Image.Resampling.LANCZOS)
-                            card_with_border = ImageOps.expand(card_img, border=6, fill='black')
+                            # कार्ड अधिकृत आयुष्मान प्रिंट आकारात रीसायझ करणे
+                            card_resized = card_cropped.resize((1130, 710), Image.Resampling.LANCZOS)
+                            card_with_border = ImageOps.expand(card_resized, border=6, fill='black')
                             
                             # कॅनव्हासच्या मध्यभागी पेस्ट करणे
                             paste_x = (PAPER_W - card_with_border.width) // 2
                             final_canvas.paste(card_with_border, (paste_x, 540))
                             
-                            st.success("✅ आयुष्मान कार्ड प्रिंटिंगसाठी तयार आहे!")
-                            st.image(final_canvas, caption="४x६ प्रिंट प्रिव्ह्यू", use_container_width=True)
+                            st.success("✅ केवळ मुख्य आयुष्मान कार्ड ट्रिम करून प्रिंटसाठी तयार केले आहे!")
+                            st.image(final_canvas, caption="४x६ परफेक्ट प्रिंट प्रिव्ह्यू (फक्त मुख्य कार्ड)", use_container_width=True)
                             
                             id_buffer = io.BytesIO()
                             final_canvas.save(id_buffer, format="PNG", dpi=(300, 300))
@@ -166,27 +170,22 @@ with main_tab2:
                             )
                         except Exception as e:
                             st.error(f"❌ प्रोसेस करताना चूक झाली: {e}")
-            else:
-                st.info("तुमची आयुष्मान भारत सिस्टीम सुरक्षितपणे कनेक्टेड आहे... कृपया वरून फोटो अपलोड करा.")
 
-        # --- ॲप २: Bill Manager ---
+        # --- बाकीचे सर्व ॲप्स जसेच्या तसे सुरक्षित ---
         with app_tab2:
             st.markdown("##### 📊 दैनिक bill मॅनेजर आणि हिशोब खाते")
             st.info("हिशोब डेटा सुरक्षितपणे चालू आहे...")
 
-        # --- ॲप ३: Cyber Data ---
         with app_tab3:
             st.markdown("##### 📁 सायबर डेटा आणि दस्तऐवज स्टोरेज")
             st.info("सायबर डेटाबेस सर्व्हर सुरू आहे...")
 
-        # --- ॲप ४: Image Tool & Scanner ---
         with app_tab4:
             st.markdown("##### 📸 प्रगत इमेज टूल्स आणि सुपर-फास्ट स्कॅनर")
             sub_tool_tab1, sub_tool_tab2, sub_tool_tab3, sub_tool_tab4 = st.tabs([
-                "📸 पासपोर्ट मेकर", "📝 फोटो-सही रीसायझर", "🖨️ स्मार्ट आयडी PRINT", "📸 सुपर-फास्ट स्कॅनर"
+                "📸 पासपोर्ट मेकर", "📝 फोटो-सही रीसायझर", "🖨️ स्मार्ट आयडी प्रिंटर", "📸 सुपर-फास्ट स्कॅनर"
             ])
             
-            # अ) पासपोर्ट मेकर
             with sub_tool_tab1:
                 st.markdown("###### पासपोर्ट साईझ फोटो ऑटो-शीट जनरेटर")
                 uploaded_image = st.file_uploader("फोटो अपलोड करा:", type=["jpg", "jpeg", "png"], key="pp_uploader")
@@ -196,7 +195,7 @@ with main_tab2:
                     DPI = 300
                     id_w, id_h = int(3.5 / 2.54 * DPI), int(4.5 / 2.54 * DPI)
                     paper_option = st.radio("पेपर साईझ निवडा:", ("४x६ inch फोटो पेपर", "पूर्ण A4 सरकारी paper"), key="paper_opt")
-                    if st.button("🚀 पासपोर्ट साईझ फोटो SHEET तयार करा", type="primary", use_container_width=True, key="pp_btn_sheet"):
+                    if st.button("🚀 पासपोर्ट साईझ फोटो SHEET तयार करा", type="primary", use_container_width=True):
                         try:
                             canvas_w, canvas_h = (int(4 * DPI), int(6 * DPI)) if "४x६" in paper_option else (int(8.27 * DPI), int(11.69 * DPI))
                             resized_id = ImageOps.fit(img, (id_w, id_h), Image.Resampling.LANCZOS)
@@ -210,7 +209,6 @@ with main_tab2:
                             st.download_button(label="📥 HD फोटो शीट डाऊनलोड करा", data=buffer.getvalue(), file_name="Balaji_Passport.png", mime="image/png", use_container_width=True, key="dl_pp_btn")
                         except Exception as e: st.error(f"❌ चूक: {e}")
 
-            # ब) फोटो-सही रीसायझर
             with sub_tool_tab2:
                 st.markdown("###### 📝 सरकारी फॉर्म - फोटो व सही कॉम्प्रेसर")
                 tool_mode = st.radio("रीसाईझ प्रकार निवडा:", ("फोटो", "सही"), key="mode_form")
@@ -218,7 +216,7 @@ with main_tab2:
                 if uploaded_file is not None:
                     raw_img = Image.open(uploaded_file).convert("RGB")
                     t_width, t_height, max_kb, label = (160, 200, 20, "Photo") if "फोटो" in tool_mode else (256, 64, 10, "Signature")
-                    if st.button(f"⚡ {label} रीसाईझ करा", type="primary", use_container_width=True, key="compress_btn_form"):
+                    if st.button(f"⚡ {label} रीसाईझ करा", type="primary", use_container_width=True):
                         try:
                             resized_img = raw_img.resize((t_width, t_height), Image.Resampling.LANCZOS)
                             quality = 95
@@ -230,17 +228,16 @@ with main_tab2:
                                 resized_img.save(img_buffer, "JPEG", optimize=True, quality=quality)
                             st.success(f"✅ यशस्वी! साईझ: {len(img_buffer.getvalue()) // 1024} KB")
                             st.image(img_buffer.getvalue())
-                            st.download_button(label="📥 कॉम्प्रेस फाईल डाऊनलोड करा", data=img_buffer.getvalue(), file_name=f"balaji_{label.lower()}.jpg", mime="image/jpeg", use_container_width=True, key="dl_compress_form")
+                            st.download_button(label="📥 कॉम्प्रेस फाईल डाऊनलोड करा", data=img_buffer.getvalue(), file_name=f"balaji_{label.lower()}.jpg", mime="image/jpeg", use_container_width=True)
                         except Exception as e: st.error(f"❌ चूक: {e}")
 
-            # क) स्मार्ट आयडी प्रिंटर
             with sub_tool_tab3:
                 st.markdown("###### 🖨️ स्मार्ट आयडी कार्ड प्रिंटर")
                 col_id1, col_id2 = st.columns(2)
                 with col_id1: front_file = st.file_uploader("१. फ्रंट बाजू फोटो:", type=["jpg", "jpeg", "png"], key="id_front")
                 with col_id2: back_file = st.file_uploader("२. बॅक बाजू फोटो:", type=["jpg", "jpeg", "png"], key="id_back")
                 if front_file and back_file:
-                    if st.button("⚙️ ४x६ प्रिंट लेआउट तयार करा", type="primary", use_container_width=True, key="id_layout_generate"):
+                    if st.button("⚙️ ४x६ प्रिंट लेआउट तयार करा", type="primary", use_container_width=True):
                         try:
                             img_f, img_b = Image.open(front_file).convert("RGB"), Image.open(back_file).convert("RGB")
                             img_f = img_f.resize((1130, 710), Image.Resampling.LANCZOS)
@@ -253,17 +250,15 @@ with main_tab2:
                             id_buffer = io.BytesIO()
                             id_canvas.save(id_buffer, format="PNG", dpi=(300, 300))
                             st.image(id_canvas, use_container_width=True)
-                            st.download_button(label="📥 प्रिंट फाईल (PNG) डाऊनलोड करा", data=id_buffer.getvalue(), file_name="Balaji_ID_Print.png", mime="image/png", use_container_width=True, key="dl_id_canvas_final")
+                            st.download_button(label="📥 प्रिंट फाईल (PNG) डाऊनलोड करा", data=id_buffer.getvalue(), file_name="Balaji_ID_Print.png", mime="image/png", use_container_width=True)
                         except Exception as e: st.error(f"❌ चूक: {e}")
 
-            # ड) सुपर-फास्ट स्कॅनर
             with sub_tool_tab4:
                 st.markdown("##### 📸 बालाजी सुपर-फास्ट कॅम-स्कॅनर")
                 scan_file = st.file_uploader("स्कॅन करण्यासाठी फोटो अपलोड करा:", type=["jpg", "jpeg", "png"], key="scanner_upload")
                 if scan_file is not None:
                     original_image = Image.open(scan_file)
                     st.markdown("####### ⚡ वन-क्लिक कंट्रोल्स:")
-                    
                     col_b1, col_b2, col_b3, col_b4, col_b5 = st.columns(5)
                     with col_b1:
                         if st.button("डावीकडून कापा", use_container_width=True, key="l_crop"): st.session_state.c_left += 5
@@ -304,7 +299,7 @@ with main_tab2:
                                 if scan_mode == "कडक ब्लॅक & व्हाईट (B&W)":
                                     gray = cv2.cvtColor(img_cv, cv2.COLOR_BGR2GRAY)
                                     final_res = Image.fromarray(cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 25, 12))
-                                elif scan_mode == "मॅजिक收藏 कलर (Magic Color)":
+                                elif scan_mode == "मॅजिक कलर (Magic Color)":
                                     channels = cv2.split(img_cv)
                                     result_channels = []
                                     for ch in channels:
@@ -319,19 +314,16 @@ with main_tab2:
                                 st.image(final_res, caption="फायनल रिझल्ट", use_container_width=True)
                                 img_byte_arr = io.BytesIO()
                                 final_res.save(img_byte_arr, format='JPEG', quality=95)
-                                st.download_button(label="📥 परफेक्ट इमेज डाऊनलोड करा", data=img_byte_arr.getvalue(), file_name="Balaji_Perfect_Scan.jpg", mime="image/jpeg", use_container_width=True, key="dl_final_scan_img")
+                                st.download_button(label="📥 परफेक्ट इमेज डाऊनलोड करा", data=img_byte_arr.getvalue(), file_name="Balaji_Perfect_Scan.jpg", mime="image/jpeg", use_container_width=True)
                             except Exception as e: st.error(f"❌ चूक: {e}")
 
-        # --- ॲप ५: जाहिरात व्यवस्थापक ---
+        # --- जाहिरात व्यवस्थापक ---
         with app_tab5:
             st.markdown("##### 📢 होम पेजवरील जाहिरात आणि इमेज बदला")
-            
             with st.form("ads_update_form", clear_on_submit=False):
                 new_ad_text = st.text_area("📝 जाहिरातीचा मजकूर प्रविष्ट करा (मराठीत):", value=st.session_state.ad_text, height=100)
                 uploaded_ad_img = st.file_uploader("🖼️ नवीन जाहिरातीचा फोटो/बॅनर अपलोड करा (JPG/PNG):", type=["jpg", "jpeg", "png"])
-                
                 submit_ad = st.form_submit_button("🚀 जाहिरात होम पेजवर लाईव्ह करा", type="primary", use_container_width=True)
-                
                 if submit_ad:
                     st.session_state.ad_text = new_ad_text
                     if uploaded_ad_img is not None:
@@ -340,7 +332,7 @@ with main_tab2:
             
             st.write("")
             if st.button("🔄 जाहिरात रिसेट करा", type="secondary"):
-                st.session_state.ad_text = "📌 **महाभरती २०२क्षा:** विविध सरकारी विभागांमध्ये नवीन जागा उपलब्ध झाल्या आहेत. ऑनलाईन अर्ज भरण्यासाठी आजच दुकानात आवश्यक कागदपत्रांसह भेट द्या."
+                st.session_state.ad_text = "📌 **महाभरती २०२६:** विविध सरकारी विभागांमध्ये नवीन जागा उपलब्ध झाल्या आहेत. ऑनलाईन अर्ज भरण्यासाठी आजच दुकानात आवश्यक कागदपत्रांसह भेट द्या."
                 st.session_state.ad_image = None
                 st.success("🔄 मूळ जाहिरात रिसेट झाली!")
                 st.rerun()
