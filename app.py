@@ -1,109 +1,110 @@
 import streamlit as st
-import fitz  # PyMuPDF
-from PIL import Image, ImageOps, ImageDraw
+from PIL import Image, ImageOps
 import io
-import time
+import fitz  # PyMuPDF
 
 # ==========================================
-# 🌐 पेज सेटिंग (बालाजी सायबर पॉईंट स्पेशल)
+# 🌐 १. लेआउट कॉन्फिगरेशन
 # ==========================================
-st.set_page_config(page_title="श्री बालाजी सायबर पॉईंट - आयुष्मान 4X6 कंव्हर्टर", page_icon="🖨️", layout="wide")
+st.set_page_config(
+    page_title="बालाजी सायबर पॉइंट - डिजिटल टूलकिट", 
+    page_icon="🖥️", 
+    layout="wide"
+)
 
 # ==========================================
-# ✂️ ऑटो-ट्रिमिंग (पांढरी जागा गायब करणारी सिस्टीम)
-# ==========================================
-def auto_crop_card(card_img):
-    """कार्डच्या आजूबाजूची सर्व शुद्ध पांढरी जागा स्वयंचलितपणे कापून टाकते"""
-    gray = card_img.convert("L")
-    inverted = ImageOps.invert(gray)
-    bbox = inverted.getbbox()
-    if bbox:
-        return card_img.crop(bbox)
-    return card_img
-
-# ==========================================
-# 📢 मुख्य हेडर आणि लेआउट
+# 🎨 २. कॉर्पोरेट UI डिझाईन (CSS)
 # ==========================================
 st.markdown("""
-<div style="background: linear-gradient(135deg, #002f6c 0%, #0056b3 100%); padding: 20px; border-radius: 12px; text-align: center; color: white; border: 2px solid #d4af37; margin-bottom: 20px;">
-    <h2 style="color: #e5be3b; margin: 0;">श्री बालाजी सायबर पॉईंट, माणगाव</h2>
-    <h4 style="margin-top: 5px; font-size: 18px; opacity: 0.95;">आयुष्मान भारत PDF ते 4X6 कडक प्रिंट कंव्हर्टर</h4>
-</div>
+    <style>
+    .block-container {
+        padding-top: 1.5rem !important;
+        padding-bottom: 1.5rem !important;
+        padding-left: 2rem !important;
+        padding-right: 2rem !important;
+    }
+    
+    .main-header {
+        font-size: 26px !important;
+        font-weight: 800 !important;
+        color: #0F172A !important;
+        text-align: center;
+        margin-bottom: 20px;
+        letter-spacing: 0.5px;
+    }
+    </style>
 """, unsafe_allow_html=True)
 
-st.success("🔓 **सर्व टूल्स unlocked आहेत!** कोणतीही PDF टाका आणि १-क्लिकमध्ये ४x६ प्रिंट शीट डाऊनलोड करा.")
-st.write("---")
+# मुख्य शीर्षक
+st.markdown("<div class='main-header'>श्री बालाजी सायबर पॉईंट - आयुष्मान भारत 4x6 प्रिंट प्रोसेसिंग</div>", unsafe_allow_html=True)
 
-# 📁 फाईल अपलोडर
-uploaded_file = st.file_uploader("तुमची आयुष्मान भारत सरकारी PDF फाईल इथे अपलोड करा:", type=["pdf"])
+# ==========================================
+# 🛠️ ३. मुख्य कार्यप्रणाली (Ayushman 4x6 Layout)
+# ==========================================
+col_a1, col_a2 = st.columns([2, 1])
+with col_a1:
+    pdf_file = st.file_uploader("आयुष्मान भारत PDF फाईल अपलोड करा:", type=["pdf"], key="ayushman_pdf_uploader")
+with col_a2:
+    pdf_password = st.text_input("PDF पासवर्ड (असेल तर):", type="password", key="ayushman_pass_input")
 
-if uploaded_file is not None:
-    if st.button("🚀 कडक ४x६ प्रिंट लेआउट तयार करा", type="primary", use_container_width=True):
-        with st.spinner("⏳ स्वयंचलित तंत्रज्ञानाद्वारे पांढरा भाग काढून लेआउट फिक्स होत आहे..."):
+if pdf_file is not None:
+    if st.button("4x6 प्रिंटींग लेआउट जनरेट करा", type="primary", use_container_width=True, key="btn_ayushman_gen"):
+        with st.spinner("प्रक्रिया सुरू आहे..."):
             try:
-                # कॅशे क्लिअर करणे
-                st.cache_data.clear()
-                
-                pdf_bytes = uploaded_file.read()
+                pdf_bytes = pdf_file.read()
                 doc = fitz.open(stream=pdf_bytes, filetype="pdf")
                 
-                if len(doc) < 1:
-                    st.error("मजकूर सापडला नाही! कृपया खरी पीडीएफ अपलोड करा.")
-                else:
-                    page = doc[0]
-                    # ४०० DPI वर हाय-डेफिनिशन कडक रेंडरिंग
-                    pix = page.get_pixmap(dpi=400)
-                    img_data = pix.tobytes("png")
-                    img = Image.open(io.BytesIO(img_data))
-                    
-                    width, height = img.size
-                    
-                    # १. मूळ पीडीएफ मधून दोन्ही बाजूंचा सुरक्षित रफ क्रॉप
-                    rough_front = img.crop((int(width * 0.03), int(height * 0.12), int(width * 0.50), int(height * 0.88)))
-                    rough_back = img.crop((int(width * 0.50), int(height * 0.12), int(width * 0.97), int(height * 0.88)))
-                    
-                    # २. जादुई ऑटो-ट्रिम: आजूबाजूची सर्व एक्स्ट्रा पांढरी जागा स्वयंचलितपणे नष्ट!
-                    img_front = auto_crop_card(rough_front)
-                    img_back = auto_crop_card(rough_back)
-                    
-                    # ३. ४x६ कॅनव्हास आणि कार्डची साईझ कडांना मॅच करण्यासाठी परफेक्ट लॉक
-                    PAPER_WIDTH, PAPER_HEIGHT = 1200, 1800
-                    card_w, card_h = 1200, 765
-                    
-                    img_front = img_front.resize((card_w, card_h), Image.Resampling.LANCZOS)
-                    img_back = img_back.resize((card_w, card_h), Image.Resampling.LANCZOS)
-                    
-                    final_canvas = Image.new("RGB", (PAPER_WIDTH, PAPER_HEIGHT), "white")
-                    
-                    # डाव्या-उजव्या कडेला ० मार्जिनवर तंतोतंत पेस्ट (Edge-to-Edge)
-                    final_canvas.paste(img_front, (0, 80))
-                    final_canvas.paste(img_back, (0, 950))
-                    
-                    # काठोकाठ कडक ५ पिक्सेलची काळी बॉर्डर
-                    draw = ImageDraw.Draw(final_canvas)
-                    draw.rectangle([0, 80, PAPER_WIDTH - 1, 80 + card_h], outline="black", width=5)
-                    draw.rectangle([0, 950, PAPER_WIDTH - 1, 950 + card_h], outline="black", width=5)
-                    
-                    img_byte_arr = io.BytesIO()
-                    final_canvas.save(img_byte_arr, format='PNG', dpi=(400, 400))
-                    img_byte_arr_raw = img_byte_arr.getvalue()
-                    
-                    st.success("✅ आयुष्मान कार्ड आता काठोकाठ फिट झाले असून क्वालिटी कडक झाली आहे!")
-                    
-                    # स्क्रीनवर प्रिव्ह्यू
-                    st.image(final_canvas, caption="४x६ कडक प्रिंट प्रिव्ह्यू (ऑटो-फिट मास्टर)", width=650)
-                    st.write("")
-                    
-                    unique_time = int(time.time())
-                    st.download_button(
-                        label="📥 कडक ४x६ प्रिंट इमेज (PNG) डाऊनलोड करा",
-                        data=img_byte_arr_raw,
-                        file_name=f"Ayushman_AutoFit_HD_{unique_time}.png",
-                        mime="image/png",
-                        use_container_width=True
-                    )
+                if doc.is_encrypted:
+                    if pdf_password:
+                        auth_success = doc.authenticate(pdf_password)
+                        if not auth_success:
+                            st.error("चुकीचा पासवर्ड प्रविष्ट केला आहे.")
+                            st.stop()
+                    else:
+                        st.warning("कृपया PDF पासवर्ड टाका.")
+                        st.stop()
+
+                page = doc[0]
+                pix = page.get_pixmap(dpi=300)
+                img_data = pix.tobytes("png")
+                full_img = Image.open(io.BytesIO(img_data)).convert("RGB")
+                
+                w, h = full_img.size
+                
+                # आयुष्मान भारत कार्ड क्रॉप कॉर्डिनेट्स
+                crop_front = full_img.crop((int(w * 0.05), int(h * 0.55), int(w * 0.49), int(h * 0.88)))
+                crop_back = full_img.crop((int(w * 0.51), int(h * 0.55), int(w * 0.95), int(h * 0.88)))
+                
+                PAPER_W, PAPER_HEIGHT = 1200, 1800
+                final_canvas = Image.new("RGB", (PAPER_W, PAPER_HEIGHT), "white")
+
+                card_w, card_h = 1050, 650
+                front_resized = crop_front.resize((card_w, card_h), Image.Resampling.LANCZOS)
+                back_resized = crop_back.resize((card_w, card_h), Image.Resampling.LANCZOS)
+
+                front_bordered = ImageOps.expand(front_resized, border=4, fill='black')
+                back_bordered = ImageOps.expand(back_resized, border=4, fill='black')
+
+                paste_x = (PAPER_W - front_bordered.width) // 2
+                
+                final_canvas.paste(front_bordered, (paste_x, 150))
+                final_canvas.paste(back_bordered, (paste_x, 920))
+
+                st.image(final_canvas, caption="4x6 Print Preview", use_container_width=True)
+                
+                id_buffer = io.BytesIO()
+                final_canvas.save(id_buffer, format="PNG", dpi=(300, 300))
+                
+                st.download_button(
+                    label="4x6 PNG डाऊनलोड करा", 
+                    data=id_buffer.getvalue(), 
+                    file_name="Ayushman_4x6_Layout.png", 
+                    mime="image/png", 
+                    use_container_width=True,
+                    key="dl_ayushman_btn"
+                )
             except Exception as e:
-                st.error(f"अडचण आली: {e}")
+                st.error(f"त्रुटी: {e}")
 
 st.write("---")
-st.markdown("<p style='text-align: center; font-size: 13px; color: #555; font-weight: bold;'>📍 श्री बालाजी सायबर पॉईंट, माणगाव | 📞 संपर्क: 8007365051</p>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center; font-size: 12px; color: #94A3B8;'>श्री बालाजी सायबर पॉईंट, माणगाव, रायगड</p>", unsafe_allow_html=True)
