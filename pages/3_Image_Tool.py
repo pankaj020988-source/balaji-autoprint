@@ -6,22 +6,78 @@ import cv2
 import numpy as np
 
 # ==========================================
-# 🌐 १. पेज कॉन्फिगरेशन आणि लेआउट
+# 🌐 १. वाईड लेआउट कॉन्फिगरेशन (Full Page Width)
 # ==========================================
-st.set_page_config(page_title="बालाजी सायबर पॉइंट - इमेज टूल्स", page_icon="📸", layout="centered")
+st.set_page_config(
+    page_title="बालाजी सायबर पॉइंट - इमेज टूल्स", 
+    page_icon="📸", 
+    layout="wide"  # 🎯 पूर्ण स्क्रीनचा वापर करण्यासाठी wide लेआउट
+)
 
-st.markdown("<h2 style='text-align: center; color: #0078D7;'>📸 श्री बालाजी सायबर पॉईंट - डिजिटल इमेज पोर्टल्स</h2>", unsafe_allow_html=True)
+# ==========================================
+# 🎨 २. सर्व टॅब्स एकाच वेळी दिसण्यासाठी प्रोफेशनल CSS
+# ==========================================
+st.markdown("""
+    <style>
+    /* मुख्य कन्टेनर मार्जिन कमी करणे */
+    .block-container {
+        padding-top: 1.5rem;
+        padding-bottom: 1.5rem;
+        padding-left: 2rem;
+        padding-right: 2rem;
+    }
+    
+    /* टॅब यादी पूर्ण स्क्रीनवर बसवणे */
+    div[data-baseweb="tab-list"] {
+        gap: 8px;
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+    }
+    
+    /* प्रत्येक टॅबचे सुंदर आणि आकर्षक डिझाईन */
+    button[data-baseweb="tab"] {
+        flex: 1 !important;
+        text-align: center !important;
+        font-size: 15px !important;
+        font-weight: 700 !important;
+        border-radius: 8px 8px 0px 0px !important;
+        padding: 12px 8px !important;
+        background-color: #f1f5f9 !important;
+        color: #1e293b !important;
+        border: 1px solid #cbd5e1 !important;
+        box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.05);
+        transition: all 0.3s ease;
+    }
+    
+    /* हॉव्हर (माऊस नेल्यावर) इफेक्ट */
+    button[data-baseweb="tab"]:hover {
+        background-color: #e2e8f0 !important;
+        color: #0f172a !important;
+    }
+    
+    /* सिलेक्ट केलेल्या (Active) टॅबचा कडक रंग */
+    button[data-baseweb="tab"][aria-selected="true"] {
+        background: linear-gradient(135deg, #0078D7 0%, #0056b3 100%) !important;
+        color: #ffffff !important;
+        border: 1px solid #0056b3 !important;
+        box-shadow: 0px 4px 8px rgba(0, 120, 215, 0.3);
+    }
+    </style>
+""", unsafe_allow_html=True)
+
+st.markdown("<h2 style='text-align: center; color: #0078D7; font-weight: 800;'>📸 श्री बालाजी सायबर पॉईंट - डिजिटल इमेज पोर्टल्स</h2>", unsafe_allow_html=True)
 st.success("🔓 **सर्व टूल्स unlocked आहेत!** कोणताही पासवर्ड न टाकता खालील सर्व टूल्स वापरा.")
 st.write("---")
 
 # ==========================================
-# 🛠️ २. चार मुख्य टूल्स (टॅब्स व्याख्या)
+# 🛠️ ३. चार मुख्य टूल्स (एकाच लाईनमध्ये बसणारे)
 # ==========================================
 tab1, tab2, tab3, tab4 = st.tabs([
-    "🖨️ ओरिजिनल आधार कार्ड कटर (Precision Cut)", 
-    "📸 पासपोर्ट फोटो शीट मेकर (९ फोटो)", 
-    "📝 सरकारी फॉर्म फोटो-सही रीसायझर", 
-    "📸 कॅम-स्कॅनर (Photo & PDF Support)"
+    "🖨️ आधार कटर (Precision Cut)", 
+    "📸 पासपोर्ट फोटो मेकर (९ फोटो)", 
+    "📝 फोटो-सही रीसायझर", 
+    "📸 कॅम-स्कॅनर (Photo & PDF)"
 ])
 
 # ------------------------------------------
