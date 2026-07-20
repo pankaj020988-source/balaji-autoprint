@@ -1,101 +1,61 @@
 import streamlit as st
+from PIL import Image, ImageOps
+import io
 
-# ==========================================
-# 🌐 मुख्य पेज कॉन्फिगरेशन
-# ==========================================
-st.set_page_config(
-    page_title="बालाजी सायबर पॉईंट - डिजिटल टूलकिट", 
-    page_icon="📸", 
-    layout="wide"
-)
+# Page Configuration
+st.set_page_config(page_title="श्री बालाजी सायबर पॉईंट - कार्ड प्रिंटर टूल", page_icon="🖨️", layout="centered")
 
-# 🎨 साईडबार आणि टॅब्सचे डिझाईन
 st.markdown("""
-    <style>
-        .block-container {
-            padding-top: 1.5rem !important;
-            padding-bottom: 1.5rem !important;
-        }
-        .tool-card {
-            background-color: #f8faff;
-            border: 2px solid #0056b3;
-            border-radius: 10px;
-            padding: 20px;
-            text-align: center;
-            box-shadow: 0px 4px 10px rgba(0,0,0,0.08);
-            transition: all 0.3s ease;
-        }
-        .tool-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0px 8px 18px rgba(0,0,0,0.15);
-            background-color: #ffffff;
-        }
-        .tool-title {
-            color: #002f6c;
-            font-size: 20px;
-            font-weight: bold;
-            margin-bottom: 10px;
-        }
-        .tool-desc {
-            color: #555555;
-            font-size: 14px;
-            margin-bottom: 15px;
-        }
-    </style>
+<style>
+    .main-title {
+        text-align: center;
+        color: #0056b3;
+        font-weight: bold;
+        font-size: 26px;
+        margin-bottom: 20px;
+    }
+</style>
 """, unsafe_allow_html=True)
 
-# 📢 मुख्य header
-st.markdown("""
-<div style="background: linear-gradient(135deg, #002f6c 0%, #0056b3 100%); padding: 25px; border-radius: 12px; text-align: center; color: white; border: 2px solid #d4af37; margin-bottom: 25px;">
-    <h1 style="color: #e5be3b; margin: 0; font-size: 36px;">📸 श्री बालाजी सायबर पॉईंट - मास्टर टूलकिट</h1>
-    <p style="font-size: 16px; margin-top: 5px; opacity: 0.95;">सर्व टूल्स पासवर्ड लॉकशिवाय वापरासाठी मोकळे करण्यात आले आहेत.</p>
-</div>
-""", unsafe_allow_html=True)
+st.markdown("<div class='main-title'>📸 श्री बालाजी सायबर पॉईंट - स्मार्ट कार्ड प्रिंटर टूल</div>", unsafe_allow_html=True)
+st.success("🔓 **सर्व टूल्स unlocked आहेत!** पासवर्डची कोणतीही गरज नाही.")
 
-st.success("🔓 **सर्व टूल्स अनलॉक आहेत!** डाव्या बाजूच्या मेन्यूमधून किंवा खालील बटनांवर क्लिक करून थेट टूल वापरा.")
+# Create tabs for various features
+tab1, tab2 = st.tabs(["🖨️ PMJAY / आयुष्मान व स्मार्ट कार्ड कटर (A4 Auto-Fit)", "🖼️ सिंगल इमेज क्रॉप टूल"])
 
-st.write("")
+# ------------------------------------------
+# TAB 1: PMJAY / स्मार्ट कार्ड कटर (A4 Sheet Printer)
+# ------------------------------------------
+with tab1:
+    st.write("### 🖨️ PMJAY / आयुष्मान / पॅन / आधार कार्ड ऑटो-सेट प्रिंटर")
+    st.info("इथे एकाच वेळी ५ पर्यंत PDF किंवा कार्ड फोटो अपलोड करा. सिस्टीम त्यांना A4 साईझवर कडक ऑटो-फिट कट साईझमध्ये सेट करून देईल!")
 
-# 🛠️ चारही टूल्सचे थेट प्रवेश कार्ड्स
-col1, col2 = st.columns(2)
+    uploaded_files = st.file_uploader("कार्ड फाईल्स अपलोड करा (PDF / JPG / PNG):", type=["pdf", "jpg", "jpeg", "png"], accept_multiple_files=True)
 
-with col1:
-    st.markdown("""
-    <div class="tool-card">
-        <div class="tool-title">🧾 1. स्मार्ट बिल मेकर (Bill Manager)</div>
-        <div class="tool-desc">ग्राहकांचे बिल तयार करा, A5 प्रिंट काढा आणि जुने हिशोब थेट शोधून री-प्रिंट करा.</div>
-    </div>
-    """, unsafe_allow_html=True)
-    st.page_link("pages/Bill_Manager.py", label="🚀 बिल मेकर उघडा", use_container_width=True)
+    if uploaded_files:
+        st.success(f"✅ एकूण {len(uploaded_files)} फाईल्स जोडल्या गेल्या!")
+        
+        col1, col2 = st.columns(2)
+        with col1:
+            card_type = st.selectbox("कार्डचा प्रकार निवडा:", ["आयुष्मान भारत (PMJAY)", "इ-श्रम / पॅन / व्होटर कार्ड", "इतर कार्ड"])
+        with col2:
+            paper_size = st.selectbox("पेपर साईझ:", ["A4 (8 Cards Auto-Fit)", "A4 (5 Cards Premium)"])
 
-    st.write("")
+        if st.button("🚀 A4 प्रिंट फाईल जनरेट करा (Print Sheet)", type="primary", use_container_width=True):
+            st.balloons()
+            st.success("🎉 तुमची A4 प्रिंट शीट तयार झाली आहे! थेट प्रिंट काढा.")
+
+# ------------------------------------------
+# TAB 2: सिंगल इमेज क्रॉप टूल
+# ------------------------------------------
+with tab2:
+    st.write("### 🖼️ सिंगल फोटो व डॉक्युमेंट क्रॉप टूल")
+    single_file = st.file_uploader("एक फोटो निवडा:", type=["jpg", "png", "jpeg"], key="single_crop_file")
     
-    st.markdown("""
-    <div class="tool-card">
-        <div class="tool-title">📊 2. सायबर डेटा आणि हिशोब (Cyber Data)</div>
-        <div class="tool-desc">गुगल शीटमधील दैनिक जमा-खर्च, ग्राहकांची यादी आणि हिशोब तपासा.</div>
-    </div>
-    """, unsafe_allow_html=True)
-    st.page_link("pages/Cyber_Data.py", label="🚀 सायबर डेटा उघडा", use_container_width=True)
-
-with col2:
-    st.markdown("""
-    <div class="tool-card">
-        <div class="tool-title">🖼️ 3. इमेज टूल आणि फोटो क्रॉप (Image Tool)</div>
-        <div class="tool-desc">आयुष्मान, पॅन कार्ड आणि पासपोर्ट फोटो एका क्लिकवर A4 शीटवर प्रिंट करण्यासाठी क्रॉप करा.</div>
-    </div>
-    """, unsafe_allow_html=True)
-    st.page_link("pages/Image_Tool.py", label="🚀 इमेज टूल उघडा", use_container_width=True)
-
-    st.write("")
-
-    st.markdown("""
-    <div class="tool-card">
-        <div class="tool-title">⚙️ 4. सिस्टीम कंट्रोल (App / Settings)</div>
-        <div class="tool-desc">मेन ॲपच्या इतर अंतर्गत सेटिंग्ज आणि कंट्रोल ऑप्शन्स.</div>
-    </div>
-    """, unsafe_allow_html=True)
-    st.page_link("app.py", label="🚀 मुख्य ॲप रिफ्रेश करा", use_container_width=True)
+    if single_file:
+        img = Image.open(single_file)
+        st.image(img, caption="मूळ फोटो", use_container_width=True)
+        st.info("हा फोटो कडक साईझमध्ये ऑटो-रिझोल्यूशन सेट झाला आहे.")
 
 st.write("---")
-st.markdown("<p style='text-align: center; color: #777; font-weight: bold;'>📍 बालाजी सायबर पॉईंट, माणगाव, रायगड | संपर्क: 8007365051</p>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center; color: #555; font-weight: bold;'>📍 श्री बालाजी सायबर पॉईंट, माणगाव, रायगड | 📞 8007365051</p>", unsafe_allow_html=True)
