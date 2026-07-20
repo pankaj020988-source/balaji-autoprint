@@ -1,5 +1,230 @@
+import streamlit as st
+from PIL import Image, ImageOps, ImageEnhance
+import io
+import fitz  # PyMuPDF
+import cv2
+import numpy as np
+
+# ==========================================
+# 🌐 १. पेज कॉन्फिगरेशन आणि लेआउट
+# ==========================================
+st.set_page_config(page_title="बालाजी सायबर पॉइंट - इमेज टूल्स", page_icon="📸", layout="centered")
+
+st.markdown("<h2 style='text-align: center; color: #0078D7;'>📸 श्री बालाजी सायबर पॉईंट - डिजिटल इमेज पोर्टल्स</h2>", unsafe_allow_html=True)
+st.success("🔓 **सर्व टूल्स unlocked आहेत!** कोणताही पासवर्ड न टाकता खालील सर्व टूल्स वापरा.")
+st.write("---")
+
+# ==========================================
+# 🛠️ २. चार मुख्य टूल्स (टॅब्स व्याख्या)
+# ==========================================
+tab1, tab2, tab3, tab4 = st.tabs([
+    "🖨️ ओरिजिनल आधार कार्ड कटर (Precision Cut)", 
+    "📸 पासपोर्ट फोटो शीट मेकर (९ फोटो)", 
+    "📝 सरकारी फॉर्म फोटो-सही रीसायझर", 
+    "📸 कॅम-स्कॅनर (Photo & PDF Support)"
+])
+
 # ------------------------------------------
-# 📸 टॅब ४: कॅम-स्कॅनर (JPG, PNG आणि PDF सपोर्टसह)
+# 🖨️ टॅब १: ओरिजिनल आधार कार्ड कटर
+# ------------------------------------------
+with tab1:
+    st.markdown("<h4 style='color: #0056b3;'>🖨️ ओरिजिनल आधार कार्ड कटर (परफेक्ट काठोकाठ लेआउट)</h4>", unsafe_allow_html=True)
+    st.info("💡 वरचा आणि खालचा एक्स्ट्रा भाग १-क्लिकमध्ये कट करा आणि काठोकाठ ४x६ प्रिंट काढा.")
+
+    col_a1, col_a2 = st.columns([2, 1])
+    with col_a1:
+        pdf_file = st.file_uploader("ओरिजिनल आधार PDF फाईल अपलोड करा:", type=["pdf"], key="aadhaar_pdf_uploader")
+    with col_a2:
+        pdf_password = st.text_input("🔑 PDF पासवर्ड (असेल तर):", type="password", help="उदा. नाव + जन्मवर्ष", key="pdf_pass_input")
+
+    if pdf_file is not None:
+        st.write("📐 **अचूक काठोकाठ कटिंगसाठी सोपे कंट्रोल्स:**")
+        col_c1, col_c2 = st.columns(2)
+        with col_c1:
+            top_trim = st.slider("✂️ वरचा एक्स्ट्रा भाग कापा (%)", 65.0, 78.0, 72.2, step=0.2, key="top_trim_slider")
+        with col_c2:
+            bottom_trim = st.slider("✂️ खालचा एक्स्ट्रा भाग कापा (%)", 88.0, 98.0, 92.5, step=0.2, key="bot_trim_slider")
+
+        if st.button("🚀 ओरिजिनल आधार ४x६ लेआउट तयार करा", type="primary", use_container_width=True, key="btn_aadhaar_gen"):
+            with st.spinner("⏳ नको असलेला भाग कट करून आधार कार्ड सेट होत आहे..."):
+                try:
+                    pdf_bytes = pdf_file.read()
+                    doc = fitz.open(stream=pdf_bytes, filetype="pdf")
+                    
+                    if doc.is_encrypted:
+                        if pdf_password:
+                            auth_success = doc.authenticate(pdf_password)
+                            if not auth_success:
+                                st.error("❌ चुकीचा पासवर्ड! कृपया योग्य आधार PDF पासवर्ड प्रविष्ट करा.")
+                                st.stop()
+                        else:
+                            st.warning("⚠️ ही PDF पासवर्ड प्रोटेक्टेड आहे. कृपया वर पासवर्ड टाका!")
+                            st.stop()
+
+                    page = doc[0]
+                    pix = page.get_pixmap(dpi=400)
+                    img_data = pix.tobytes("png")
+                    full_img = Image.open(io.BytesIO(img_data)).convert("RGB")
+                    
+                    w, h = full_img.size
+                    
+                    t_pct = top_trim / 100.0
+                    b_pct = bottom_trim / 100.0
+                    
+                    crop_front = full_img.crop((int(w * 0.078), int(h * t_pct), int(w * 0.492), int(h * b_pct)))
+                    crop_back = full_img.crop((int(w * 0.508), int(h * t_pct), int(w * 0.922), int(h * b_pct)))
+                    
+                    PAPER_W, PAPER_HEIGHT = 1200, 1800
+                    final_canvas = Image.new("RGB", (PAPER_W, PAPER_HEIGHT), "white")
+
+                    card_w, card_h = 1050, 600
+                    front_resized = crop_front.resize((card_w, card_h), Image.Resampling.LANCZOS)
+                    back_resized = crop_back.resize((card_w, card_h), Image.Resampling.LANCZOS)
+
+                    front_bordered = ImageOps.expand(front_resized, border=5, fill='black')
+                    back_bordered = ImageOps.expand(back_resized, border=5, fill='black')
+
+                    paste_x = (PAPER_W - front_bordered.width) // 2
+                    
+                    final_canvas.paste(front_bordered, (paste_x, 180))
+                    final_canvas.paste(back_bordered, (paste_x, 950))
+
+                    st.success("✅ एक्स्ट्रा भाग पूर्ण कट झाला आहे! कार्ड काठोकाठ रेडी आहे.")
+                    st.image(final_canvas, caption="Balaji_Aadhaar_Precision_Fit.png", use_container_width=True)
+                    
+                    id_buffer = io.BytesIO()
+                    final_canvas.save(id_buffer, format="PNG", dpi=(300, 300))
+                    
+                    st.download_button(
+                        label="📥 ४x६ आधार प्रिंट फाईल (PNG) डाऊनलोड करा", 
+                        data=id_buffer.getvalue(), 
+                        file_name="Balaji_Aadhaar_4x6_Perfect.png", 
+                        mime="image/png", 
+                        use_container_width=True,
+                        key="dl_aadhaar_btn"
+                    )
+                except Exception as e:
+                    st.error(f"❌ आधार कार्ड प्रक्रियेत अडचण आली: {e}")
+
+# ------------------------------------------
+# 📸 टॅब २: पासपोर्ट फोटो (९ फोटो)
+# ------------------------------------------
+with tab2:
+    st.markdown("<h4 style='color: #0078D7;'>पासपोर्ट साईझ फोटो ऑटो-शीट जनरेटर (९ फोटो 4x6 / A4)</h4>", unsafe_allow_html=True)
+    uploaded_image = st.file_uploader("ज्या फोटोचे पासपोर्ट साईझ बनवायचे आहेत तो फोटो अपलोड करा:", type=["jpg", "jpeg", "png"], key="pp_uploader")
+
+    if uploaded_image is not None:
+        img = Image.open(uploaded_image)
+        st.image(img, caption="अपलोड केलेला मूळ फोटो", width=150)
+        st.write("---")
+        
+        DPI = 300
+        paper_option = st.radio(
+            "कोणत्या साईझच्या paper वर फोटो सेट करायचे आहेत?",
+            ("४x६ inch फोटो पेपर - ९ फोटो (9 Photos on 4x6)", "पूर्ण A4 सरकारी paper (Full A4 Sheet)"),
+            key="paper_opt"
+        )
+        
+        if st.button("🚀 पासपोर्ट साईझ फोटो शीट तयार करा", type="primary", use_container_width=True, key="btn_pp"):
+            with st.spinner("⏳ कडक ९ फोटोंचे हाय-क्वालिटी लेआउट तयार होत आहे..."):
+                try:
+                    if "४x६" in paper_option:
+                        canvas_w, canvas_h = int(4 * DPI), int(6 * DPI)
+                        cols, rows = 3, 3
+                        file_suffix = "4x6_9_Photos"
+                        
+                        id_w, id_h = 350, 450
+                        resized_id = ImageOps.fit(img, (id_w, id_h), Image.Resampling.LANCZOS)
+                        resized_id = ImageOps.expand(resized_id, border=3, fill='black')
+                        
+                        sheet = Image.new("RGB", (canvas_w, canvas_h), "white")
+                        
+                        margin_x = (canvas_w - (cols * resized_id.width)) // (cols + 1)
+                        margin_y = (canvas_h - (rows * resized_id.height)) // (rows + 1)
+                        
+                        for r in range(rows):
+                            for c in range(cols):
+                                x = margin_x + c * (resized_id.width + margin_x)
+                                y = margin_y + r * (resized_id.height + margin_y)
+                                sheet.paste(resized_id, (x, y))
+                    else:
+                        canvas_w, canvas_h = int(8.27 * DPI), int(11.69 * DPI)
+                        file_suffix = "A4_Sheet"
+                        id_w, id_h = int(3.5 / 2.54 * DPI), int(4.5 / 2.54 * DPI)
+                        
+                        resized_id = ImageOps.fit(img, (id_w, id_h), Image.Resampling.LANCZOS)
+                        resized_id = ImageOps.expand(resized_id, border=3, fill='black')
+                        
+                        sheet = Image.new("RGB", (canvas_w, canvas_h), "white")
+                        margin = 25
+                        for y in range(margin, canvas_h - id_h, id_h + margin):
+                            for x in range(margin, canvas_w - id_w, id_w + margin):
+                                sheet.paste(resized_id, (x, y))
+                    
+                    buffer = io.BytesIO()
+                    sheet.save(buffer, format="PNG", dpi=(DPI, DPI))
+                    buffer.seek(0)
+                    
+                    st.success(f"✅ तुमचे {9 if '४x६' in paper_option else 'A4'} पासपोर्ट फोटो शीट तयार झाले आहे!")
+                    st.image(sheet, caption="⚙️ ९ फोटो प्रिंट प्रिव्ह्यू", use_container_width=True)
+                    
+                    st.download_button(
+                        label="📥 तयार झालेली HD फोटो शीट (PNG) डाऊनलोड करा",
+                        data=buffer,
+                        file_name=f"Balaji_Passport_{file_suffix}.png",
+                        mime="image/png",
+                        use_container_width=True,
+                        key="dl_pp_btn"
+                    )
+                except Exception as e:
+                    st.error(f"❌ चूक झाली: {e}")
+
+# ------------------------------------------
+# 📝 टॅब ३: सरकारी फॉर्म रीसायझर
+# ------------------------------------------
+with tab3:
+    st.markdown("<h4 style='color: #4CAF50;'>सरकारी फॉर्म - फोटो व सही कॉम्प्रेसर टूल</h4>", unsafe_allow_html=True)
+    tool_mode = st.radio("तुम्हाला काय रीसाईझ करायचे आहे?", ("ग्राहक फोटो (Photo - 20KB)", "ग्राहक सही (Signature - 10KB)"), key="mode_form")
+    uploaded_file = st.file_uploader("तुमची फाईल (Photo/Sign) इथे अपलोड करा:", type=["jpg", "jpeg", "png"], key="form_uploader")
+
+    if uploaded_file is not None:
+        raw_img = Image.open(uploaded_file).convert("RGB")
+        st.image(raw_img, caption="अपलोड केलेली मूळ फाईल", width=150)
+        
+        t_width, t_height, max_kb, label = (160, 200, 20, "Photo") if "Photo" in tool_mode else (256, 64, 10, "Signature")
+            
+        if st.button(f"⚡ {label} रीसाईझ आणि कॉम्प्रेस करा", type="primary", use_container_width=True, key="btn_resize_gen"):
+            with st.spinner("⏳ कॉम्प्रेस होत आहे..."):
+                try:
+                    resized_img = raw_img.resize((t_width, t_height), Image.Resampling.LANCZOS)
+                    quality = 95
+                    img_buffer = io.BytesIO()
+                    resized_img.save(img_buffer, "JPEG", optimize=True, quality=quality)
+                    
+                    while img_buffer.tell() > max_kb * 1024 and quality > 10:
+                        quality -= 5
+                        img_buffer = io.BytesIO()
+                        resized_img.save(img_buffer, "JPEG", optimize=True, quality=quality)
+                        
+                    final_bytes = img_buffer.getvalue()
+                    final_size_kb = len(final_bytes) // 1024
+                    
+                    st.success(f"✅ {label} यशस्वीरित्या रीसाईझ झाला आहे! (साईझ: {final_size_kb} KB)")
+                    st.image(final_bytes, caption=f"रीसाईझ केलेला {label}")
+                    
+                    st.download_button(
+                        label=f"📥 कॉम्प्रेस झालेली {label} डाऊनलोड करा",
+                        data=final_bytes,
+                        file_name=f"balaji_converted_{label.lower()}.jpg",
+                        mime="image/jpeg",
+                        use_container_width=True,
+                        key="dl_form_btn"
+                    )
+                except Exception as e:
+                    st.error(f"❌ चूक झाली: {e}")
+
+# ------------------------------------------
+# 📸 टॅब ४: कॅम-स्कॅनर (Photo + PDF Support)
 # ------------------------------------------
 with tab4:
     st.markdown("<h4 style='color: #E65100;'>📸 बालाजी सुपर-फास्ट कॅम-स्कॅनर</h4>", unsafe_allow_html=True)
@@ -11,16 +236,14 @@ with tab4:
     if "c_bottom" not in st.session_state: st.session_state.c_bottom = 0
     if "r_angle" not in st.session_state: st.session_state.r_angle = 0
 
-    # 🎯 इथे "pdf" पर्याय जोडला आहे
     scan_file = st.file_uploader("स्कॅन करण्यासाठी डॉक्युमेंटचा फोटो किंवा PDF फाईल अपलोड करा (JPG/PNG/PDF):", type=["jpg", "jpeg", "png", "pdf"], key="scanner_upload")
 
     if scan_file is not None:
         try:
-            # 📄 जर फाईल PDF असेल तर त्याचे इमेजमध्ये रूपांतर करणे
             if scan_file.name.lower().endswith(".pdf"):
                 pdf_bytes = scan_file.read()
                 doc = fitz.open(stream=pdf_bytes, filetype="pdf")
-                page = doc[0] # पहिली पान रेंडर करणे
+                page = doc[0]
                 pix = page.get_pixmap(dpi=300)
                 img_data = pix.tobytes("png")
                 original_image = Image.open(io.BytesIO(img_data)).convert("RGB")
@@ -125,3 +348,6 @@ with tab4:
                         st.error(f"❌ चूक झाली: {e}")
         except Exception as e:
             st.error(f"❌ फाईल ओपन करताना चूक झाली: {e}")
+
+st.write("---")
+st.markdown("<p style='text-align: center; font-size: 13px; color: #666;'>📍 श्री बालाजी सायबर पॉईंट, माणगाव, रायगड | Designed for Fast Cyber Operations</p>", unsafe_allow_html=True)
