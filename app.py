@@ -10,23 +10,6 @@ import time
 st.set_page_config(page_title="बालाजी सायबर पॉईंट - होम", page_icon="🖥️", layout="wide")
 
 # ==========================================
-# 👥 साईडबार युझर सिस्टीम
-# ==========================================
-if "user_role" not in st.session_state:
-    st.session_state.user_role = "Manager (Pankajji)"
-
-st.sidebar.markdown("### सिस्टीम युझर")
-current_user = st.sidebar.radio(
-    "युझर निवडा:",
-    ("Manager (Pankajji)", "Staff / Partner"),
-    index=0 if st.session_state.user_role == "Manager (Pankajji)" else 1
-)
-st.session_state.user_role = current_user
-
-st.sidebar.write("---")
-st.sidebar.markdown(f"**सध्याचे युझर:** `{st.session_state.user_role}`")
-
-# ==========================================
 # ✂️ ऑटो-ट्रिमिंग फंक्शन
 # ==========================================
 def auto_crop_card(card_img):
@@ -39,7 +22,7 @@ def auto_crop_card(card_img):
     return card_img
 
 # ==========================================
-# 🖥️ मुख्य इंटरफेस
+# 🖥️ मुख्य इंटरफेस (No Sidebar / No User Selector)
 # ==========================================
 st.markdown("<h2 style='text-align: center; color: #0F172A; font-weight: 800;'>श्री बालाजी सायबर पॉईंट, माणगाव</h2>", unsafe_allow_html=True)
 st.markdown("<h4 style='text-align: center; color: #2563EB; font-weight: 600;'>आयुष्मान भारत - 4x6 पॉकेट कार्ड कंव्हर्टर</h4>", unsafe_allow_html=True)
