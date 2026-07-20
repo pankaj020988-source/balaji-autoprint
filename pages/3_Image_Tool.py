@@ -1,6 +1,7 @@
 import streamlit as st
 from PIL import Image, ImageOps, ImageEnhance
 import io
+import fitz  # PyMuPDF
 import cv2
 import numpy as np
 
@@ -17,63 +18,92 @@ st.write("---")
 # 🛠️ २. चार मुख्य टूल्स (मोकळे व अनलॉक केलेले)
 # ==========================================
 tab1, tab2, tab3, tab4 = st.tabs([
-    "🖨️ आयुष्मान भारत ४x६", 
+    "🖨️ ओरिजिनल आधार कार्ड कटर (4x6 Auto-Fit)", 
     "📸 पासपोर्ट फोटो शीट मेकर (९ फोटो)", 
     "📝 सरकारी फॉर्म फोटो-सही रीसायझर", 
     "📸 कॅम-स्कॅनर (Super Fast)"
 ])
 
 # ------------------------------------------
-# 🖨️ टॅब १: आयुष्मान भारत ४x६ लेआउट प्रिंटर
+# 🖨️ टॅब १: ओरिजिनल आधार कार्ड कटर (Password Protect PDF to 4x6 Layout)
 # ------------------------------------------
 with tab1:
-    st.markdown("<h4 style='color: #0056b3;'>🖨️ आयुष्मान भारत ४x६ परफेक्ट लेआउट प्रिंटर</h4>", unsafe_allow_html=True)
-    uploaded_ad_img = st.file_uploader("आयुष्मान कार्डचा फोटो/स्क्रीनशॉट अपलोड करा:", type=["jpg", "jpeg", "png"], key="ayush_uploader")
+    st.markdown("<h4 style='color: #0056b3;'>🖨️ ओरिजिनल आधार कार्ड कटर (Password PDF ते 4x6 Sheet)</h4>", unsafe_allow_html=True)
+    st.info("💡 ओरिजिनल आधार PDF अपलोड करा. जर PDF ला पासवर्ड असेल तर खाली पासवर्ड टाका, सिस्टीम आपोआप ४x६ वर फ्रंट व बॅक सेट करून देईल!")
 
-    if uploaded_ad_img is not None:
-        pil_img = Image.open(uploaded_ad_img).convert("RGB")
-        st.image(pil_img, caption="अपलोड केलेला फोटो", use_container_width=True)
-        w, h = pil_img.size
-        
-        st.write("🎯 **कार्ड कट होऊ नये म्हणून खालचा नको असलेला भाग इथून कापून घ्या:**")
-        crop_slider = st.slider("खालून किती टक्के भाग कापायचा आहे?", 0, 100, 45, step=5, key="ayush_crop_slider")
-        
-        if st.button("🚀 ४x६ साईझ लेआउट तयार करा", type="primary", use_container_width=True, key="btn_ayush_gen"):
-            try:
-                crop_pixel = h - int(h * (crop_slider / 100))
-                if crop_pixel > 10:
-                    card_cropped = pil_img.crop((0, 0, w, crop_pixel))
-                else:
-                    card_cropped = pil_img
+    col_a1, col_a2 = st.columns([2, 1])
+    with col_a1:
+        pdf_file = st.file_uploader("ओरिजिनल आधार PDF फाईल अपलोड करा:", type=["pdf"], key="aadhaar_pdf_uploader")
+    with col_a2:
+        pdf_password = st.text_input("🔑 PDF पासवर्ड (असेल तर):", type="password", help="उदा. नाव + जन्मवर्ष (PANK1995)", key="pdf_pass_input")
 
-                PAPER_W, PAPER_HEIGHT = 1200, 1800
-                final_canvas = Image.new("RGB", (PAPER_W, PAPER_HEIGHT), "white")
+    if pdf_file is not None:
+        if st.button("🚀 ओरिजिनल आधार ४x६ लेआउट तयार करा", type="primary", use_container_width=True, key="btn_aadhaar_gen"):
+            with st.spinner("⏳ PDF ओपन करून आधार कार्ड ४x६ वर सेट होत आहे..."):
+                try:
+                    pdf_bytes = pdf_file.read()
+                    doc = fitz.open(stream=pdf_bytes, filetype="pdf")
+                    
+                    # पासवर्ड प्रोटेक्टेड असेल तर अनलॉक करणे
+                    if doc.is_encrypted:
+                        if pdf_password:
+                            auth_success = doc.authenticate(pdf_password)
+                            if not auth_success:
+                                st.error("❌ चुकीचा पासवर्ड! कृपया योग्य आधार PDF पासवर्ड प्रविष्ट करा.")
+                                st.stop()
+                        else:
+                            st.warning("⚠️ ही PDF पासवर्ड प्रोटेक्टेड आहे. कृपया वर पासवर्ड टाका!")
+                            st.stop()
 
-                card_resized = card_cropped.resize((1130, 710), Image.Resampling.LANCZOS)
-                card_with_border = ImageOps.expand(card_resized, border=6, fill='black')
+                    page = doc[0]
+                    # हाय डेफिनिशन ४०० DPI वर रेंडर करणे
+                    pix = page.get_pixmap(dpi=400)
+                    img_data = pix.tobytes("png")
+                    full_img = Image.open(io.BytesIO(img_data)).convert("RGB")
+                    
+                    w, h = full_img.size
+                    
+                    # ओरिजिनल आधार PDF मधील कार्डचे तंतोतंत कॉर्डिनेट्स (Front & Back Crop)
+                    crop_front = full_img.crop((int(w * 0.05), int(h * 0.64), int(w * 0.49), int(h * 0.95)))
+                    crop_back = full_img.crop((int(w * 0.51), int(h * 0.64), int(w * 0.95), int(h * 0.95)))
+                    
+                    # ४x६ पेपर कॅनव्हास (1200 x 1800 Pixel)
+                    PAPER_W, PAPER_HEIGHT = 1200, 1800
+                    final_canvas = Image.new("RGB", (PAPER_W, PAPER_HEIGHT), "white")
 
-                paste_x = (PAPER_W - card_with_border.width) // 2
-                final_canvas.paste(card_with_border, (paste_x, 540))
+                    card_w, card_h = 1130, 710
+                    front_resized = crop_front.resize((card_w, card_h), Image.Resampling.LANCZOS)
+                    back_resized = crop_back.resize((card_w, card_h), Image.Resampling.LANCZOS)
 
-                st.success("✅ ४x६ प्रिंट लेआउट यशस्वीरित्या तयार झाला आहे!")
-                st.image(final_canvas, caption="Balaji_Ayushman_4x6.png", use_container_width=True)
-                
-                id_buffer = io.BytesIO()
-                final_canvas.save(id_buffer, format="PNG", dpi=(300, 300))
-                
-                st.download_button(
-                    label="📥 ४x६ फाईल डाऊनलोड करा", 
-                    data=id_buffer.getvalue(), 
-                    file_name="Balaji_Ayushman_4x6.png", 
-                    mime="image/png", 
-                    use_container_width=True,
-                    key="dl_ayush_btn"
-                )
-            except Exception as e:
-                st.error(f"❌ चूक: {e}")
+                    # कडक काळी ६ पिक्सेल बॉर्डर
+                    front_bordered = ImageOps.expand(front_resized, border=6, fill='black')
+                    back_bordered = ImageOps.expand(back_resized, border=6, fill='black')
+
+                    paste_x = (PAPER_W - front_bordered.width) // 2
+                    
+                    # ४x६ वर दोन बाजू अंतरावर पेस्ट करणे
+                    final_canvas.paste(front_bordered, (paste_x, 150))
+                    final_canvas.paste(back_bordered, (paste_x, 950))
+
+                    st.success("✅ ओरिजिनल आधार कार्ड ४x६ फोटो पेपरवर काठोकाठ सेट झाले आहे!")
+                    st.image(final_canvas, caption="Balaji_Aadhaar_4x6_Layout.png", use_container_width=True)
+                    
+                    id_buffer = io.BytesIO()
+                    final_canvas.save(id_buffer, format="PNG", dpi=(300, 300))
+                    
+                    st.download_button(
+                        label="📥 ४x६ आधार प्रिंट फाईल (PNG) डाऊनलोड करा", 
+                        data=id_buffer.getvalue(), 
+                        file_name="Balaji_Aadhaar_4x6_Print.png", 
+                        mime="image/png", 
+                        use_container_width=True,
+                        key="dl_aadhaar_btn"
+                    )
+                except Exception as e:
+                    st.error(f"❌ आधार कार्ड प्रक्रियेत अडचण आली: {e}")
 
 # ------------------------------------------
-# 📸 टॅब २: पासपोर्ट साईझ फोटो शीट मेकर (कडक ९ फोटो परफेक्ट सेट)
+# 📸 टॅब २: पासपोर्ट साईझ फोटो शीट मेकर (९ फोटो)
 # ------------------------------------------
 with tab2:
     st.markdown("<h4 style='color: #0078D7;'>पासपोर्ट साईझ फोटो ऑटो-शीट जनरेटर (९ फोटो 4x6 / A4)</h4>", unsafe_allow_html=True)
@@ -96,17 +126,15 @@ with tab2:
                 try:
                     if "४x६" in paper_option:
                         canvas_w, canvas_h = int(4 * DPI), int(6 * DPI) # 1200 x 1800
-                        cols, rows = 3, 3 # 🎯 ३ कॉलम x ३ रो = ९ फोटो
+                        cols, rows = 3, 3 # ३ कॉलम x ३ रो = ९ फोटो
                         file_suffix = "4x6_9_Photos"
                         
-                        # 4x6 साठी फोटोचा परफेक्ट कट साईझ
                         id_w, id_h = 350, 450
                         resized_id = ImageOps.fit(img, (id_w, id_h), Image.Resampling.LANCZOS)
-                        resized_id = ImageOps.expand(resized_id, border=3, fill='black') # ५ पिक्सेल बॉर्डर
+                        resized_id = ImageOps.expand(resized_id, border=3, fill='black')
                         
                         sheet = Image.new("RGB", (canvas_w, canvas_h), "white")
                         
-                        # मार्जिन कॅल्क्युलेशन (मध्यभागी तंतोतंत बसवण्यासाठी)
                         margin_x = (canvas_w - (cols * resized_id.width)) // (cols + 1)
                         margin_y = (canvas_h - (rows * resized_id.height)) // (rows + 1)
                         
