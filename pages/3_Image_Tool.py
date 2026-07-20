@@ -18,18 +18,18 @@ st.write("---")
 # 🛠️ २. चार मुख्य टूल्स
 # ==========================================
 tab1, tab2, tab3, tab4 = st.tabs([
-    "🖨️ ओरिजिनल आधार कार्ड कटर (Perfect Fit)", 
+    "🖨️ ओरिजिनल आधार कार्ड कटर (Perfect Tight Fit)", 
     "📸 पासपोर्ट फोटो शीट मेकर (९ फोटो)", 
     "📝 सरकारी फॉर्म फोटो-सही रीसायझर", 
     "📸 कॅम-स्कॅनर (Super Fast)"
 ])
 
 # ------------------------------------------
-# 🖨️ टॅब १: काठोकाठ परफेक्ट आधार कार्ड कटर
+# 🖨️ टॅब १: खालची रिकामी जागा काढून काठोकाठ आधार कार्ड कटर
 # ------------------------------------------
 with tab1:
-    st.markdown("<h4 style='color: #0056b3;'>🖨️ ओरिजिनल आधार कार्ड कटर (तंतोतंत मूळ चौकट लेआउट)</h4>", unsafe_allow_html=True)
-    st.info("⚡ वरचा एक्स्ट्रा मेसेज पूर्ण कट होऊन मूळ आधार कार्ड ४x६ वर काठोकाठ ऑटो-फिट होईल!")
+    st.markdown("<h4 style='color: #0056b3;'>🖨️ ओरिजिनल आधार कार्ड कटर (खालची ब्लँक स्पेस हटवून)</h4>", unsafe_allow_html=True)
+    st.info("⚡ कार्डच्या खालील नको असलेली ब्लँक जागा पूर्ण कापून चौकट तंतोतंत बसवली आहे!")
 
     col_a1, col_a2 = st.columns([2, 1])
     with col_a1:
@@ -38,8 +38,8 @@ with tab1:
         pdf_password = st.text_input("🔑 PDF पासवर्ड (असेल तर):", type="password", help="उदा. नाव + जन्मवर्ष", key="pdf_pass_input")
 
     if pdf_file is not None:
-        if st.button("🚀 ओरिजिनल आधार ४x६ लेआउट तयार करा", type="primary", use_container_width=True, key="btn_aadhaar_gen"):
-            with st.spinner("⏳ वरचा एक्स्ट्रा भाग पूर्ण कट करून मूळ आधार ४x६ वर सेट होत आहे..."):
+        if st.button("🚀 ओरिजिनल आधार ४x६ परफेक्ट लेआउट तयार करा", type="primary", use_container_width=True, key="btn_aadhaar_gen"):
+            with st.spinner("⏳ खालची रिकामी जागा कट करून आधार कार्ड सेट होत आहे..."):
                 try:
                     pdf_bytes = pdf_file.read()
                     doc = fitz.open(stream=pdf_bytes, filetype="pdf")
@@ -62,30 +62,30 @@ with tab1:
                     
                     w, h = full_img.size
                     
-                    # 🎯 १००% अचूक पिक्सेल कॉर्डिनेट्स (कात्रीच्या लाईनपासून फुटर रेषेपर्यंत तंतोतंत कट)
-                    crop_front = full_img.crop((int(w * 0.080), int(h * 0.720), int(w * 0.490), int(h * 0.940)))
-                    crop_back = full_img.crop((int(w * 0.508), int(h * 0.720), int(w * 0.918), int(h * 0.940)))
+                    # 🎯 खालची ब्लँक स्पेस पूर्णपणे कट करण्यासाठी सुधारित क्रॉप (h * 0.936)
+                    crop_front = full_img.crop((int(w * 0.076), int(h * 0.662), int(w * 0.494), int(h * 0.936)))
+                    crop_back = full_img.crop((int(w * 0.506), int(h * 0.662), int(w * 0.924), int(h * 0.936)))
                     
                     PAPER_W, PAPER_HEIGHT = 1200, 1800
                     final_canvas = Image.new("RGB", (PAPER_W, PAPER_HEIGHT), "white")
 
-                    # पॉकेट कार्डची कडक प्रमाणबद्ध साईझ (1020 x 620 px)
-                    card_w, card_h = 1020, 620
+                    # पॉकेट कार्ड साईझ (1050 x 640 px)
+                    card_w, card_h = 1050, 640
                     front_resized = crop_front.resize((card_w, card_h), Image.Resampling.LANCZOS)
                     back_resized = crop_back.resize((card_w, card_h), Image.Resampling.LANCZOS)
 
-                    # ५ पिक्सेल काळी कडक बॉर्डर
+                    # ५ पिक्सेल कडक काळी बॉर्डर थेट कार्डच्या रेषेवर फिक्स
                     front_bordered = ImageOps.expand(front_resized, border=5, fill='black')
                     back_bordered = ImageOps.expand(back_resized, border=5, fill='black')
 
                     paste_x = (PAPER_W - front_bordered.width) // 2
                     
-                    # ४x६ वर अंतरावर तंतोतंत सेंटर पेस्ट
-                    final_canvas.paste(front_bordered, (paste_x, 180))
+                    # ४x६ वर अंतरावर तंतोतंत पेस्टिंग
+                    final_canvas.paste(front_bordered, (paste_x, 150))
                     final_canvas.paste(back_bordered, (paste_x, 950))
 
-                    st.success("✅ एक्स्ट्रा वरचा भाग पूर्ण कट झाला आहे! मूळ आधार कार्ड ४x६ वर काठोकाठ रेडी आहे.")
-                    st.image(final_canvas, caption="Balaji_Aadhaar_Perfect_Fit.png", use_container_width=True)
+                    st.success("✅ खालची सर्व रिकामी जागा यशस्वीरित्या हटवली आहे!")
+                    st.image(final_canvas, caption="Balaji_Aadhaar_No_Blank_Space.png", use_container_width=True)
                     
                     id_buffer = io.BytesIO()
                     final_canvas.save(id_buffer, format="PNG", dpi=(300, 300))
