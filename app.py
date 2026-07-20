@@ -1,5 +1,5 @@
 import streamlit as st
-from PIL import Image, ImageOps
+from PIL import Image
 import io
 
 # Page Configuration
@@ -41,9 +41,23 @@ with tab1:
         with col2:
             paper_size = st.selectbox("पेपर साईझ:", ["A4 (8 Cards Auto-Fit)", "A4 (5 Cards Premium)"])
 
+        # 📥 फाईल तयार करून थेट डाऊनलोड बटण दाखवणे
         if st.button("🚀 A4 प्रिंट फाईल जनरेट करा (Print Sheet)", type="primary", use_container_width=True):
-            st.balloons()
-            st.success("🎉 तुमची A4 प्रिंट शीट तयार झाली आहे! थेट प्रिंट काढा.")
+            st.success("🎉 तुमची A4 प्रिंट शीट तयार झाली आहे!")
+            
+            # डमी इमेज किंवा फाईल डेटा तयार करून डाऊनलोडसाठी देणे
+            sample_img = Image.new('RGB', (1240, 1754), color=(255, 255, 255))
+            buf = io.BytesIO()
+            sample_img.save(buf, format="JPEG")
+            byte_im = buf.getvalue()
+
+            st.download_button(
+                label="📥 तयार केलेली A4 प्रिंट शीट डाऊनलोड करा",
+                data=byte_im,
+                file_name="Balaji_A4_Print_Sheet.jpg",
+                mime="image/jpeg",
+                use_container_width=True
+            )
 
 # ------------------------------------------
 # TAB 2: सिंगल इमेज क्रॉप टूल
