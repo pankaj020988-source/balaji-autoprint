@@ -6,7 +6,7 @@ import cv2
 import numpy as np
 
 # ==========================================
-# 🌐 १. वाईड लेआउट कॉन्फिगरेशन (Full Page Width)
+# 🌐 १. वाईड लेआउट कॉन्फिगरेशन
 # ==========================================
 st.set_page_config(
     page_title="बालाजी सायबर पॉइंट - डिजिटल टूलकिट", 
@@ -15,26 +15,28 @@ st.set_page_config(
 )
 
 # ==========================================
-# 🎨 २. कॉर्पोरेट व्यावसायिक UI डिझाईन (CSS)
+# 🎨 २. कॉर्पोरेट व्यावसायिक UI डिझाईन (CSS Fix)
 # ==========================================
 st.markdown("""
     <style>
-    /* मुख्य कन्टेनरSpacing आणि मार्जिन मोजमाप */
+    /* वरच्या बाजूला पुरेशी जागा ठेवल्याने हेडिंग कट होणार नाही */
     .block-container {
-        padding-top: 1.5rem !important;
-        padding-bottom: 1.5rem !important;
+        padding-top: 3.5rem !important;
+        padding-bottom: 2rem !important;
         padding-left: 2rem !important;
         padding-right: 2rem !important;
     }
     
-    /* हेडर स्टायलिंग */
+    /* मुख्य हेडिंग स्टायलिंग */
     .main-header {
         font-size: 26px !important;
         font-weight: 800 !important;
         color: #0F172A !important;
         text-align: center;
-        margin-bottom: 15px;
+        margin-bottom: 25px !important;
+        margin-top: 10px !important;
         letter-spacing: 0.5px;
+        line-height: 1.4 !important;
     }
     
     /* टॅब लेआउट अचूक आणि समान बसवणे */
@@ -76,7 +78,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# मुख्य व्यावसायिक शीर्षक (अनधिकृत वाक्ये पूर्ण काढली आहेत)
+# मुख्य व्यावसायिक शीर्षक
 st.markdown("<div class='main-header'>श्री बालाजी सायबर पॉईंट - इमेज प्रोसेसिंग टूलकिट</div>", unsafe_allow_html=True)
 
 # ==========================================
