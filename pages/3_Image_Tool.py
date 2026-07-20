@@ -18,7 +18,7 @@ st.write("---")
 # ==========================================
 tab1, tab2, tab3, tab4 = st.tabs([
     "🖨️ आयुष्मान भारत ४x६", 
-    "📸 पासपोर्ट फोटो शीट मेकर", 
+    "📸 पासपोर्ट फोटो शीट मेकर (९ फोटो)", 
     "📝 सरकारी फॉर्म फोटो-सही रीसायझर", 
     "📸 कॅम-स्कॅनर (Super Fast)"
 ])
@@ -73,10 +73,10 @@ with tab1:
                 st.error(f"❌ चूक: {e}")
 
 # ------------------------------------------
-# 📸 टॅब २: पासपोर्ट साईझ फोटो शीट मेकर
+# 📸 टॅब २: पासपोर्ट साईझ फोटो शीट मेकर (कडक ९ फोटो परफेक्ट सेट)
 # ------------------------------------------
 with tab2:
-    st.markdown("<h4 style='color: #0078D7;'>पासपोर्ट साईझ फोटो ऑटो-शीट जनरेटर (३.५ x ४.५ सेमी)</h4>", unsafe_allow_html=True)
+    st.markdown("<h4 style='color: #0078D7;'>पासपोर्ट साईझ फोटो ऑटो-शीट जनरेटर (९ फोटो 4x6 / A4)</h4>", unsafe_allow_html=True)
     uploaded_image = st.file_uploader("ज्या फोटोचे पासपोर्ट साईझ बनवायचे आहेत तो फोटो अपलोड करा:", type=["jpg", "jpeg", "png"], key="pp_uploader")
 
     if uploaded_image is not None:
@@ -85,38 +85,56 @@ with tab2:
         st.write("---")
         
         DPI = 300
-        id_w, id_h = int(3.5 / 2.54 * DPI), int(4.5 / 2.54 * DPI)
-        
         paper_option = st.radio(
             "कोणत्या साईझच्या paper वर फोटो सेट करायचे आहेत?",
-            ("४x६ inch फोटो पेपर (4x6 Sheet)", "पूर्ण A4 सरकारी paper (Full A4 Sheet)"),
+            ("४x६ inch फोटो पेपर - ९ फोटो (9 Photos on 4x6)", "पूर्ण A4 सरकारी paper (Full A4 Sheet)"),
             key="paper_opt"
         )
         
         if st.button("🚀 पासपोर्ट साईझ फोटो शीट तयार करा", type="primary", use_container_width=True, key="btn_pp"):
-            with st.spinner("⏳ कडक हाय-क्वालिटी लेआउट तयार होत आहे..."):
+            with st.spinner("⏳ कडक ९ फोटोंचे हाय-क्वालिटी लेआउट तयार होत आहे..."):
                 try:
                     if "४x६" in paper_option:
-                        canvas_w, canvas_h = int(4 * DPI), int(6 * DPI)
-                        file_suffix = "4x6_Sheet"
+                        canvas_w, canvas_h = int(4 * DPI), int(6 * DPI) # 1200 x 1800
+                        cols, rows = 3, 3 # 🎯 ३ कॉलम x ३ रो = ९ फोटो
+                        file_suffix = "4x6_9_Photos"
+                        
+                        # 4x6 साठी फोटोचा परफेक्ट कट साईझ
+                        id_w, id_h = 350, 450
+                        resized_id = ImageOps.fit(img, (id_w, id_h), Image.Resampling.LANCZOS)
+                        resized_id = ImageOps.expand(resized_id, border=3, fill='black') # ५ पिक्सेल बॉर्डर
+                        
+                        sheet = Image.new("RGB", (canvas_w, canvas_h), "white")
+                        
+                        # मार्जिन कॅल्क्युलेशन (मध्यभागी तंतोतंत बसवण्यासाठी)
+                        margin_x = (canvas_w - (cols * resized_id.width)) // (cols + 1)
+                        margin_y = (canvas_h - (rows * resized_id.height)) // (rows + 1)
+                        
+                        for r in range(rows):
+                            for c in range(cols):
+                                x = margin_x + c * (resized_id.width + margin_x)
+                                y = margin_y + r * (resized_id.height + margin_y)
+                                sheet.paste(resized_id, (x, y))
                     else:
                         canvas_w, canvas_h = int(8.27 * DPI), int(11.69 * DPI)
                         file_suffix = "A4_Sheet"
-                    
-                    resized_id = ImageOps.fit(img, (id_w, id_h), Image.Resampling.LANCZOS)
-                    sheet = Image.new("RGB", (canvas_w, canvas_h), "white")
-                    
-                    margin = 25
-                    for y in range(margin, canvas_h - id_h, id_h + margin):
-                        for x in range(margin, canvas_w - id_w, id_w + margin):
-                            sheet.paste(resized_id, (x, y))
+                        id_w, id_h = int(3.5 / 2.54 * DPI), int(4.5 / 2.54 * DPI)
+                        
+                        resized_id = ImageOps.fit(img, (id_w, id_h), Image.Resampling.LANCZOS)
+                        resized_id = ImageOps.expand(resized_id, border=3, fill='black')
+                        
+                        sheet = Image.new("RGB", (canvas_w, canvas_h), "white")
+                        margin = 25
+                        for y in range(margin, canvas_h - id_h, id_h + margin):
+                            for x in range(margin, canvas_w - id_w, id_w + margin):
+                                sheet.paste(resized_id, (x, y))
                     
                     buffer = io.BytesIO()
                     sheet.save(buffer, format="PNG", dpi=(DPI, DPI))
                     buffer.seek(0)
                     
-                    st.success("✅ तुमचे पासपोर्ट फोटो शीट तयार झाले आहे!")
-                    st.image(sheet, caption="⚙️ प्रिंट प्रिव्ह्यू", use_container_width=True)
+                    st.success(f"✅ तुमचे {9 if '४x६' in paper_option else 'A4'} पासपोर्ट फोटो शीट तयार झाले आहे!")
+                    st.image(sheet, caption="⚙️ ९ फोटो प्रिंट प्रिव्ह्यू", use_container_width=True)
                     
                     st.download_button(
                         label="📥 तयार झालेली HD फोटो शीट (PNG) डाऊनलोड करा",
@@ -249,7 +267,7 @@ with tab4:
                         gray = cv2.cvtColor(img_cv, cv2.COLOR_BGR2GRAY)
                         scanned = cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 25, 12)
                         final_res = Image.fromarray(scanned)
-                    elif scan_mode == "मॅजिक COLOR (Magic Color)":
+                    elif scan_mode == "मॅजिक कलर (Magic Color)":
                         channels = cv2.split(img_cv)
                         result_channels = []
                         for ch in channels:
