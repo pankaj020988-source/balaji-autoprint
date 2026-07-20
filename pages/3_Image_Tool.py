@@ -8,8 +8,8 @@ import time
 # 🌐 १. पेज कॉन्फिगरेशन
 # ==========================================
 st.set_page_config(
-    page_title="श्री बालाजी सायबर पॉईंट - इमेज व कार्ड टूल", 
-    page_icon="📸", 
+    page_title="श्री बालाजी सायबर पॉईंट - डिजिटल पोर्टल्स", 
+    page_icon="📷", 
     layout="wide"
 )
 
@@ -29,20 +29,31 @@ st.markdown("""
             border: 2px solid #d4af37;
             margin-bottom: 20px;
         }
+        .ad-box {
+            background-color: #f8faff;
+            border: 2px solid #0056b3;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 15px;
+        }
+        .ad-title {
+            color: #002f6c;
+            font-size: 22px;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 10px;
+        }
     </style>
 """, unsafe_allow_html=True)
 
 # 📢 मुख्य हेडर
 st.markdown("""
 <div class="main-header">
-    <h2 style="color: #e5be3b; margin: 0;">📸 श्री बालाजी सायबर पॉईंट - मास्टर इमेज टूल</h2>
-    <p style="margin-top: 5px; opacity: 0.95; font-size: 15px;">आयुष्मान भारत PDF, ४x६ फोटो आणि स्मार्ट कार्ड प्रिंटर सोल्यूशन्स</p>
+    <h1 style="color: #e5be3b; margin: 0; font-size: 32px;">📷 श्री बालाजी सायबर पॉईंट - डिजिटल पोर्टल्स</h1>
 </div>
 """, unsafe_allow_html=True)
 
-st.success("🔓 **सर्व सायबर टूल्स अनलॉक करण्यात आले आहेत!** कोणताही पासवर्ड न टाकता खालील टूल्स वापरा.")
-
-# ✂️ ऑटो-ट्रिमिंग फंकशन (पांढरा भाग कट करण्यासाठी)
+# ✂️ ऑटो-ट्रिमिंग फंक्शन (पांढरा भाग कट करण्यासाठी)
 def auto_crop_card(card_img):
     gray = card_img.convert("L")
     inverted = ImageOps.invert(gray)
@@ -52,17 +63,59 @@ def auto_crop_card(card_img):
     return card_img
 
 # ==========================================
-# 🛠️ २. अनलॉक केलेले मास्टर टूल्स (जाहिरात टॅब काढला आहे)
+# 🏠 २. मूळ टॅब सिस्टीम (होम पेज + सायबर टूल्स)
 # ==========================================
-tool_tab1, tool_tab2 = st.tabs([
-    "🖨️ आयुष्मान भारत PDF ते 4X6 कडक प्रिंट", 
-    "🖼️ सिंगल फोटो / डॉक्युमेंट क्रॉप व प्रिंट"
+main_tab1, main_tab2 = st.tabs([
+    "🏠 होम पेज (जाहिरात व सुविधा)", 
+    "🔐 सायबर टूल्स पोर्टल (Locked)"
 ])
 
 # ------------------------------------------
-# टॅब १: आयुष्मान भारत PDF ते 4X6 कन्व्हर्टर
+# टॅब १: होम पेज (जाहिरात व माहिती)
 # ------------------------------------------
-with tool_tab1:
+with main_tab1:
+    st.markdown("""
+    <div style="background-color: #004085; color: white; padding: 25px; border-radius: 8px; text-align: center; margin-bottom: 20px;">
+        <h2 style="color: #ffc107; margin: 0;">बालाजी सायबर पॉईंट (माणगाव)</h2>
+        <h4 style="margin-top: 5px; font-weight: 400;">तुमचे डिजिटल आणि ट्रॅव्हल सोल्यूशन पार्टनर!</h4>
+    </div>
+    """, unsafe_allow_html=True)
+
+    col_a, col_b = st.columns(2)
+    with col_a:
+        st.markdown("""
+        <div style="background-color: #e8f4f8; padding: 15px; border-radius: 8px; border-left: 5px solid #0056b3;">
+            <h4 style="color: #0056b3; margin-top: 0;">📢 नवीन सरकारी नोकर भरती व जाहिराती</h4>
+            <p><b>📌 महाभरती २०२६:</b> विविध सरकारी विभागांमध्ये नवीन जागा उपलब्ध झाल्या आहेत. ऑनलाईन अर्ज भरण्यासाठी आजच दुकानात आवश्यक कागदपत्रांसह भेट द्या.</p>
+        </div>
+        """, unsafe_allow_html=True)
+    with col_b:
+        st.markdown("""
+        <div style="background-color: #fff9e6; padding: 15px; border-radius: 8px; border-left: 5px solid #ffc107;">
+            <h4 style="color: #856404; margin-top: 0;">📌 परीक्षा प्रवेशपत्र (Admit Card)</h4>
+            <p>चालू महिन्यातील स्पर्धा परीक्षांचे हॉल तिकीट आणि विविध सरकारी परीक्षांचे प्रवेशपत्र डाऊनलोड करणे सुरू आहे.</p>
+        </div>
+        """, unsafe_allow_html=True)
+
+    st.write("---")
+    st.markdown("### 🛠️ आमच्याकडे उपलब्ध असलेल्या प्रमुख सुविधा:")
+    
+    col1, col2 = st.columns(2)
+    with col1:
+        st.write("🖨️ **कार्ड प्रिंटिंग आणि स्कॅनर सेवा**")
+        st.write("* आयुष्मान भारत कार्ड ४x६ ऑटो-फिट प्रिंटिंग")
+        st.write("* स्मार्ट आयडी कार्ड प्रिंटर (पॅन कार्ड / व्होटर आयडी)")
+        st.write("* A4 / A3 हाय-क्वालिटी कलर प्रिंटिंग आणि लॅमिनेशन")
+    with col2:
+        st.write("📝 **ऑनलाईन फॉर्म आणि ट्रॅव्हल बुकिंग**")
+        st.write("* सर्व प्रकारच्या सरकारी व भरती परीक्षांचे ऑनलाईन अर्ज")
+        st.write("* फ्लाईट, रेल्वे व बस तिकिट बुकिंग")
+        st.write("* पासपोर्ट व ड्रायव्हिंग लायसन्स ऑनलाईन अर्ज")
+
+# ------------------------------------------
+# टॅब २: सायबर टूल्स पोर्टल (आयुष्मान भारत PDF कन्व्हर्टर)
+# ------------------------------------------
+with main_tab2:
     st.write("### 🖨️ आयुष्मान भारत सरकारी PDF ऑटो-फिट 4X6 प्रिंटर")
     uploaded_file = st.file_uploader("तुमची आयुष्मान भारत सरकारी PDF फाईल इथे अपलोड करा:", type=["pdf"], key="ayushman_pdf_uploader")
 
@@ -120,18 +173,6 @@ with tool_tab1:
                         )
                 except Exception as e:
                     st.error(f"अडचण आली: {e}")
-
-# ------------------------------------------
-# टॅब २: सिंगल फोटो क्रॉप टूल
-# ------------------------------------------
-with tool_tab2:
-    st.write("### 🖼️ फोटो / पॅन / व्होटर कार्ड क्रॉप टूल")
-    single_file = st.file_uploader("एक फोटो अपलोड करा (JPG/PNG):", type=["jpg", "png", "jpeg"], key="single_img_uploader")
-    
-    if single_file:
-        img = Image.open(single_file)
-        st.image(img, caption="मूळ फोटो", use_container_width=True)
-        st.success("फोटो रेडी आहे!")
 
 st.write("---")
 st.markdown("<p style='text-align: center; color: #555; font-weight: bold;'>📍 श्री बालाजी सायबर पॉईंट, माणगाव | 📞 संपर्क: 8007365051</p>", unsafe_allow_html=True)
