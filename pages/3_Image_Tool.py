@@ -9,106 +9,105 @@ import numpy as np
 # 🌐 १. वाईड लेआउट कॉन्फिगरेशन (Full Page Width)
 # ==========================================
 st.set_page_config(
-    page_title="बालाजी सायबर पॉइंट - इमेज टूल्स", 
-    page_icon="📸", 
+    page_title="बालाजी सायबर पॉइंट - डिजिटल टूलकिट", 
+    page_icon="🖥️", 
     layout="wide"
 )
 
 # ==========================================
-# 🎨 २. अक्षरे कट होऊ नये म्हणून स्पेशल CSS
+# 🎨 २. कॉर्पोरेट व्यावसायिक UI डिझाईन (CSS)
 # ==========================================
 st.markdown("""
     <style>
-    /* वरच्या बाजूला पुरेशी जागा ठेवणे जेणेकरून अक्षरे आणि मात्रा कट होणार नाहीत */
+    /* मुख्य कन्टेनरSpacing आणि मार्जिन मोजमाप */
     .block-container {
-        padding-top: 2.5rem !important;
-        padding-bottom: 2rem !important;
+        padding-top: 1.5rem !important;
+        padding-bottom: 1.5rem !important;
         padding-left: 2rem !important;
         padding-right: 2rem !important;
     }
     
-    /* मुख्य Title ची उंची व स्पेसिंग */
-    h2 {
-        line-height: 1.5 !important;
-        padding-bottom: 5px !important;
-        overflow: visible !important;
+    /* हेडर स्टायलिंग */
+    .main-header {
+        font-size: 26px !important;
+        font-weight: 800 !important;
+        color: #0F172A !important;
+        text-align: center;
+        margin-bottom: 15px;
+        letter-spacing: 0.5px;
     }
     
-    /* टॅब यादी पूर्ण स्क्रीनवर बसवणे */
+    /* टॅब लेआउट अचूक आणि समान बसवणे */
     div[data-baseweb="tab-list"] {
-        gap: 6px;
+        gap: 8px;
         width: 100%;
         display: flex;
         justify-content: space-between;
+        margin-bottom: 20px;
     }
     
-    /* टॅबमधील मजकूर न कापण्यासाठी अ‍ॅडजस्टमेंट */
+    /* व्यावसायिक बटण स्वरूप */
     button[data-baseweb="tab"] {
         flex: 1 !important;
         text-align: center !important;
         font-size: 14px !important;
         font-weight: 700 !important;
-        border-radius: 8px 8px 0px 0px !important;
-        padding: 10px 4px !important;
-        background-color: #f1f5f9 !important;
-        color: #1e293b !important;
-        border: 1px solid #cbd5e1 !important;
-        box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.05);
-        transition: all 0.3s ease;
+        border-radius: 6px !important;
+        padding: 12px 6px !important;
+        background-color: #F8FAFC !important;
+        color: #334155 !important;
+        border: 1px solid #E2E8F0 !important;
+        box-shadow: 0px 1px 3px rgba(0, 0, 0, 0.05);
+        transition: all 0.2s ease-in-out;
         white-space: nowrap !important;
     }
     
     button[data-baseweb="tab"]:hover {
-        background-color: #e2e8f0 !important;
-        color: #0f172a !important;
+        background-color: #F1F5F9 !important;
+        color: #0F172A !important;
     }
     
     button[data-baseweb="tab"][aria-selected="true"] {
-        background: linear-gradient(135deg, #0078D7 0%, #0056b3 100%) !important;
-        color: #ffffff !important;
-        border: 1px solid #0056b3 !important;
-        box-shadow: 0px 4px 8px rgba(0, 120, 215, 0.3);
+        background-color: #2563EB !important;
+        color: #FFFFFF !important;
+        border: 1px solid #2563EB !important;
+        box-shadow: 0px 4px 6px -1px rgba(37, 99, 235, 0.2);
     }
     </style>
 """, unsafe_allow_html=True)
 
-st.markdown("<h2 style='text-align: center; color: #0078D7; font-weight: 800;'>📸 श्री बालाजी सायबर पॉईंट - डिजिटल इमेज पोर्टल्स</h2>", unsafe_allow_html=True)
-st.success("🔓 **सर्व टूल्स unlocked आहेत!** कोणताही पासवर्ड न टाकता खालील सर्व टूल्स वापरा.")
-st.write("---")
+# मुख्य व्यावसायिक शीर्षक (अनधिकृत वाक्ये पूर्ण काढली आहेत)
+st.markdown("<div class='main-header'>श्री बालाजी सायबर पॉईंट - इमेज प्रोसेसिंग टूलकिट</div>", unsafe_allow_html=True)
 
 # ==========================================
-# 🛠️ ३. चार मुख्य टूल्स
+# 🛠️ ३. मुख्य टूल्स (टॅब्स)
 # ==========================================
 tab1, tab2, tab3, tab4 = st.tabs([
-    "🖨️ आधार कटर (Precision Cut)", 
-    "📸 पासपोर्ट फोटो मेकर (९ फोटो)", 
-    "📝 फोटो-सही रीसायझर", 
-    "📸 कॅम-स्कॅनर (Photo & PDF)"
+    "आधार कटर (4x6 Layout)", 
+    "पासपोर्ट फोटो मेकर (9 Photos)", 
+    "फॉर्म फोटो व सही रीसायझर", 
+    "डॉक्युमेंट स्कॅनर (Doc/PDF)"
 ])
 
 # ------------------------------------------
-# 🖨️ टॅब १: ओरिजिनल आधार कार्ड कटर
+# 🖨️ टॅब १: आधार कार्ड कटर
 # ------------------------------------------
 with tab1:
-    st.markdown("<h4 style='color: #0056b3;'>🖨️ ओरिजिनल आधार कार्ड कटर (परफेक्ट काठोकाठ लेआउट)</h4>", unsafe_allow_html=True)
-    st.info("💡 वरचा आणि खालचा एक्स्ट्रा भाग १-क्लिकमध्ये कट करा आणि काठोकाठ ४x६ प्रिंट काढा.")
-
     col_a1, col_a2 = st.columns([2, 1])
     with col_a1:
-        pdf_file = st.file_uploader("ओरिजिनल आधार PDF फाईल अपलोड करा:", type=["pdf"], key="aadhaar_pdf_uploader")
+        pdf_file = st.file_uploader("आधार PDF अपलोड करा:", type=["pdf"], key="aadhaar_pdf_uploader")
     with col_a2:
-        pdf_password = st.text_input("🔑 PDF पासवर्ड (असेल तर):", type="password", help="उदा. नाव + जन्मवर्ष", key="pdf_pass_input")
+        pdf_password = st.text_input("PDF पासवर्ड (असेल तर):", type="password", key="pdf_pass_input")
 
     if pdf_file is not None:
-        st.write("📐 **अचूक काठोकाठ कटिंगसाठी सोपे कंट्रोल्स:**")
         col_c1, col_c2 = st.columns(2)
         with col_c1:
-            top_trim = st.slider("✂️ वरचा एक्स्ट्रा भाग कापा (%)", 65.0, 78.0, 72.2, step=0.2, key="top_trim_slider")
+            top_trim = st.slider("वरचा भाग ट्रीम (%)", 65.0, 78.0, 72.2, step=0.2, key="top_trim_slider")
         with col_c2:
-            bottom_trim = st.slider("✂️ खालचा एक्स्ट्रा भाग कापा (%)", 88.0, 98.0, 92.5, step=0.2, key="bot_trim_slider")
+            bottom_trim = st.slider("खालचा भाग ट्रीम (%)", 88.0, 98.0, 92.5, step=0.2, key="bot_trim_slider")
 
-        if st.button("🚀 ओरिजिनल आधार ४x६ लेआउट तयार करा", type="primary", use_container_width=True, key="btn_aadhaar_gen"):
-            with st.spinner("⏳ नको असलेला भाग कट करून आधार कार्ड सेट होत आहे..."):
+        if st.button("4x6 लेआउट जनरेट करा", type="primary", use_container_width=True, key="btn_aadhaar_gen"):
+            with st.spinner("प्रक्रिया सुरू आहे..."):
                 try:
                     pdf_bytes = pdf_file.read()
                     doc = fitz.open(stream=pdf_bytes, filetype="pdf")
@@ -117,10 +116,10 @@ with tab1:
                         if pdf_password:
                             auth_success = doc.authenticate(pdf_password)
                             if not auth_success:
-                                st.error("❌ चुकीचा पासवर्ड! कृपया योग्य आधार PDF पासवर्ड प्रविष्ट करा.")
+                                st.error("चुकीचा पासवर्ड प्रविष्ट केला आहे.")
                                 st.stop()
                         else:
-                            st.warning("⚠️ ही PDF पासवर्ड प्रोटेक्टेड आहे. कृपया वर पासवर्ड टाका!")
+                            st.warning("कृपया PDF पासवर्ड टाका.")
                             st.stop()
 
                     page = doc[0]
@@ -151,49 +150,47 @@ with tab1:
                     final_canvas.paste(front_bordered, (paste_x, 180))
                     final_canvas.paste(back_bordered, (paste_x, 950))
 
-                    st.success("✅ एक्स्ट्रा भाग पूर्ण कट झाला आहे! कार्ड काठोकाठ रेडी आहे.")
-                    st.image(final_canvas, caption="Balaji_Aadhaar_Precision_Fit.png", use_container_width=True)
+                    st.image(final_canvas, caption="4x6 Print Preview", use_container_width=True)
                     
                     id_buffer = io.BytesIO()
                     final_canvas.save(id_buffer, format="PNG", dpi=(300, 300))
                     
                     st.download_button(
-                        label="📥 ४x६ आधार प्रिंट फाईल (PNG) डाऊनलोड करा", 
+                        label="4x6 PNG डाऊनलोड करा", 
                         data=id_buffer.getvalue(), 
-                        file_name="Balaji_Aadhaar_4x6_Perfect.png", 
+                        file_name="Aadhaar_4x6_Layout.png", 
                         mime="image/png", 
                         use_container_width=True,
                         key="dl_aadhaar_btn"
                     )
                 except Exception as e:
-                    st.error(f"❌ आधार कार्ड प्रक्रियेत अडचण आली: {e}")
+                    st.error(f"त्रुटी: {e}")
 
 # ------------------------------------------
-# 📸 टॅब २: पासपोर्ट फोटो (९ फोटो)
+# 📸 टॅब २: पासपोर्ट फोटो जनरेटर
 # ------------------------------------------
 with tab2:
-    st.markdown("<h4 style='color: #0078D7;'>पासपोर्ट साईझ फोटो ऑटो-शीट जनरेटर (९ फोटो 4x6 / A4)</h4>", unsafe_allow_html=True)
-    uploaded_image = st.file_uploader("ज्या फोटोचे पासपोर्ट साईझ बनवायचे आहेत तो फोटो अपलोड करा:", type=["jpg", "jpeg", "png"], key="pp_uploader")
+    uploaded_image = st.file_uploader("मूळ फोटो अपलोड करा:", type=["jpg", "jpeg", "png"], key="pp_uploader")
 
     if uploaded_image is not None:
         img = Image.open(uploaded_image)
-        st.image(img, caption="अपलोड केलेला मूळ फोटो", width=150)
-        st.write("---")
+        st.image(img, caption="अपलोड फाईल", width=120)
         
         DPI = 300
         paper_option = st.radio(
-            "कोणत्या साईझच्या paper वर फोटो सेट करायचे आहेत?",
-            ("४x६ inch फोटो पेपर - ९ फोटो (9 Photos on 4x6)", "पूर्ण A4 सरकारी paper (Full A4 Sheet)"),
-            key="paper_opt"
+            "पेपर साईझ निवडा:",
+            ("4x6 Paper - 9 Photos", "Full A4 Sheet"),
+            key="paper_opt",
+            horizontal=True
         )
         
-        if st.button("🚀 पासपोर्ट साईझ फोटो शीट तयार करा", type="primary", use_container_width=True, key="btn_pp"):
-            with st.spinner("⏳ कडक ९ फोटोंचे हाय-क्वालिटी लेआउट तयार होत आहे..."):
+        if st.button("पासपोर्ट सीट जनरेट करा", type="primary", use_container_width=True, key="btn_pp"):
+            with st.spinner("प्रक्रिया सुरू आहे..."):
                 try:
-                    if "४x६" in paper_option:
+                    if "4x6" in paper_option:
                         canvas_w, canvas_h = int(4 * DPI), int(6 * DPI)
                         cols, rows = 3, 3
-                        file_suffix = "4x6_9_Photos"
+                        file_suffix = "4x6_9Photos"
                         
                         id_w, id_h = 350, 450
                         resized_id = ImageOps.fit(img, (id_w, id_h), Image.Resampling.LANCZOS)
@@ -227,36 +224,34 @@ with tab2:
                     sheet.save(buffer, format="PNG", dpi=(DPI, DPI))
                     buffer.seek(0)
                     
-                    st.success(f"✅ तुमचे {9 if '४x६' in paper_option else 'A4'} पासपोर्ट फोटो शीट तयार झाले आहे!")
-                    st.image(sheet, caption="⚙️ ९ फोटो प्रिंट प्रिव्ह्यू", use_container_width=True)
+                    st.image(sheet, caption="Print Preview", use_container_width=True)
                     
                     st.download_button(
-                        label="📥 तयार झालेली HD फोटो शीट (PNG) डाऊनलोड करा",
+                        label="फोटो शीट डाऊनलोड करा (PNG)",
                         data=buffer,
-                        file_name=f"Balaji_Passport_{file_suffix}.png",
+                        file_name=f"Passport_Sheet_{file_suffix}.png",
                         mime="image/png",
                         use_container_width=True,
                         key="dl_pp_btn"
                     )
                 except Exception as e:
-                    st.error(f"❌ चूक झाली: {e}")
+                    st.error(f"त्रुटी: {e}")
 
 # ------------------------------------------
-# 📝 टॅब ३: सरकारी फॉर्म रीसायझर
+# 📝 टॅब ३: फोटो व सही रीसायझर
 # ------------------------------------------
 with tab3:
-    st.markdown("<h4 style='color: #4CAF50;'>सरकारी फॉर्म - फोटो व सही कॉम्प्रेसर टूल</h4>", unsafe_allow_html=True)
-    tool_mode = st.radio("तुम्हाला काय रीसाईझ करायचे आहे?", ("ग्राहक फोटो (Photo - 20KB)", "ग्राहक सही (Signature - 10KB)"), key="mode_form")
-    uploaded_file = st.file_uploader("तुमची फाईल (Photo/Sign) इथे अपलोड करा:", type=["jpg", "jpeg", "png"], key="form_uploader")
+    tool_mode = st.radio("प्रकार निवडा:", ("फोटो (Max 20KB)", "सही (Max 10KB)"), key="mode_form", horizontal=True)
+    uploaded_file = st.file_uploader("इमेज अपलोड करा:", type=["jpg", "jpeg", "png"], key="form_uploader")
 
     if uploaded_file is not None:
         raw_img = Image.open(uploaded_file).convert("RGB")
-        st.image(raw_img, caption="अपलोड केलेली मूळ फाईल", width=150)
+        st.image(raw_img, caption="अपलोड फाईल", width=120)
         
-        t_width, t_height, max_kb, label = (160, 200, 20, "Photo") if "Photo" in tool_mode else (256, 64, 10, "Signature")
+        t_width, t_height, max_kb, label = (160, 200, 20, "Photo") if "फोटो" in tool_mode else (256, 64, 10, "Signature")
             
-        if st.button(f"⚡ {label} रीसाईझ आणि कॉम्प्रेस करा", type="primary", use_container_width=True, key="btn_resize_gen"):
-            with st.spinner("⏳ कॉम्प्रेस होत आहे..."):
+        if st.button("कॉम्प्रेश करा", type="primary", use_container_width=True, key="btn_resize_gen"):
+            with st.spinner("प्रक्रिया सुरू आहे..."):
                 try:
                     resized_img = raw_img.resize((t_width, t_height), Image.Resampling.LANCZOS)
                     quality = 95
@@ -271,34 +266,31 @@ with tab3:
                     final_bytes = img_buffer.getvalue()
                     final_size_kb = len(final_bytes) // 1024
                     
-                    st.success(f"✅ {label} यशस्वीरित्या रीसाईझ झाला आहे! (साईझ: {final_size_kb} KB)")
-                    st.image(final_bytes, caption=f"रीसाईझ केलेला {label}")
+                    st.success(f"अंतिम साईझ: {final_size_kb} KB")
+                    st.image(final_bytes, caption=f"रीसाईझ {label}")
                     
                     st.download_button(
-                        label=f"📥 कॉम्प्रेस झालेली {label} डाऊनलोड करा",
+                        label="डाऊनलोड करा (JPG)",
                         data=final_bytes,
-                        file_name=f"balaji_converted_{label.lower()}.jpg",
+                        file_name=f"Resized_{label.lower()}.jpg",
                         mime="image/jpeg",
                         use_container_width=True,
                         key="dl_form_btn"
                     )
                 except Exception as e:
-                    st.error(f"❌ चूक झाली: {e}")
+                    st.error(f"त्रुटी: {e}")
 
 # ------------------------------------------
-# 📸 टॅब ४: कॅम-स्कॅनर (Photo + PDF Support)
+# 📸 टॅब ४: डॉक्युमेंट स्कॅनर
 # ------------------------------------------
 with tab4:
-    st.markdown("<h4 style='color: #E65100;'>📸 बालाजी सुपर-फास्ट कॅम-स्कॅनर</h4>", unsafe_allow_html=True)
-    st.write("झटपट क्रॉप आणि सरळ करण्यासाठी खालील बटनांचा वापर करा.")
-    
     if "c_left" not in st.session_state: st.session_state.c_left = 0
     if "c_right" not in st.session_state: st.session_state.c_right = 0
     if "c_top" not in st.session_state: st.session_state.c_top = 0
     if "c_bottom" not in st.session_state: st.session_state.c_bottom = 0
     if "r_angle" not in st.session_state: st.session_state.r_angle = 0
 
-    scan_file = st.file_uploader("स्कॅन करण्यासाठी डॉक्युमेंटचा फोटो किंवा PDF फाईल अपलोड करा (JPG/PNG/PDF):", type=["jpg", "jpeg", "png", "pdf"], key="scanner_upload")
+    scan_file = st.file_uploader("इमेज किंवा PDF अपलोड करा:", type=["jpg", "jpeg", "png", "pdf"], key="scanner_upload")
 
     if scan_file is not None:
         try:
@@ -312,20 +304,19 @@ with tab4:
             else:
                 original_image = Image.open(scan_file).convert("RGB")
                 
-            st.markdown("##### ⚡ वन-क्लिक FAST कंट्रोल्स:")
             col_b1, col_b2, col_b3, col_b4, col_b5 = st.columns(5)
             with col_b1:
-                if st.button("⬅️ डावीकडून कापा", use_container_width=True): st.session_state.c_left += 5
+                if st.button("डावीकडून कापा", use_container_width=True): st.session_state.c_left += 5
             with col_b2:
-                if st.button("➡️ उजवीकडून कापा", use_container_width=True): st.session_state.c_right += 5
+                if st.button("उजवीकडून कापा", use_container_width=True): st.session_state.c_right += 5
             with col_b3:
-                if st.button("⬆️ वरून कापा", use_container_width=True): st.session_state.c_top += 5
+                if st.button("वरून कापा", use_container_width=True): st.session_state.c_top += 5
             with col_b4:
-                if st.button("⬇️ खालून कापा", use_container_width=True): st.session_state.c_bottom += 5
+                if st.button("खालून कापा", use_container_width=True): st.session_state.c_bottom += 5
             with col_b5:
-                if st.button("🔄 ९०° फिरवा", use_container_width=True): st.session_state.r_angle = (st.session_state.r_angle + 90) % 360
+                if st.button("90° फिरवा", use_container_width=True): st.session_state.r_angle = (st.session_state.r_angle + 90) % 360
 
-            if st.button("🔄 सर्व नियंत्रणे रिसेट करा (Reset All)", type="secondary", use_container_width=True):
+            if st.button("रिसेट करा", type="secondary", use_container_width=True):
                 st.session_state.c_left = 0
                 st.session_state.c_right = 0
                 st.session_state.c_top = 0
@@ -333,8 +324,8 @@ with tab4:
                 st.session_state.r_angle = 0
 
             scan_mode = st.selectbox(
-                "🎨 कलर मोड निवडा:", 
-                ["मॅजिक कलर (Magic Color)", "कडक ब्लॅक & व्हाईट (B&W)", "मूळ कलर"],
+                "कलर मोड:", 
+                ["Magic Color", "B&W", "Original"],
                 key="scanner_mode_select"
             )
             
@@ -355,22 +346,19 @@ with tab4:
             if r_px > l_px and b_px > t_px:
                 working_img = working_img.crop((l_px, t_px, r_px, b_px))
 
-            st.write("---")
-            st.markdown("##### 📐 लाईव्ह crops प्रिव्ह्यू:")
-            st.image(working_img, caption="सध्याचा डॉक्युमेंट आकार", use_container_width=True)
-            st.write("---")
+            st.image(working_img, caption="Preview", use_container_width=True)
             
-            if st.button("🚀 ३. मॅजिक स्कॅनिंग फिनिश करा", type="primary", use_container_width=True, key="scan_btn"):
-                with st.spinner("⏳ सिस्टीम सावली साफ करत आहे..."):
+            if st.button("स्कॅनिंग पूर्ण करा", type="primary", use_container_width=True, key="scan_btn"):
+                with st.spinner("प्रक्रिया सुरू आहे..."):
                     try:
                         img_np = np.array(working_img.convert('RGB'))
                         img_cv = cv2.cvtColor(img_np, cv2.COLOR_RGB2BGR)
                         
-                        if scan_mode == "कडक ब्लॅक & व्हाईट (B&W)":
+                        if scan_mode == "B&W":
                             gray = cv2.cvtColor(img_cv, cv2.COLOR_BGR2GRAY)
                             scanned = cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 25, 12)
                             final_res = Image.fromarray(scanned)
-                        elif scan_mode == "मॅजिक कलर (Magic Color)":
+                        elif scan_mode == "Magic Color":
                             channels = cv2.split(img_cv)
                             result_channels = []
                             for ch in channels:
@@ -392,24 +380,23 @@ with tab4:
                         else:
                             final_res = Image.fromarray(cv2.cvtColor(img_cv, cv2.COLOR_BGR2RGB))
                         
-                        st.markdown("#### 🖨️ तुमचा फायनल स्कॅन झालेला रिझल्ट:")
-                        st.image(final_res, use_container_width=True)
+                        st.image(final_res, caption="Scanned Result", use_container_width=True)
                         
                         img_byte_arr = io.BytesIO()
                         final_res.save(img_byte_arr, format='JPEG', quality=95)
                         
                         st.download_button(
-                            label="📥 स्कॅन झालेली इमेज डाऊनलोड करा",
+                            label="इमेज डाऊनलोड करा",
                             data=img_byte_arr.getvalue(),
-                            file_name="Balaji_Perfect_Scan.jpg",
+                            file_name="Scanned_Document.jpg",
                             mime="image/jpeg",
                             use_container_width=True,
                             key="scan_dl_btn"
                         )
                     except Exception as e:
-                        st.error(f"❌ चूक झाली: {e}")
+                        st.error(f"त्रुटी: {e}")
         except Exception as e:
-            st.error(f"❌ फाईल ओपन करताना चूक झाली: {e}")
+            st.error(f"त्रुटी: {e}")
 
 st.write("---")
-st.markdown("<p style='text-align: center; font-size: 13px; color: #666;'>📍 श्री बालाजी सायबर पॉईंट, माणगाव, रायगड | Designed for Fast Cyber Operations</p>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center; font-size: 12px; color: #94A3B8;'>श्री बालाजी सायबर पॉईंट, माणगाव, रायगड</p>", unsafe_allow_html=True)
