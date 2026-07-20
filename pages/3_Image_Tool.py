@@ -25,11 +25,11 @@ tab1, tab2, tab3, tab4 = st.tabs([
 ])
 
 # ------------------------------------------
-# 🖨️ टॅब १: काठोकाठ अचूक आधार कार्ड कटर
+# 🖨️ टॅब १: संपूर्ण ओरिजिनल मजकुरासह आधार कार्ड कटर
 # ------------------------------------------
 with tab1:
-    st.markdown("<h4 style='color: #0056b3;'>🖨️ ओरिजिनल आधार कार्ड कटर (तंतोतंत मूळ चौकट कट)</h4>", unsafe_allow_html=True)
-    st.info("⚡ बाहेरील सर्व एक्स्ट्रा पट्टे पूर्ण कट करून मूळ आधार कार्ड ४x६ वर ऑटो-फिट होईल!")
+    st.markdown("<h4 style='color: #0056b3;'>🖨️ ओरिजिनल आधार कार्ड कटर (4x6 Auto-Fit)</h4>", unsafe_allow_html=True)
+    st.info("⚡ सर्व मूळ मजकुरासह आधार कार्ड ४x६ वर ऑटो-फिट करून प्रिंट फाईल तयार होईल!")
 
     col_a1, col_a2 = st.columns([2, 1])
     with col_a1:
@@ -39,7 +39,7 @@ with tab1:
 
     if pdf_file is not None:
         if st.button("🚀 ओरिजिनल आधार ४x६ परफेक्ट लेआउट तयार करा", type="primary", use_container_width=True, key="btn_aadhaar_gen"):
-            with st.spinner("⏳ मूळ काळ्या चौकटीनुसार तंतोतंत कटिंग होत आहे..."):
+            with st.spinner("⏳ ओरिजिनल कार्ड ४x६ वर सेट होत आहे..."):
                 try:
                     pdf_bytes = pdf_file.read()
                     doc = fitz.open(stream=pdf_bytes, filetype="pdf")
@@ -62,15 +62,15 @@ with tab1:
                     
                     w, h = full_img.size
                     
-                    # 🎯 मूळ आतील काळ्या चौकटीनुसार तंतोतंत कॉर्डिनेट्स (एक्स्ट्रा पट्टे १००% गायब)
-                    crop_front = full_img.crop((int(w * 0.082), int(h * 0.728), int(w * 0.490), int(h * 0.912)))
-                    crop_back = full_img.crop((int(w * 0.508), int(h * 0.728), int(w * 0.916), int(h * 0.912)))
+                    # 🎯 मूळ संपूर्ण कार्डचा अचूक क्रॉप (सर्व हेडिंग्ज आणि फुटरसह)
+                    crop_front = full_img.crop((int(w * 0.080), int(h * 0.675), int(w * 0.492), int(h * 0.945)))
+                    crop_back = full_img.crop((int(w * 0.508), int(h * 0.675), int(w * 0.920), int(h * 0.945)))
                     
                     PAPER_W, PAPER_HEIGHT = 1200, 1800
                     final_canvas = Image.new("RGB", (PAPER_W, PAPER_HEIGHT), "white")
 
-                    # पॉकेट कार्डची कडक मानक साईझ (1020 x 580 px)
-                    card_w, card_h = 1020, 580
+                    # पॉकेट कार्ड साईझ (1020 x 640 px)
+                    card_w, card_h = 1020, 640
                     front_resized = crop_front.resize((card_w, card_h), Image.Resampling.LANCZOS)
                     back_resized = crop_back.resize((card_w, card_h), Image.Resampling.LANCZOS)
 
@@ -81,11 +81,11 @@ with tab1:
                     paste_x = (PAPER_W - front_bordered.width) // 2
                     
                     # ४x६ वर अंतरावर तंतोतंत सेंटर पेस्ट
-                    final_canvas.paste(front_bordered, (paste_x, 200))
+                    final_canvas.paste(front_bordered, (paste_x, 180))
                     final_canvas.paste(back_bordered, (paste_x, 950))
 
-                    st.success("✅ बाहेरील एक्स्ट्रा भाग पूर्ण कट झाला असून मूळ ओळखपत्र रेडी आहे!")
-                    st.image(final_canvas, caption="Balaji_Aadhaar_Perfect_Trim.png", use_container_width=True)
+                    st.success("✅ ओरिजिनल आधार कार्ड संपूर्ण मजकुरासह ४x६ वर रेडी आहे!")
+                    st.image(final_canvas, caption="Balaji_Aadhaar_Full_Layout.png", use_container_width=True)
                     
                     id_buffer = io.BytesIO()
                     final_canvas.save(id_buffer, format="PNG", dpi=(300, 300))
@@ -93,7 +93,7 @@ with tab1:
                     st.download_button(
                         label="📥 ४x६ आधार प्रिंट फाईल (PNG) डाऊनलोड करा", 
                         data=id_buffer.getvalue(), 
-                        file_name="Balaji_Aadhaar_4x6_Perfect.png", 
+                        file_name="Balaji_Aadhaar_4x6_Full.png", 
                         mime="image/png", 
                         use_container_width=True,
                         key="dl_aadhaar_btn"
@@ -236,7 +236,7 @@ with tab4:
     if scan_file is not None:
         original_image = Image.open(scan_file)
         
-        st.markdown("##### ⚡ वन-क्लिक फास्ट कंट्रोल्स:")
+        st.markdown("##### ⚡ वन-क्लिक FAST कंट्रोल्स:")
         col_b1, col_b2, col_b3, col_b4, col_b5 = st.columns(5)
         with col_b1:
             if st.button("⬅️ डावीकडून कापा", use_container_width=True): st.session_state.c_left += 5
