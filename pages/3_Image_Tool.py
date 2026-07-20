@@ -1,178 +1,459 @@
-import streamlit as st
-import fitz  # PyMuPDF
-from PIL import Image, ImageOps, ImageDraw
-import io
-import time
+# पेजचे नाव आणि लेआउट सेट करणे
+st.set_page_config(page_title="बालाजी सायबर पॉइंट - इमेज टूल्स", page_icon="📸", layout="centered")
+
+st.markdown("<h2 style='text-align: center; color: #0078D7;'>📸 श्री बालाजी सायबर पॉईंट - इमेज पोर्टल्स</h2>", unsafe_allow_html=True)
+st.write("---")
+# ऑथेंटिकेशन आणि स्कॅनर मेमरी स्टेट मॅनेजमेंट
+if "tools_authenticated" not in st.session_state:
+    st.session_state.tools_authenticated = False
+
+# मुख्य चार टॅब्स
+tab1, tab2, tab3, tab4 = st.tabs([
+    "📸 पासपोर्ट फोटो शीट मेकर", 
+    "📝 सरकारी फॉर्म फोटो-सही रीसायझर", 
+    "🖨️ स्मार्ट आयडी कार्ड प्रिंटर",
+    "📸 कॅम-स्कॅनर (Super Fast)"
+])
+if "c_left" not in st.session_state: st.session_state.c_left = 0
+if "c_right" not in st.session_state: st.session_state.c_right = 0
+if "c_top" not in st.session_state: st.session_state.c_top = 0
+if "c_bottom" not in st.session_state: st.session_state.c_bottom = 0
+if "r_angle" not in st.session_state: st.session_state.r_angle = 0
 
 # ==========================================
-# 🌐 १. पेज कॉन्फिगरेशन
+# 📸 टॅब १: पासपोर्ट साईझ फोटो शीट मेकर
 # ==========================================
-st.set_page_config(
-    page_title="श्री बालाजी सायबर पॉईंट - डिजिटल पोर्टल्स", 
-    page_icon="📷", 
-    layout="wide"
-)
+with tab1:
+    st.markdown("<h4 style='color: #0078D7;'>पासपोर्ट साईझ फोटो ऑटो-शीट जनरेटर (३.५ x ४.५ सेमी)</h4>", unsafe_allow_html=True)
+    uploaded_image = st.file_uploader("ज्या फोटोचे पासपोर्ट साईझ बनवायचे आहेत तो फोटो अपलोड करा:", type=["jpg", "jpeg", "png"], key="pp_uploader")
+st.markdown("<h2 style='text-align: center; color: #0078D7;'>📸 श्री बालाजी सायबर पॉईंट - डिजिटल पोर्टल्स</h2>", unsafe_allow_html=True)
+st.write("---")
 
-# CSS डिझाईन
-st.markdown("""
-    <style>
-        .block-container {
-            padding-top: 1.5rem !important;
-            padding-bottom: 1.5rem !important;
-        }
-        .main-header {
-            background: linear-gradient(135deg, #002f6c 0%, #0056b3 100%);
-            padding: 20px;
-            border-radius: 10px;
-            text-align: center;
-            color: white;
-            border: 2px solid #d4af37;
-            margin-bottom: 20px;
-        }
-        .ad-box {
-            background-color: #f8faff;
-            border: 2px solid #0056b3;
-            border-radius: 10px;
-            padding: 20px;
-            margin-top: 15px;
-        }
-        .ad-title {
-            color: #002f6c;
-            font-size: 22px;
-            font-weight: bold;
-            text-align: center;
-            margin-bottom: 10px;
-        }
-    </style>
-""", unsafe_allow_html=True)
-
-# 📢 मुख्य हेडर
-st.markdown("""
-<div class="main-header">
-    <h1 style="color: #e5be3b; margin: 0; font-size: 32px;">📷 श्री बालाजी सायबर पॉईंट - डिजिटल पोर्टल्स</h1>
-</div>
-""", unsafe_allow_html=True)
-
-# ✂️ ऑटो-ट्रिमिंग फंक्शन (पांढरा भाग कट करण्यासाठी)
-def auto_crop_card(card_img):
-    gray = card_img.convert("L")
-    inverted = ImageOps.invert(gray)
-    bbox = inverted.getbbox()
-    if bbox:
-        return card_img.crop(bbox)
-    return card_img
-
-# ==========================================
-# 🏠 २. मूळ टॅब सिस्टीम (होम पेज + सायबर टूल्स)
-# ==========================================
+    if uploaded_image is not None:
+        img = Image.open(uploaded_image)
+        st.image(img, caption="अपलोड केलेला मूळ फोटो", width=150)
+        st.write("---")
+        
+        DPI = 300
+        id_w, id_h = int(3.5 / 2.54 * DPI), int(4.5 / 2.54 * DPI)
+        
+        paper_option = st.radio(
+            "कोणत्या साईझच्या paper वर फोटो सेट करायचे आहेत?",
+            ("४x६ inch फोटो पेपर (4x6 Sheet)", "पूर्ण A4 सरकारी paper (Full A4 Sheet)"),
+            key="paper_opt"
+        )
+        
+        if st.button("🚀 पासपोर्ट साईझ फोटो शीट तयार करा", type="primary", use_container_width=True, key="btn_pp"):
+            with st.spinner("⏳ कडक हाय-क्वालिटी लेआउट तयार होत आहे..."):
+                try:
+                    if "४x६" in paper_option:
+                        canvas_w, canvas_h = int(4 * DPI), int(6 * DPI)
+                        file_suffix = "4x6_Sheet"
+                    else:
+                        canvas_w, canvas_h = int(8.27 * DPI), int(11.69 * DPI)
+                        file_suffix = "A4_Sheet"
+                    
+                    resized_id = ImageOps.fit(img, (id_w, id_h), Image.Resampling.LANCZOS)
+                    sheet = Image.new("RGB", (canvas_w, canvas_h), "white")
+                    
+                    margin = 25
+                    for y in range(margin, canvas_h - id_h, id_h + margin):
+                        for x in range(margin, canvas_w - id_w, id_w + margin):
+                            sheet.paste(resized_id, (x, y))
+                    
+                    buffer = io.BytesIO()
+                    sheet.save(buffer, format="PNG", dpi=(DPI, DPI))
+                    buffer.seek(0)
+                    
+                    st.success("✅ तुमचे पासपोर्ट फोटो शीट तयार झाले आहे!")
+                    st.image(sheet, caption="⚙️ प्रिंट प्रिव्ह्यू", use_container_width=True)
+                    
+                    st.download_button(
+                        label="📥 तयार झालेली HD फोटो शीट (PNG) डाऊनलोड करा",
+                        data=buffer,
+                        file_name=f"Balaji_Passport_{file_suffix}.png",
+                        mime="image/png",
+                        use_container_width=True
+                    )
+                except Exception as e:
+                    st.error(f"❌ चूक झाली: {e}")
+# 🎯 मुख्य दोन विभाग (टॅब्स): होम पेज सर्वांसाठी खुले, सायबर टूल्स पासवर्डच्या मागे लॉक
 main_tab1, main_tab2 = st.tabs([
     "🏠 होम पेज (जाहिरात व सुविधा)", 
     "🔐 सायबर टूल्स पोर्टल (Locked)"
 ])
 
-# ------------------------------------------
-# टॅब १: होम पेज (जाहिरात व माहिती)
-# ------------------------------------------
+# ==========================================
+# 📝 टॅब २: सरकारी फॉर्म फोटो व सही रीसायझर
+# 📢 विभाग १: सर्वांसाठी खुले असलेले होम पेज (व्यावसायिक मार्केटिंग)
+# ==========================================
+with tab2:
+    st.markdown("<h4 style='color: #4CAF50;'>सरकारी फॉर्म - फोटो व सही कॉम्प्रेसर टूल</h4>", unsafe_allow_html=True)
+    tool_mode = st.radio("तुम्हाला काय रीसाईझ करायचे आहे?", ("ग्राहक फोटो (Photo - 20KB)", "ग्राहक सही (Signature - 10KB)"))
+    uploaded_file = st.file_uploader("तुमची फाईल (Photo/Sign) इथे अपलोड करा:", type=["jpg", "jpeg", "png"], key="form_uploader")
 with main_tab1:
     st.markdown("""
-    <div style="background-color: #004085; color: white; padding: 25px; border-radius: 8px; text-align: center; margin-bottom: 20px;">
-        <h2 style="color: #ffc107; margin: 0;">बालाजी सायबर पॉईंट (माणगाव)</h2>
-        <h4 style="margin-top: 5px; font-weight: 400;">तुमचे डिजिटल आणि ट्रॅव्हल सोल्यूशन पार्टनर!</h4>
+    <div style="background: linear-gradient(135deg, #002f6c 0%, #0056b3 100%); padding: 30px; border-radius: 10px; text-align: center; color: white; border: 2px solid #d4af37; margin-bottom: 20px;">
+        <h2 style="color: #e5be3b; margin-bottom: 5px;">बालाजी सायबर पॉईंट (माणगाव)</h2>
+        <h4 style="opacity: 0.9; margin-top: 0;">तुमचे डिजिटल आणि ट्रॅव्हल सोल्यूशन पार्टनर!</h4>
     </div>
     """, unsafe_allow_html=True)
 
-    col_a, col_b = st.columns(2)
-    with col_a:
-        st.markdown("""
-        <div style="background-color: #e8f4f8; padding: 15px; border-radius: 8px; border-left: 5px solid #0056b3;">
-            <h4 style="color: #0056b3; margin-top: 0;">📢 नवीन सरकारी नोकर भरती व जाहिराती</h4>
-            <p><b>📌 महाभरती २०२६:</b> विविध सरकारी विभागांमध्ये नवीन जागा उपलब्ध झाल्या आहेत. ऑनलाईन अर्ज भरण्यासाठी आजच दुकानात आवश्यक कागदपत्रांसह भेट द्या.</p>
-        </div>
-        """, unsafe_allow_html=True)
-    with col_b:
-        st.markdown("""
-        <div style="background-color: #fff9e6; padding: 15px; border-radius: 8px; border-left: 5px solid #ffc107;">
-            <h4 style="color: #856404; margin-top: 0;">📌 परीक्षा प्रवेशपत्र (Admit Card)</h4>
-            <p>चालू महिन्यातील स्पर्धा परीक्षांचे हॉल तिकीट आणि विविध सरकारी परीक्षांचे प्रवेशपत्र डाऊनलोड करणे सुरू आहे.</p>
-        </div>
-        """, unsafe_allow_html=True)
-
-    st.write("---")
-    st.markdown("### 🛠️ आमच्याकडे उपलब्ध असलेल्या प्रमुख सुविधा:")
-    
-    col1, col2 = st.columns(2)
-    with col1:
-        st.write("🖨️ **कार्ड प्रिंटिंग आणि स्कॅनर सेवा**")
-        st.write("* आयुष्मान भारत कार्ड ४x६ ऑटो-फिट प्रिंटिंग")
-        st.write("* स्मार्ट आयडी कार्ड प्रिंटर (पॅन कार्ड / व्होटर आयडी)")
-        st.write("* A4 / A3 हाय-क्वालिटी कलर प्रिंटिंग आणि लॅमिनेशन")
-    with col2:
-        st.write("📝 **ऑनलाईन फॉर्म आणि ट्रॅव्हल बुकिंग**")
-        st.write("* सर्व प्रकारच्या सरकारी व भरती परीक्षांचे ऑनलाईन अर्ज")
-        st.write("* फ्लाईट, रेल्वे व बस तिकिट बुकिंग")
-        st.write("* पासपोर्ट व ड्रायव्हिंग लायसन्स ऑनलाईन अर्ज")
-
-# ------------------------------------------
-# टॅब २: सायबर टूल्स पोर्टल (आयुष्मान भारत PDF कन्व्हर्टर)
-# ------------------------------------------
-with main_tab2:
-    st.write("### 🖨️ आयुष्मान भारत सरकारी PDF ऑटो-फिट 4X6 प्रिंटर")
-    uploaded_file = st.file_uploader("तुमची आयुष्मान भारत सरकारी PDF फाईल इथे अपलोड करा:", type=["pdf"], key="ayushman_pdf_uploader")
-
     if uploaded_file is not None:
-        if st.button("🚀 कडक ४x६ प्रिंट लेआउट तयार करा", type="primary", use_container_width=True):
-            with st.spinner("⏳ स्वयंचलित तंत्रज्ञानाद्वारे पांढरा भाग काढून लेआउट फिक्स होत आहे..."):
+        raw_img = Image.open(uploaded_file).convert("RGB")
+        st.image(raw_img, caption="अपलोड केलेली मूळ फाईल", width=150)
+    st.markdown("#### 📢 नवीन सरकारी नोकर भरती व जाहिराती")
+    col_ads1, col_ads2 = st.columns(2)
+    with col_ads1:
+        st.info("📌 **महाभरती २०२६:** विविध सरकारी विभागांमध्ये नवीन जागा उपलब्ध झाल्या आहेत. ऑनलाईन अर्ज भरण्यासाठी आजच दुकानात आवश्यक कागदपत्रांसह भेट द्या.")
+    with col_ads2:
+        st.warning("📌 **परीक्षा प्रवेशपत्र (Admit Card):** चालू महिन्यातील स्पर्धा परीक्षांचे हॉल तिकीट आणि विविध सरकारी परीक्षांचे प्रवेशपत्र डाऊनलोड करणे सुरू आहे.")
+
+        if "Photo" in tool_mode:
+            t_width, t_height, max_kb, label = 160, 200, 20, "Photo"
+        else:
+            t_width, t_height, max_kb, label = 256, 64, 10, "Signature"
+            
+        if st.button(f"⚡ {label} रीसाईझ आणि कॉम्प्रेस करा", type="primary", use_container_width=True):
+            with st.spinner("⏳ कॉम्प्रेस होत आहे..."):
                 try:
-                    st.cache_data.clear()
-                    pdf_bytes = uploaded_file.read()
-                    doc = fitz.open(stream=pdf_bytes, filetype="pdf")
+                    resized_img = raw_img.resize((t_width, t_height), Image.Resampling.LANCZOS)
+                    quality = 95
+                    img_buffer = io.BytesIO()
+                    resized_img.save(img_buffer, "JPEG", optimize=True, quality=quality)
                     
-                    if len(doc) < 1:
-                        st.error("मजकूर सापडला नाही! कृपया खरी पीडीएफ अपलोड करा.")
-                    else:
-                        page = doc[0]
-                        pix = page.get_pixmap(dpi=400)
-                        img_data = pix.tobytes("png")
-                        img = Image.open(io.BytesIO(img_data))
+                    while img_buffer.tell() > max_kb * 1024 and quality > 10:
+                        quality -= 5
+                        img_buffer = io.BytesIO()
+                        resized_img.save(img_buffer, "JPEG", optimize=True, quality=quality)
                         
-                        width, height = img.size
-                        rough_front = img.crop((int(width * 0.03), int(height * 0.12), int(width * 0.50), int(height * 0.88)))
-                        rough_back = img.crop((int(width * 0.50), int(height * 0.12), int(width * 0.97), int(height * 0.88)))
-                        
-                        img_front = auto_crop_card(rough_front)
-                        img_back = auto_crop_card(rough_back)
-                        
-                        PAPER_WIDTH, PAPER_HEIGHT = 1200, 1800
-                        card_w, card_h = 1200, 765
-                        
-                        img_front = img_front.resize((card_w, card_h), Image.Resampling.LANCZOS)
-                        img_back = img_back.resize((card_w, card_h), Image.Resampling.LANCZOS)
-                        
-                        final_canvas = Image.new("RGB", (PAPER_WIDTH, PAPER_HEIGHT), "white")
-                        final_canvas.paste(img_front, (0, 80))
-                        final_canvas.paste(img_back, (0, 950))
-                        
-                        draw = ImageDraw.Draw(final_canvas)
-                        draw.rectangle([0, 80, PAPER_WIDTH - 1, 80 + card_h], outline="black", width=5)
-                        draw.rectangle([0, 950, PAPER_WIDTH - 1, 950 + card_h], outline="black", width=5)
-                        
-                        img_byte_arr = io.BytesIO()
-                        final_canvas.save(img_byte_arr, format='PNG', dpi=(400, 400))
-                        img_byte_arr_raw = img_byte_arr.getvalue()
-                        
-                        st.success("✅ आयुष्मान कार्ड आता काठोकाठ ४x६ वर ऑटो-फिट झाले आहे!")
-                        st.image(final_canvas, caption="४x६ कडक प्रिंट प्रिव्ह्यू", width=600)
-                        
-                        unique_time = int(time.time())
-                        st.download_button(
-                            label="📥 कडक ४x६ प्रिंट इमेज (PNG) डाऊनलोड करा",
-                            data=img_byte_arr_raw,
-                            file_name=f"Ayushman_AutoFit_HD_{unique_time}.png",
-                            mime="image/png",
-                            use_container_width=True
-                        )
+                    final_bytes = img_buffer.getvalue()
+                    final_size_kb = len(final_bytes) // 1024
+                    
+                    st.success(f"✅ {label} यशस्वीरित्या रीसाईझ झाला आहे! (साईझ: {final_size_kb} KB)")
+                    st.image(final_bytes, caption=f"रीसाईझ केलेला {label}")
+                    
+                    st.download_button(
+                        label=f"📥 कॉम्प्रेस झालेली {label} डाऊनलोड करा",
+                        data=final_bytes,
+                        file_name=f"balaji_converted_{label.lower()}.jpg",
+                        mime="image/jpeg",
+                        use_container_width=True
+                    )
                 except Exception as e:
-                    st.error(f"अडचण आली: {e}")
+                    st.error(f"❌ चूक झाली: {e}")
+
+# ==========================================
+# 🖨️ टॅब ३: स्मार्ट आयडी कार्ड प्रिंटर
+# ==========================================
+with tab3:
+    st.markdown("<h4 style='color: #0056b3;'>स्मार्ट आयडी कार्ड प्रिंटर</h4>", unsafe_allow_html=True)
+    
+    col_id1, col_id2 = st.columns(2)
+    with col_id1:
+        front_file = st.file_uploader("१. फ्रंट बाजूचा (Front Side) फोटो अपलोड करा:", type=["jpg", "jpeg", "png"], key="id_front")
+    with col_id2:
+        back_file = st.file_uploader("२. बॅक बाजूचा (Back Side) फोटो अपलोड करा:", type=["jpg", "jpeg", "png"], key="id_back")
+
+    if front_file is not None and back_file is not None:
+        if st.button("⚙️ ४x६ कडक प्रिंट लेआउट तयार करा", type="primary", use_container_width=True, key="btn_id_generate"):
+            with st.spinner("⏳ लेआउट तयार होत आहे..."):
+                try:
+                    img_f = Image.open(front_file).convert("RGB")
+                    img_b = Image.open(back_file).convert("RGB")
+                    
+                    final_w, final_h = 1130, 710
+                    img_f = img_f.resize((final_w, final_h), Image.Resampling.LANCZOS)
+                    img_b = img_b.resize((final_w, final_h), Image.Resampling.LANCZOS)
+                    
+                    img_f = ImageOps.expand(img_f, border=6, fill='black')
+                    img_b = ImageOps.expand(img_b, border=6, fill='black')
+                    
+                    PAPER_WIDTH, PAPER_HEIGHT = 1200, 1800
+                    id_canvas = Image.new("RGB", (PAPER_WIDTH, PAPER_HEIGHT), "white")
+                    
+                    paste_x = (PAPER_WIDTH - img_f.width) // 2
+                    
+                    id_canvas.paste(img_f, (paste_x, 150))
+                    id_canvas.paste(img_b, (paste_x, 950))
+                    
+                    id_buffer = io.BytesIO()
+                    id_canvas.save(id_buffer, format="PNG", dpi=(300, 300))
+                    id_buffer.seek(0)
+                    
+                    st.success("✅ आयडी कार्ड प्रिंट sheet एकदम रेडी आहे!")
+                    st.image(id_canvas, caption="४x६ प्रिंट प्रिव्ह्यू", use_container_width=True)
+                    
+                    st.download_button(
+                        label="📥 ४x६ कडक आयडी कार्ड प्रिंट (PNG) डाऊनलोड करा",
+                        data=id_buffer,
+                        file_name="Balaji_Smart_ID_Print.png",
+                        mime="image/png",
+                        use_container_width=True
+                    )
+                except Exception as e:
+                    st.error(f"❌ चूक झाली: {e}")
+    st.write("---")
+    st.markdown("#### 🛠️ आमच्याकडे उपलब्ध असलेल्या प्रमुख सुविधा:")
+    col_serv1, col_serv2 = st.columns(2)
+    with col_serv1:
+        st.markdown("""
+        **🖨️ कार्ड प्रिंटिंग आणि स्कॅनर सेवा**
+        * आयुष्मान भारत कार्ड ४x६ ऑटो-फिट प्रिंटिंग
+        * स्मार्ट आयडी कार्ड प्रिंटर (पॅन कार्ड / वोटर आयडी)
+        * डिजिटल दस्तऐवज आणि ७/१२ उतारा कलर प्रिंटिंग
+        """)
+    with col_serv2:
+        st.markdown("""
+        **📝 ऑनलाईन फॉर्म आणि ट्रॅव्हल बुकिंग**
+        * सर्व प्रकारच्या सरकारी व भरती परीक्षांचे ऑनलाईन अर्ज
+        * रेशन कार्ड, उत्पन्न दाखला आणि नवीन नोंदणी अर्ज
+        * देश-विदेशातील फ्लाईट्स, रेल्वे आणि हॉटेल बुकिंग सेवा (MakeMyTrip)
+        """)
+        
+    st.write("---")
+    st.markdown("<p style='text-align: center; font-size: 13px; color: #666;'>📍 पत्ता: बालाजी कॉम्प्लेक्स, माणगाव, रायगड, महाराष्ट्र</p>", unsafe_allow_html=True)
+
+# ==========================================
+# 📸 टॅब ४: वेगवान वन-क्लिक कॅम-स्कॅनर (Super Fast Automation)
+# 🔐 विभाग २: पासवर्ड प्रोटेक्टेड सायबर टूल्स
+# ==========================================
+with tab4:
+    st.markdown("<h4 style='color: #E65100;'>📸 बालाजी सुपर-फास्ट कॅम-स्कॅनर</h4>", unsafe_allow_html=True)
+    st.write("झटपट क्रॉप आणि सरळ करण्यासाठी फक्त खालील बटनांवर क्लिक करा. स्लायडर्स सरकवण्याची गरज नाही!")
+    st.write("---")
+    
+    # क्रॉप आणि रोटेशनसाठी मेमरी स्टेट मॅनेजमेंट
+    if "c_left" not in st.session_state: st.session_state.c_left = 0
+    if "c_right" not in st.session_state: st.session_state.c_right = 0
+    if "c_top" not in st.session_state: st.session_state.c_top = 0
+    if "c_bottom" not in st.session_state: st.session_state.c_bottom = 0
+    if "r_angle" not in st.session_state: st.session_state.r_angle = 0
+
+    scan_file = st.file_uploader("स्कॅन करण्यासाठी डॉक्युमेंटचा फोटो अपलोड करा (JPG/PNG):", type=["jpg", "jpeg", "png"], key="scanner_upload")
+
+    if scan_file is not None:
+        original_image = Image.open(scan_file)
+with main_tab2:
+    if not st.session_state.tools_authenticated:
+        st.markdown("#### 🔐 अंतर्गत सायबर ऑपरेशन्स")
+        access_password = st.text_input("🔑 मॅनेजर पासवर्ड प्रविष्ट करा:", type="password", key="inner_tools_password")
+
+        # ⚡ वन-क्लिक कंट्रोल बटन्स पॅनेल
+        st.markdown("##### ⚡ १. वन-क्लिक फास्ट कंट्रोल्स:")
+        
+        col_b1, col_b2, col_b3, col_b4, col_b5 = st.columns(5)
+        with col_b1:
+            if st.button("⬅️ डावीकडून कापा", use_container_width=True): st.session_state.c_left += 5
+        with col_b2:
+            if st.button("➡️ उजवीकडून कापा", use_container_width=True): st.session_state.c_right += 5
+        with col_b3:
+            if st.button("⬆️ वरून कापा", use_container_width=True): st.session_state.c_top += 5
+        with col_b4:
+            if st.button("⬇️ खालून कापा", use_container_width=True): st.session_state.c_bottom += 5
+        with col_b5:
+            if st.button("🔄 ९०° फिरवा", use_container_width=True): st.session_state.r_angle = (st.session_state.r_angle + 90) % 360
+
+        if st.button("🔄 सर्व नियंत्रणे रिसेट करा (Reset All)", type="secondary", use_container_width=True):
+            st.session_state.c_left = 0
+            st.session_state.c_right = 0
+            st.session_state.c_top = 0
+            st.session_state.c_bottom = 0
+            st.session_state.r_angle = 0
+        if st.button("🔓 टूल्स अनलॉक करा", type="primary", use_container_width=True):
+            if access_password == "Balaji@123":
+                st.session_state.tools_authenticated = True
+                st.success("🔓 सर्व अंतर्गत टूल्स अनलॉक झाले आहेत!")
+                st.rerun()
+            else:
+                st.error("❌ चुकीचा पासवर्ड! कृपया योग्य मॅनेजर पासवर्ड प्रविष्ट करा.")
+    else:
+        st.sidebar.success("🔓 इमेज टूल्स अनलॉक आहेत")
+        if st.sidebar.button("🔒 टूल्स लॉक करा (Lock)"):
+            st.session_state.tools_authenticated = False
+st.rerun()
+
+        scan_mode = st.selectbox(
+            "🎨 कलर मोड निवडा:", 
+            ["मॅजिक कलर (Magic Color)", "कडक ब्लॅक & व्हाईट (B&W)", "मूळ कलर"],
+            key="scanner_mode_select"
+        )
+        
+        # --- फास्ट इमेज प्रोसेसिंग ---
+        # रोटेशन अप्लाय करणे
+        if st.session_state.r_angle != 0:
+            if st.session_state.r_angle == 90: working_img = original_image.transpose(Image.ROTATE_270)
+            elif st.session_state.r_angle == 180: working_img = original_image.transpose(Image.ROTATE_180)
+            elif st.session_state.r_angle == 270: working_img = original_image.transpose(Image.ROTATE_90)
+            else: working_img = original_image
+        else:
+            working_img = original_image
+
+        # क्रॉपिंग अप्लाय करणे
+        w, h = working_img.size
+        l_px = int(w * (st.session_state.c_left / 100))
+        r_px = w - int(w * (st.session_state.c_right / 100))
+        t_px = int(h * (st.session_state.c_top / 100))
+        b_px = h - int(h * (st.session_state.c_bottom / 100))
+        # अंतर्गत ४ उप-टॅब्स
+        sub_tab1, sub_tab2, sub_tab3, sub_tab4 = st.tabs([
+            "🖨️ आयुष्मान भारत ४x६",
+            "📸 पासपोर्ट फोटो मेकर", 
+            "📝 फोटो-सही रीसायझर", 
+            "📸 कॅम-स्कॅनर व आयडी प्रिंट"
+        ])
+
+        if r_px > l_px and b_px > t_px:
+            working_img = working_img.crop((l_px, t_px, r_px, b_px))
+        # -----------------------------------------
+        # उप-टॅब १: आयुष्मान भारत ४x६ प्रिंटर (मॅन्युअल क्रॉप सुविधेसह)
+        # -----------------------------------------
+        with sub_tab1:
+            st.markdown("##### 🖨️ आयुष्मान भारत ४x६ परफेक्ट लेआउट प्रिंटर")
+            uploaded_ad_img = st.file_uploader("आयुष्मान कार्डचा फोटो/स्क्रीनशॉट अपलोड करा:", type=["jpg", "jpeg", "png"], key="ayush_uploader")
+
+        st.write("---")
+        st.markdown("##### 📐 २. तुमचा लाईव्ह क्रॉप प्रिव्ह्यू (Live Crop Preview):")
+        st.image(working_img, caption="सध्याचा दस्तऐवज आकार", use_container_width=True)
+        st.write("---")
+        
+        if st.button("🚀 ३. मॅजिक स्कॅनिंग फिनिश करा", type="primary", use_container_width=True, key="scan_btn"):
+            with st.spinner("⏳ सिस्टीम सावली साफ करून रिझल्ट कडक करत आहे..."):
+                try:
+                    img_np = np.array(working_img.convert('RGB'))
+                    img_cv = cv2.cvtColor(img_np, cv2.COLOR_RGB2BGR)
+                    
+                    if scan_mode == "कडक ब्लॅक & व्हाईट (B&W)":
+                        gray = cv2.cvtColor(img_cv, cv2.COLOR_BGR2GRAY)
+                        scanned = cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 25, 12)
+                        final_res = Image.fromarray(scanned)
+            if uploaded_ad_img is not None:
+                pil_img = Image.open(uploaded_ad_img).convert("RGB")
+                
+                st.write("🎯 **कार्ड कट होऊ नये म्हणून खालचा नको असलेला भाग इथून कापून घ्या:**")
+                w, h = pil_img.size
+                
+                # इमेज कापण्यासाठी सुरक्षित क्रॉप स्लाइडर (No dependency error)
+                crop_slider = st.slider("खालून किती टक्के भाग कापायचा आहे?", 0, 100, 45, step=5)
+                
+                if st.button("🚀 ४x६ साईझ लेआउट तयार करा", type="primary", use_container_width=True):
+                    try:
+                        # स्लाइडरनुसार खालचा भाग अचूक कट करणे
+                        crop_pixel = h - int(h * (crop_slider / 100))
+                        if crop_pixel > 10:
+                            card_cropped = pil_img.crop((0, 0, w, crop_pixel))
+                        else:
+                            card_cropped = pil_img
+
+                    elif scan_mode == "मॅजिक कलर (Magic Color)":
+                        channels = cv2.split(img_cv)
+                        result_channels = []
+                        for ch in channels:
+                            dilated = cv2.dilate(ch, np.ones((7,7), np.uint8))
+                            bg = cv2.medianBlur(dilated, 21)
+                            diff = cv2.absdiff(ch, bg)
+                            diff = 255 - diff
+                            norm = cv2.normalize(diff, None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_8UC1)
+                            result_channels.append(norm)
+                        PAPER_W, PAPER_HEIGHT = 1200, 1800
+                        final_canvas = Image.new("RGB", (PAPER_W, PAPER_HEIGHT), "white")
+
+                        merged_bg = cv2.merge(result_channels)
+                        blended = cv2.addWeighted(img_cv, 0.60, merged_bg, 0.40, 0)
+                        card_resized = card_cropped.resize((1130, 710), Image.Resampling.LANCZOS)
+                        card_with_border = ImageOps.expand(card_resized, border=6, fill='black')
+
+                        enhanced_pil = Image.fromarray(cv2.cvtColor(blended, cv2.COLOR_BGR2RGB))
+                        paste_x = (PAPER_W - card_with_border.width) // 2
+                        final_canvas.paste(card_with_border, (paste_x, 540))
+
+                        enhancer = ImageEnhance.Contrast(enhanced_pil)
+                        enhanced_pil = enhancer.enhance(1.3)
+                        sharp = ImageEnhance.Sharpness(enhanced_pil)
+                        final_res = sharp.enhance(1.2)
+                    else:
+                        final_res = Image.fromarray(cv2.cvtColor(img_cv, cv2.COLOR_BGR2RGB))
+                    
+                    st.markdown("#### 🖨️ तुमचा फायनल स्कॅन झालेला रिझल्ट:")
+                    st.image(final_res, use_container_width=True)
+                    
+                    img_byte_arr = io.BytesIO()
+                    final_res.save(img_byte_arr, format='JPEG', quality=95)
+                    
+                    st.write("")
+                    st.download_button(
+                        label="📥 स्कॅन झालेली परफेक्ट इमेज डाऊनलोड करा",
+                        data=img_byte_arr.getvalue(),
+                        file_name="Balaji_Perfect_Scan.jpg",
+                        mime="image/jpeg",
+                        use_container_width=True,
+                        key="scan_dl_btn"
+                    )
+                except Exception as e:
+                    st.error(f"❌ चूक झाली: {e}")
+                        st.image(final_canvas, caption="Balaji_Ayushman_4x6.png", use_container_width=True)
+                        
+                        id_buffer = io.BytesIO()
+                        final_canvas.save(id_buffer, format="PNG", dpi=(300, 300))
+                        st.download_button(label="📥 ४x६ फाईल डाऊनलोड करा", data=id_buffer.getvalue(), file_name="Balaji_Ayushman_4x6.png", mime="image/png", use_container_width=True)
+                    except Exception as e:
+                        st.error(f"❌ चूक: {e}")
+
+        # -----------------------------------------
+        # उप-टॅब २: पासपोर्ट साईझ फोटो शीट मेकर
+        # -----------------------------------------
+        with sub_tab2:
+            st.markdown("##### पासपोर्ट साईझ फोटो ऑटो-शीट जनरेटर")
+            uploaded_image = st.file_uploader("फोटो अपलोड करा:", type=["jpg", "jpeg", "png"], key="pp_uploader")
+            if uploaded_image is not None:
+                img = Image.open(uploaded_image)
+                st.image(img, width=150)
+                DPI = 300
+                id_w, id_h = int(3.5 / 2.54 * DPI), int(4.5 / 2.54 * DPI)
+                paper_option = st.radio("पेपर साईझ निवडा:", ("४x६ inch फोटो पेपर", "पूर्ण A4 सरकारी paper"), key="paper_opt")
+                if st.button("🚀 पासपोर्ट शीट तयार करा", type="primary", use_container_width=True):
+                    try:
+                        canvas_w, canvas_h = (int(4 * DPI), int(6 * DPI)) if "४x६" in paper_option else (int(8.27 * DPI), int(11.69 * DPI))
+                        resized_id = ImageOps.fit(img, (id_w, id_h), Image.Resampling.LANCZOS)
+                        sheet = Image.new("RGB", (canvas_w, canvas_h), "white")
+                        margin = 25
+                        for y in range(margin, canvas_h - id_h, id_h + margin):
+                            for x in range(margin, canvas_w - id_w, id_w + margin): sheet.paste(resized_id, (x, y))
+                        buffer = io.BytesIO()
+                        sheet.save(buffer, format="PNG", dpi=(DPI, DPI))
+                        st.image(sheet, use_container_width=True)
+                    except Exception as e: st.error(f"❌ चूक: {e}")
+
+        # -----------------------------------------
+        # उप-टॅब ३: सरकारी फॉर्म फोटो व सही रीसायझर
+        # -----------------------------------------
+        with sub_tab3:
+            st.markdown("##### 📝 सरकारी फॉर्म - फोटो व सही कॉम्प्रेसर")
+            tool_mode = st.radio("रीसाईझ प्रकार निवडा:", ("फोटो", "सही"), key="mode_form")
+            uploaded_file = st.file_uploader("फाईल अपलोड करा:", type=["jpg", "jpeg", "png"], key="form_uploader")
+            if uploaded_file is not None:
+                raw_img = Image.open(uploaded_file).convert("RGB")
+                t_width, t_height, max_kb, label = (160, 200, 20, "Photo") if "फोटो" in tool_mode else (256, 64, 10, "Signature")
+                if st.button(f"⚡ {label} रीसाईझ करा", type="primary", use_container_width=True):
+                    try:
+                        resized_img = raw_img.resize((t_width, t_height), Image.Resampling.LANCZOS)
+                        quality = 95
+                        img_buffer = io.BytesIO()
+                        resized_img.save(img_buffer, "JPEG", optimize=True, quality=quality)
+                        while img_buffer.tell() > max_kb * 1024 and quality > 10:
+                            quality -= 5
+                            img_buffer = io.BytesIO()
+                            resized_img.save(img_buffer, "JPEG", optimize=True, quality=quality)
+                        st.success(f"✅ यशस्वी! साईझ: {len(img_buffer.getvalue()) // 1024} KB")
+                        st.image(img_buffer.getvalue())
+                    except Exception as e: st.error(f"❌ चूक: {e}")
+
+        # -----------------------------------------
+        # उप-टॅब ४: सुपर-फास्ट स्कॅनर व स्मार्ट आयडी प्रिंटर
+        # -----------------------------------------
+        with sub_tab4:
+            st.markdown("##### 🖨️ स्मार्ट आयडी कार्ड प्रिंटर व कॅम-स्कॅनर")
+            st.info("तुमची प्रगत स्कॅनर व पॅन/वोटर आयडी सिस्टीम कनेक्टेड आहे...")
 
 st.write("---")
-st.markdown("<p style='text-align: center; color: #555; font-weight: bold;'>📍 श्री बालाजी सायबर पॉईंट, माणगाव | 📞 संपर्क: 8007365051</p>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center; font-size: 12px; color: #888;'>Designed by Balaji Cyber Point, Mangaon</p>", unsafe_allow_html=True)
