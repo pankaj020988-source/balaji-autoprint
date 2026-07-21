@@ -15,11 +15,10 @@ st.set_page_config(
 )
 
 # ==========================================
-# 🎨 २. कॉर्पोरेट व्यावसायिक UI डिझाईन (CSS Fix)
+# 🎨 २. कॉर्पोरेट UI डिझाईन (CSS)
 # ==========================================
 st.markdown("""
     <style>
-    /* वरच्या बाजूला पुरेशी जागा ठेवल्याने हेडिंग कट होणार नाही */
     .block-container {
         padding-top: 3.5rem !important;
         padding-bottom: 2rem !important;
@@ -27,7 +26,6 @@ st.markdown("""
         padding-right: 2rem !important;
     }
     
-    /* मुख्य हेडिंग स्टायलिंग */
     .main-header {
         font-size: 26px !important;
         font-weight: 800 !important;
@@ -39,7 +37,6 @@ st.markdown("""
         line-height: 1.4 !important;
     }
     
-    /* टॅब लेआउट अचूक आणि समान बसवणे */
     div[data-baseweb="tab-list"] {
         gap: 8px;
         width: 100%;
@@ -48,7 +45,6 @@ st.markdown("""
         margin-bottom: 20px;
     }
     
-    /* व्यावसायिक बटण स्वरूप */
     button[data-baseweb="tab"] {
         flex: 1 !important;
         text-align: center !important;
@@ -78,8 +74,61 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# मुख्य व्यावसायिक शीर्षक
 st.markdown("<div class='main-header'>बालाजी सायबर पॉईंट - इमेज प्रोसेसिंग टूलकिट</div>", unsafe_allow_html=True)
+
+# ==========================================
+# 📐 ऑटोमॅटिक डॉक्युमेंट क्रॉप फंक्शन (OpenCV)
+# ==========================================
+def auto_perspective_crop(pil_img):
+    img_np = np.array(pil_img.convert('RGB'))
+    img_cv = cv2.cvtColor(img_np, cv2.COLOR_RGB2BGR)
+    orig = img_cv.copy()
+    
+    gray = cv2.cvtColor(img_cv, cv2.COLOR_BGR2GRAY)
+    blur = cv2.GaussianBlur(gray, (5, 5), 0)
+    edged = cv2.Canny(blur, 50, 200)
+    
+    contours, _ = cv2.findContours(edged.copy(), cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+    contours = sorted(contours, key=cv2.contourArea, reverse=True)[:5]
+    
+    doc_cnt = None
+    for c in contours:
+        peri = cv2.arcLength(c, True)
+        approx = cv2.approxPolyDP(c, 0.02 * peri, True)
+        if len(approx) == 4:
+            doc_cnt = approx
+            break
+            
+    if doc_cnt is not None:
+        pts = doc_cnt.reshape(4, 2)
+        rect = np.zeros((4, 2), dtype="float32")
+        s = pts.sum(axis=1)
+        rect[0] = pts[np.argmin(s)]
+        rect[2] = pts[np.argmax(s)]
+        diff = np.diff(pts, axis=1)
+        rect[1] = pts[np.argmin(diff)]
+        rect[3] = pts[np.argmax(diff)]
+        
+        (tl, tr, br, bl) = rect
+        widthA = np.sqrt(((br[0] - bl[0]) ** 2) + ((br[1] - bl[1]) ** 2))
+        widthB = np.sqrt(((tr[0] - tl[0]) ** 2) + ((tr[1] - tl[1]) ** 2))
+        maxWidth = max(int(widthA), int(widthB))
+        
+        heightA = np.sqrt(((tr[0] - br[0]) ** 2) + ((tr[1] - br[1]) ** 2))
+        heightB = np.sqrt(((tl[0] - bl[0]) ** 2) + ((tl[1] - bl[1]) ** 2))
+        maxHeight = max(int(heightA), int(heightB))
+        
+        dst = np.array([
+            [0, 0],
+            [maxWidth - 1, 0],
+            [maxWidth - 1, maxHeight - 1],
+            [0, maxHeight - 1]], dtype="float32")
+            
+        M = cv2.getPerspectiveTransform(rect, dst)
+        warped = cv2.warpPerspective(orig, M, (maxWidth, maxHeight))
+        return Image.fromarray(cv2.cvtColor(warped, cv2.COLOR_BGR2RGB)), True
+    else:
+        return pil_img, False
 
 # ==========================================
 # 🛠️ ३. मुख्य टूल्स (टॅब्स)
@@ -88,7 +137,7 @@ tab1, tab2, tab3, tab4 = st.tabs([
     "आधार कटर (4x6 Layout)", 
     "पासपोर्ट फोटो मेकर (9 Photos)", 
     "फॉर्म फोटो व सही रीसायझर", 
-    "डॉक्युमेंट स्कॅनर (Doc/PDF)"
+    "ऑटो डॉक्युमेंट स्कॅनर (Auto-Scan)"
 ])
 
 # ------------------------------------------
@@ -283,16 +332,10 @@ with tab3:
                     st.error(f"त्रुटी: {e}")
 
 # ------------------------------------------
-# 📸 टॅब ४: डॉक्युमेंट स्कॅनर
+# 📸 टॅब ४: १-क्लिक ऑटोमॅटिक डॉक्युमेंट स्कॅनर
 # ------------------------------------------
 with tab4:
-    if "c_left" not in st.session_state: st.session_state.c_left = 0
-    if "c_right" not in st.session_state: st.session_state.c_right = 0
-    if "c_top" not in st.session_state: st.session_state.c_top = 0
-    if "c_bottom" not in st.session_state: st.session_state.c_bottom = 0
-    if "r_angle" not in st.session_state: st.session_state.r_angle = 0
-
-    scan_file = st.file_uploader("इमेज किंवा PDF अपलोड करा:", type=["jpg", "jpeg", "png", "pdf"], key="scanner_upload")
+    scan_file = st.file_uploader("इमेज किंवा PDF फाईल अपलोड करा:", type=["jpg", "jpeg", "png", "pdf"], key="auto_scanner_upload")
 
     if scan_file is not None:
         try:
@@ -306,54 +349,20 @@ with tab4:
             else:
                 original_image = Image.open(scan_file).convert("RGB")
                 
-            col_b1, col_b2, col_b3, col_b4, col_b5 = st.columns(5)
-            with col_b1:
-                if st.button("डावीकडून कापा", use_container_width=True): st.session_state.c_left += 5
-            with col_b2:
-                if st.button("उजवीकडून कापा", use_container_width=True): st.session_state.c_right += 5
-            with col_b3:
-                if st.button("वरून कापा", use_container_width=True): st.session_state.c_top += 5
-            with col_b4:
-                if st.button("खालून कापा", use_container_width=True): st.session_state.c_bottom += 5
-            with col_b5:
-                if st.button("90° फिरवा", use_container_width=True): st.session_state.r_angle = (st.session_state.r_angle + 90) % 360
-
-            if st.button("रिसेट करा", type="secondary", use_container_width=True):
-                st.session_state.c_left = 0
-                st.session_state.c_right = 0
-                st.session_state.c_top = 0
-                st.session_state.c_bottom = 0
-                st.session_state.r_angle = 0
-
             scan_mode = st.selectbox(
-                "कलर मोड:", 
+                "कलर मोड निवडा:", 
                 ["Magic Color", "B&W", "Original"],
-                key="scanner_mode_select"
+                key="auto_scan_mode_select"
             )
             
-            if st.session_state.r_angle != 0:
-                if st.session_state.r_angle == 90: working_img = original_image.transpose(Image.ROTATE_270)
-                elif st.session_state.r_angle == 180: working_img = original_image.transpose(Image.ROTATE_180)
-                elif st.session_state.r_angle == 270: working_img = original_image.transpose(Image.ROTATE_90)
-                else: working_img = original_image
-            else:
-                working_img = original_image
-
-            w, h = working_img.size
-            l_px = int(w * (st.session_state.c_left / 100))
-            r_px = w - int(w * (st.session_state.c_right / 100))
-            t_px = int(h * (st.session_state.c_top / 100))
-            b_px = h - int(h * (st.session_state.c_bottom / 100))
-
-            if r_px > l_px and b_px > t_px:
-                working_img = working_img.crop((l_px, t_px, r_px, b_px))
-
-            st.image(working_img, caption="Preview", use_container_width=True)
-            
-            if st.button("स्कॅनिंग पूर्ण करा", type="primary", use_container_width=True, key="scan_btn"):
-                with st.spinner("प्रक्रिया सुरू आहे..."):
+            if st.button("⚡ १-क्लिक ऑटो स्कॅन करा", type="primary", use_container_width=True, key="btn_auto_scan"):
+                with st.spinner("⏳ स्वयंचलितपणे कडा शोधून सावली साफ केली जात आहे..."):
                     try:
-                        img_np = np.array(working_img.convert('RGB'))
+                        # १. ऑटो-क्रॉप आणि सरळ करणे
+                        cropped_pil, detected = auto_perspective_crop(original_image)
+                        
+                        # २. सावली साफ करणे आणि मॅजिक कलर एनहान्समेंट
+                        img_np = np.array(cropped_pil.convert('RGB'))
                         img_cv = cv2.cvtColor(img_np, cv2.COLOR_RGB2BGR)
                         
                         if scan_mode == "B&W":
@@ -382,18 +391,23 @@ with tab4:
                         else:
                             final_res = Image.fromarray(cv2.cvtColor(img_cv, cv2.COLOR_BGR2RGB))
                         
-                        st.image(final_res, caption="Scanned Result", use_container_width=True)
+                        if detected:
+                            st.success("✅ डॉक्युमेंटच्या कडा स्वयंचलितपणे शोधून ऑटो-क्रॉप पूर्ण झाले आहे!")
+                        else:
+                            st.info("ℹ️ ऑटो-क्रॉप प्रक्रियेसह डॉक्युमेंट एचडी क्वालिटीमध्ये कन्व्हर्ट झाले आहे.")
+                            
+                        st.image(final_res, caption="Auto Scanned Result", use_container_width=True)
                         
                         img_byte_arr = io.BytesIO()
                         final_res.save(img_byte_arr, format='JPEG', quality=95)
                         
                         st.download_button(
-                            label="इमेज डाऊनलोड करा",
+                            label="📥 स्कॅन झालेली फाईल डाऊनलोड करा (JPG)",
                             data=img_byte_arr.getvalue(),
-                            file_name="Scanned_Document.jpg",
+                            file_name="Balaji_Auto_Scanned.jpg",
                             mime="image/jpeg",
                             use_container_width=True,
-                            key="scan_dl_btn"
+                            key="auto_scan_dl_btn"
                         )
                     except Exception as e:
                         st.error(f"त्रुटी: {e}")
@@ -401,4 +415,4 @@ with tab4:
             st.error(f"त्रुटी: {e}")
 
 st.write("---")
-st.markdown("<p style='text-align: center; font-size: 12px; color: #94A3B8;'>श्री बालाजी सायबर पॉईंट, माणगाव, रायगड</p>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center; font-size: 12px; color: #94A3B8;'>बालाजी सायबर पॉईंट, माणगाव, रायगड</p>", unsafe_allow_html=True)
