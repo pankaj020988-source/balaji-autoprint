@@ -77,34 +77,84 @@ st.markdown("""
 st.markdown("<div class='main-header'>बालाजी सायबर पॉईंट - इमेज प्रोसेसिंग टूलकिट</div>", unsafe_allow_html=True)
 
 # ==========================================
-# 📐 स्मार्ट डॉक्युमेंट क्रॉप आणि हाय-क्वालिटी एनहान्सर
+# 📐 पक्का CamScanner ग्रेड ऑटो-क्रॉप फंक्शन
 # ==========================================
-def smart_auto_crop(pil_img):
+def order_points(pts):
+    rect = np.zeros((4, 2), dtype="float32")
+    s = pts.sum(axis=1)
+    rect[0] = pts[np.argmin(s)]
+    rect[2] = pts[np.argmax(s)]
+    diff = np.diff(pts, axis=1)
+    rect[1] = pts[np.argmin(diff)]
+    rect[3] = pts[np.argmax(diff)]
+    return rect
+
+def four_point_transform(image, pts):
+    rect = order_points(pts)
+    (tl, tr, br, bl) = rect
+    widthA = np.sqrt(((br[0] - bl[0]) ** 2) + ((br[1] - bl[1]) ** 2))
+    widthB = np.sqrt(((tr[0] - tl[0]) ** 2) + ((tr[1] - tl[1]) ** 2))
+    maxWidth = max(int(widthA), int(widthB))
+
+    heightA = np.sqrt(((tr[0] - br[0]) ** 2) + ((tr[1] - br[1]) ** 2))
+    heightB = np.sqrt(((tl[0] - bl[0]) ** 2) + ((tl[1] - bl[1]) ** 2))
+    maxHeight = max(int(heightA), int(heightB))
+
+    dst = np.array([
+        [0, 0],
+        [maxWidth - 1, 0],
+        [maxWidth - 1, maxHeight - 1],
+        [0, maxHeight - 1]], dtype="float32")
+
+    M = cv2.getPerspectiveTransform(rect, dst)
+    warped = cv2.warpPerspective(image, M, (maxWidth, maxHeight))
+    return warped
+
+def auto_detect_and_crop(pil_img):
     img_np = np.array(pil_img.convert('RGB'))
-    gray = cv2.cvtColor(img_np, cv2.COLOR_RGB2GRAY)
+    img_cv = cv2.cvtColor(img_np, cv2.COLOR_RGB2BGR)
+    orig = img_cv.copy()
     
-    blur = cv2.GaussianBlur(gray, (5, 5), 0)
-    _, thresh = cv2.threshold(blur, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+    gray = cv2.cvtColor(img_cv, cv2.COLOR_BGR2GRAY)
+    blurred = cv2.GaussianBlur(gray, (5, 5), 0)
     
-    contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    # २ वेगवेगळ्या थ्रेशहोल्ड पद्धती वापरून कार्डच्या बॉर्डर्स शोधणे
+    edged = cv2.Canny(blurred, 30, 150)
     
-    if contours:
-        c = max(contours, key=cv2.contourArea)
-        x, y, w, h = cv2.boundingRect(c)
-        if w > img_np.shape[1] * 0.4 and h > img_np.shape[0] * 0.4:
-            cropped = img_np[y:y+h, x:x+w]
-            return Image.fromarray(cropped), True
+    contours, _ = cv2.findContours(edged.copy(), cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+    contours = sorted(contours, key=cv2.contourArea, reverse=True)[:5]
+    
+    screenCnt = None
+    for c in contours:
+        peri = cv2.arcLength(c, True)
+        approx = cv2.approxPolyDP(c, 0.02 * peri, True)
+        if len(approx) == 4:
+            screenCnt = approx
+            break
             
+    if screenCnt is not None:
+        warped = four_point_transform(orig, screenCnt.reshape(4, 2))
+        res_pil = Image.fromarray(cv2.cvtColor(warped, cv2.COLOR_BGR2RGB))
+        return res_pil, True
+    else:
+        # जर ४ कोपरे नाही सापडले, तर ऑटोमॅटिक बाउंडिंग बॉक्सने बॅकग्राउंड कट करणे
+        _, thresh = cv2.threshold(blurred, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+        cnts, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        if cnts:
+            c = max(cnts, key=cv2.contourArea)
+            x, y, w, h = cv2.boundingRect(c)
+            if w > img_np.shape[1] * 0.3 and h > img_np.shape[0] * 0.3:
+                cropped = orig[y:y+h, x:x+w]
+                return Image.fromarray(cv2.cvtColor(cropped, cv2.COLOR_BGR2RGB)), True
+
     return pil_img, False
 
 def enhance_hd_quality(pil_img):
-    # क्वालिटी खराब न करता एचडी शार्पनेस आणि कॉन्ट्रास्ट वाढवणे
     enhancer_contrast = ImageEnhance.Contrast(pil_img)
     img_contrast = enhancer_contrast.enhance(1.25)
     
     enhancer_sharpness = ImageEnhance.Sharpness(img_contrast)
     img_sharp = enhancer_sharpness.enhance(1.3)
-    
     return img_sharp
 
 # ==========================================
@@ -178,7 +228,6 @@ with tab1:
                     final_canvas.paste(front_bordered, (paste_x, 180))
                     final_canvas.paste(back_bordered, (paste_x, 950))
 
-                    # प्रिव्ह्यू सुटसुटीत दिसण्यासाठी width=450 सेट केले आहे
                     st.image(final_canvas, caption="4x6 Print Preview", width=450)
                     
                     id_buffer = io.BytesIO()
@@ -310,7 +359,7 @@ with tab3:
                     st.error(f"त्रुटी: {e}")
 
 # ------------------------------------------
-# 📸 टॅब ४: HD डॉक्युमेंट स्कॅनर (परफेक्ट प्रिव्ह्यू + ओरिजिनल HD क्लॅरिटी)
+# 📸 टॅब ४: अचूक ऑटो-क्रॉप डॉक्युमेंट स्कॅनर
 # ------------------------------------------
 with tab4:
     scan_file = st.file_uploader("स्कॅन करण्यासाठी फोटो किंवा PDF अपलोड करा:", type=["jpg", "jpeg", "png", "pdf"], key="smart_scan_upload")
@@ -327,12 +376,12 @@ with tab4:
             else:
                 original_image = Image.open(scan_file).convert("RGB")
             
-            st.markdown("##### ⚙️ ट्रिमिंग कंट्रोल्स (कडा ॲडजस्ट करण्यासाठी):")
+            st.markdown("##### ⚙️ मॅन्युअल ट्रिम (आवश्यकता असल्यास):")
             col_t1, col_t2 = st.columns(2)
             with col_t1:
-                crop_margin_x = st.slider("डावी-उजवी बाजू ट्रिम करा (%)", 0, 25, 3, key="trim_x")
+                crop_margin_x = st.slider("डावी-उजवी बाजू ट्रिम करा (%)", 0, 25, 0, key="trim_x")
             with col_t2:
-                crop_margin_y = st.slider("वरची-खालची बाजू ट्रिम करा (%)", 0, 25, 3, key="trim_y")
+                crop_margin_y = st.slider("वरची-खालची बाजू ट्रिम करा (%)", 0, 25, 0, key="trim_y")
                 
             scan_mode = st.selectbox(
                 "कलर मोड निवडा:", 
@@ -341,19 +390,20 @@ with tab4:
             )
 
             if st.button("🚀 HD स्कॅनिंग पूर्ण करा", type="primary", use_container_width=True, key="btn_smart_scan"):
-                with st.spinner("⏳ एचडी क्वालिटीमध्ये ट्रिमिंग आणि स्कॅनिंग होत आहे..."):
+                with st.spinner("⏳ स्वयंचलितपणे कार्डचे कोपरे शोधून ऑटो-क्रॉप केले जात आहे..."):
                     try:
-                        # १. ऑटो क्रॉप
-                        cropped_img, is_cropped = smart_auto_crop(original_image)
+                        # १. पक्का ऑटो-क्रॉप
+                        cropped_img, is_cropped = auto_detect_and_crop(original_image)
                         
-                        # २. मॅन्युअल स्लाईडर ट्रिम लागू करणे
+                        # २. स्लाईडर ट्रिम (युझरने सेट केले असल्यास)
                         w, h = cropped_img.size
                         mx = int(w * (crop_margin_x / 100))
                         my = int(h * (crop_margin_y / 100))
-                        if w - mx > mx and h - my > my:
-                            cropped_img = cropped_img.crop((mx, my, w - mx, h - my))
+                        if mx > 0 or my > 0:
+                            if w - mx > mx and h - my > my:
+                                cropped_img = cropped_img.crop((mx, my, w - mx, h - my))
                         
-                        # ३. HD क्वालिटी एनहान्समेंट
+                        # ३. HD एनहान्समेंट
                         if scan_mode == "HD Magic Color":
                             final_res = enhance_hd_quality(cropped_img)
                         elif scan_mode == "Black & White":
@@ -363,9 +413,11 @@ with tab4:
                         else:
                             final_res = cropped_img
 
-                        st.success("✅ डॉक्युमेंट एचडी क्वालिटीमध्ये स्कॅन झाले आहे!")
-                        
-                        # 🎯 प्रिव्ह्यूचा आकार स्क्रीनवर व्यवस्थित (width=450) दिसण्यासाठी अ‍ॅडजस्टमेंट
+                        if is_cropped:
+                            st.success("✅ डॉक्युमेंटच्या चारही कडा अचूक शोधून ऑटो-क्रॉप यशस्वी झाले!")
+                        else:
+                            st.info("ℹ️ फाईल स्कॅन झाली आहे.")
+
                         st.image(final_res, caption="Scanned Result (HD)", width=450)
                         
                         img_byte_arr = io.BytesIO()
