@@ -22,9 +22,9 @@ def auto_crop_card(card_img):
     return card_img
 
 # ==========================================
-# 🖥️ मुख्य इंटरफेस (No Sidebar / No User Selector)
+# 🖥️ मुख्य इंटरफेस (श्री शब्द काढलेला)
 # ==========================================
-st.markdown("<h2 style='text-align: center; color: #0F172A; font-weight: 800;'>श्री बालाजी सायबर पॉईंट, माणगाव</h2>", unsafe_allow_html=True)
+st.markdown("<h2 style='text-align: center; color: #0F172A; font-weight: 800;'>बालाजी सायबर पॉईंट, माणगाव</h2>", unsafe_allow_html=True)
 st.markdown("<h4 style='text-align: center; color: #2563EB; font-weight: 600;'>आयुष्मान भारत - 4x6 पॉकेट कार्ड कंव्हर्टर</h4>", unsafe_allow_html=True)
 st.write("---")
 
@@ -43,35 +43,29 @@ if uploaded_file is not None:
                     st.error("मजकूर सापडला नाही! कृपया योग्य फाईल अपलोड करा.")
                 else:
                     page = doc[0]
-                    # ४०० DPI हाय-डेफिनिशन रेंडरिंग
                     pix = page.get_pixmap(dpi=400)
                     img_data = pix.tobytes("png")
                     img = Image.open(io.BytesIO(img_data))
                     
                     width, height = img.size
                     
-                    # १. मूळ पीडीएफ मधून रफ क्रॉप
                     rough_front = img.crop((int(width * 0.03), int(height * 0.12), int(width * 0.50), int(height * 0.88)))
                     rough_back = img.crop((int(width * 0.50), int(height * 0.12), int(width * 0.97), int(height * 0.88)))
                     
-                    # २. ऑटो-ट्रिमिंग
                     img_front = auto_crop_card(rough_front)
                     img_back = auto_crop_card(rough_back)
                     
-                    # 🎯 ३. कडक मानक पॉकेट लॅमिनेशन साईझ फिक्स (1020 x 640 px)
                     PAPER_WIDTH, PAPER_HEIGHT = 1200, 1800
                     card_w, card_h = 1020, 640
                     
                     img_front = img_front.resize((card_w, card_h), Image.Resampling.LANCZOS)
                     img_back = img_back.resize((card_w, card_h), Image.Resampling.LANCZOS)
                     
-                    # कडक काळी ५ पिक्सेल बॉर्डर
                     front_bordered = ImageOps.expand(img_front, border=5, fill='black')
                     back_bordered = ImageOps.expand(img_back, border=5, fill='black')
                     
                     final_canvas = Image.new("RGB", (PAPER_WIDTH, PAPER_HEIGHT), "white")
                     
-                    # दोन्ही बाजूने समान पांढरी मार्जिन ठेवून सेंटर पेस्टिंग
                     paste_x = (PAPER_WIDTH - front_bordered.width) // 2
                     
                     final_canvas.paste(front_bordered, (paste_x, 180))
@@ -81,7 +75,6 @@ if uploaded_file is not None:
                     final_canvas.save(img_byte_arr, format='PNG', dpi=(400, 400))
                     img_byte_arr_raw = img_byte_arr.getvalue()
                     
-                    # प्रिव्ह्यू आणि डाऊनलोड
                     st.image(final_canvas, caption="4x6 Print Preview (Standard Pocket Size)", width=650)
                     st.write("")
                     
@@ -97,4 +90,4 @@ if uploaded_file is not None:
                 st.error(f"त्रुटी: {e}")
 
 st.write("---")
-st.markdown("<p style='text-align: center; font-size: 12px; color: #94A3B8;'>श्री बालाजी सायबर पॉईंट, माणगाव, रायगड</p>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center; font-size: 12px; color: #94A3B8;'>बालाजी सायबर पॉईंट, माणगाव, रायगड</p>", unsafe_allow_html=True)
