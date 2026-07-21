@@ -77,13 +77,12 @@ st.markdown("""
 st.markdown("<div class='main-header'>बालाजी सायबर पॉईंट - इमेज प्रोसेसिंग टूलकिट</div>", unsafe_allow_html=True)
 
 # ==========================================
-# 📐 सुधारित स्मार्ट डॉक्युमेंट क्रॉप आणि मॅजिक एनहान्सर
+# 📐 स्मार्ट डॉक्युमेंट क्रॉप आणि हाय-क्वालिटी एनहान्सर
 # ==========================================
 def smart_auto_crop(pil_img):
     img_np = np.array(pil_img.convert('RGB'))
     gray = cv2.cvtColor(img_np, cv2.COLOR_RGB2GRAY)
     
-    # ऑटोमॅटिक बॅकग्राउंड आणि डॉक्युमेंट बाउंड्री डिटेक्ट करणे
     blur = cv2.GaussianBlur(gray, (5, 5), 0)
     _, thresh = cv2.threshold(blur, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
     
@@ -92,36 +91,21 @@ def smart_auto_crop(pil_img):
     if contours:
         c = max(contours, key=cv2.contourArea)
         x, y, w, h = cv2.boundingRect(c)
-        # जर डॉक्युमेंट ५०% पेक्षा मोठे असेल तरच क्रॉप करणे
         if w > img_np.shape[1] * 0.4 and h > img_np.shape[0] * 0.4:
             cropped = img_np[y:y+h, x:x+w]
             return Image.fromarray(cropped), True
             
     return pil_img, False
 
-def apply_magic_color(pil_img):
-    img_np = np.array(pil_img.convert('RGB'))
-    img_cv = cv2.cvtColor(img_np, cv2.COLOR_RGB2BGR)
+def enhance_hd_quality(pil_img):
+    # क्वालिटी खराब न करता एचडी शार्पनेस आणि कॉन्ट्रास्ट वाढवणे
+    enhancer_contrast = ImageEnhance.Contrast(pil_img)
+    img_contrast = enhancer_contrast.enhance(1.25)
     
-    # सावली साफ करणे आणि पांढरा रंग उजळवणे (Illumination Normalization)
-    rgb_planes = cv2.split(img_cv)
-    result_planes = []
+    enhancer_sharpness = ImageEnhance.Sharpness(img_contrast)
+    img_sharp = enhancer_sharpness.enhance(1.3)
     
-    for plane in rgb_planes:
-        dilated_img = cv2.dilate(plane, np.ones((7,7), np.uint8))
-        bg_img = cv2.medianBlur(dilated_img, 21)
-        diff_img = 255 - cv2.absdiff(plane, bg_img)
-        norm_img = cv2.normalize(diff_img, None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_8UC1)
-        result_planes.append(norm_img)
-        
-    result = cv2.merge(result_planes)
-    result_rgb = cv2.cvtColor(result, cv2.COLOR_BGR2RGB)
-    
-    # कॉन्ट्रास्ट आणि शार्पनेस वाढवून HD CamScanner रिझल्ट देणे
-    enhanced = Image.fromarray(result_rgb)
-    contrast = ImageEnhance.Contrast(enhanced).enhance(1.4)
-    sharpness = ImageEnhance.Sharpness(contrast).enhance(1.3)
-    return sharpness
+    return img_sharp
 
 # ==========================================
 # 🛠️ ३. मुख्य टूल्स (टॅब्स)
@@ -194,7 +178,8 @@ with tab1:
                     final_canvas.paste(front_bordered, (paste_x, 180))
                     final_canvas.paste(back_bordered, (paste_x, 950))
 
-                    st.image(final_canvas, caption="4x6 Print Preview", use_container_width=True)
+                    # प्रिव्ह्यू सुटसुटीत दिसण्यासाठी width=450 सेट केले आहे
+                    st.image(final_canvas, caption="4x6 Print Preview", width=450)
                     
                     id_buffer = io.BytesIO()
                     final_canvas.save(id_buffer, format="PNG", dpi=(300, 300))
@@ -268,7 +253,7 @@ with tab2:
                     sheet.save(buffer, format="PNG", dpi=(DPI, DPI))
                     buffer.seek(0)
                     
-                    st.image(sheet, caption="Print Preview", use_container_width=True)
+                    st.image(sheet, caption="Print Preview", width=450)
                     
                     st.download_button(
                         label="फोटो शीट डाऊनलोड करा (PNG)",
@@ -325,7 +310,7 @@ with tab3:
                     st.error(f"त्रुटी: {e}")
 
 # ------------------------------------------
-# 📸 टॅब ४: नवीन हाय-पावर स्मार्ट डॉक्युमेंट स्कॅनर
+# 📸 टॅब ४: HD डॉक्युमेंट स्कॅनर (परफेक्ट प्रिव्ह्यू + ओरिजिनल HD क्लॅरिटी)
 # ------------------------------------------
 with tab4:
     scan_file = st.file_uploader("स्कॅन करण्यासाठी फोटो किंवा PDF अपलोड करा:", type=["jpg", "jpeg", "png", "pdf"], key="smart_scan_upload")
@@ -342,23 +327,23 @@ with tab4:
             else:
                 original_image = Image.open(scan_file).convert("RGB")
             
-            st.markdown("##### ⚙️ फाइन ट्यूनिंग कंट्रोल्स (जर कडा जास्त असतील तर):")
+            st.markdown("##### ⚙️ ट्रिमिंग कंट्रोल्स (कडा ॲडजस्ट करण्यासाठी):")
             col_t1, col_t2 = st.columns(2)
             with col_t1:
-                crop_margin_x = st.slider("डावी-उजवी बाजू ट्रिम करा (%)", 0, 20, 2, key="trim_x")
+                crop_margin_x = st.slider("डावी-उजवी बाजू ट्रिम करा (%)", 0, 25, 3, key="trim_x")
             with col_t2:
-                crop_margin_y = st.slider("वरची-खालची बाजू ट्रिम करा (%)", 0, 20, 2, key="trim_y")
+                crop_margin_y = st.slider("वरची-खालची बाजू ट्रिम करा (%)", 0, 25, 3, key="trim_y")
                 
             scan_mode = st.selectbox(
                 "कलर मोड निवडा:", 
-                ["Magic Color (HD Clean)", "Black & White (B&W)", "Original"],
+                ["HD Magic Color", "Original Clean", "Black & White"],
                 key="smart_scan_mode"
             )
 
-            if st.button("🚀 स्मार्ट स्कॅनिंग पूर्ण करा", type="primary", use_container_width=True, key="btn_smart_scan"):
-                with st.spinner("⏳ नको असलेला बॅकग्राउंड काढून मॅजिक एनहान्समेंट होत आहे..."):
+            if st.button("🚀 HD स्कॅनिंग पूर्ण करा", type="primary", use_container_width=True, key="btn_smart_scan"):
+                with st.spinner("⏳ एचडी क्वालिटीमध्ये ट्रिमिंग आणि स्कॅनिंग होत आहे..."):
                     try:
-                        # १. स्मार्ट ऑटो क्रॉप
+                        # १. ऑटो क्रॉप
                         cropped_img, is_cropped = smart_auto_crop(original_image)
                         
                         # २. मॅन्युअल स्लाईडर ट्रिम लागू करणे
@@ -368,26 +353,28 @@ with tab4:
                         if w - mx > mx and h - my > my:
                             cropped_img = cropped_img.crop((mx, my, w - mx, h - my))
                         
-                        # ३. मॅजिक कलर एनहान्समेंट
-                        if scan_mode == "Magic Color (HD Clean)":
-                            final_res = apply_magic_color(cropped_img)
-                        elif scan_mode == "Black & White (B&W)":
+                        # ३. HD क्वालिटी एनहान्समेंट
+                        if scan_mode == "HD Magic Color":
+                            final_res = enhance_hd_quality(cropped_img)
+                        elif scan_mode == "Black & White":
                             gray_np = np.array(cropped_img.convert('L'))
                             scanned = cv2.adaptiveThreshold(gray_np, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 21, 10)
                             final_res = Image.fromarray(scanned)
                         else:
                             final_res = cropped_img
 
-                        st.success("✅ डॉक्युमेंट यशस्वीरित्या स्कॅन आणि ट्रिम झाले आहे!")
-                        st.image(final_res, caption="Scanned Document Result", use_container_width=True)
+                        st.success("✅ डॉक्युमेंट एचडी क्वालिटीमध्ये स्कॅन झाले आहे!")
+                        
+                        # 🎯 प्रिव्ह्यूचा आकार स्क्रीनवर व्यवस्थित (width=450) दिसण्यासाठी अ‍ॅडजस्टमेंट
+                        st.image(final_res, caption="Scanned Result (HD)", width=450)
                         
                         img_byte_arr = io.BytesIO()
-                        final_res.save(img_byte_arr, format='JPEG', quality=95)
+                        final_res.save(img_byte_arr, format='JPEG', quality=100)
                         
                         st.download_button(
-                            label="📥 स्कॅन झालेली इमेज डाऊनलोड करा (JPG)",
+                            label="📥 स्कॅन झालेली HD इमेज डाऊनलोड करा (JPG)",
                             data=img_byte_arr.getvalue(),
-                            file_name="Balaji_Smart_Scanned.jpg",
+                            file_name="Balaji_HD_Scanned.jpg",
                             mime="image/jpeg",
                             use_container_width=True,
                             key="smart_scan_dl"
