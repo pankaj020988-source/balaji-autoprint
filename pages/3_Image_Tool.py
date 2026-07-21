@@ -79,7 +79,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # मुख्य व्यावसायिक शीर्षक
-st.markdown("<div class='main-header'>श्री बालाजी सायबर पॉईंट - इमेज प्रोसेसिंग टूलकिट</div>", unsafe_allow_html=True)
+st.markdown("<div class='main-header'>बालाजी सायबर पॉईंट - इमेज प्रोसेसिंग टूलकिट</div>", unsafe_allow_html=True)
 
 # ==========================================
 # 🛠️ ३. मुख्य टूल्स (टॅब्स)
