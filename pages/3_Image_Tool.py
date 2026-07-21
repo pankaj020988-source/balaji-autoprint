@@ -77,7 +77,7 @@ st.markdown("""
 st.markdown("<div class='main-header'>बालाजी सायबर पॉईंट - इमेज प्रोसेसिंग टूलकिट</div>", unsafe_allow_html=True)
 
 # ==========================================
-# 📐 पक्का CamScanner ग्रेड ऑटो-क्रॉप फंक्शन
+# 📐 संपूर्ण डॉक्युमेंट डिटेक्ट करणारा स्मार्ट क्रॉप
 # ==========================================
 def order_points(pts):
     rect = np.zeros((4, 2), dtype="float32")
@@ -114,40 +114,31 @@ def auto_detect_and_crop(pil_img):
     img_np = np.array(pil_img.convert('RGB'))
     img_cv = cv2.cvtColor(img_np, cv2.COLOR_RGB2BGR)
     orig = img_cv.copy()
+    h_img, w_img = img_cv.shape[:2]
+    total_area = h_img * w_img
     
     gray = cv2.cvtColor(img_cv, cv2.COLOR_BGR2GRAY)
     blurred = cv2.GaussianBlur(gray, (5, 5), 0)
-    
-    # २ वेगवेगळ्या थ्रेशहोल्ड पद्धती वापरून कार्डच्या बॉर्डर्स शोधणे
     edged = cv2.Canny(blurred, 30, 150)
     
     contours, _ = cv2.findContours(edged.copy(), cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
     contours = sorted(contours, key=cv2.contourArea, reverse=True)[:5]
     
-    screenCnt = None
     for c in contours:
-        peri = cv2.arcLength(c, True)
-        approx = cv2.approxPolyDP(c, 0.02 * peri, True)
-        if len(approx) == 4:
-            screenCnt = approx
-            break
-            
-    if screenCnt is not None:
-        warped = four_point_transform(orig, screenCnt.reshape(4, 2))
-        res_pil = Image.fromarray(cv2.cvtColor(warped, cv2.COLOR_BGR2RGB))
-        return res_pil, True
-    else:
-        # जर ४ कोपरे नाही सापडले, तर ऑटोमॅटिक बाउंडिंग बॉक्सने बॅकग्राउंड कट करणे
-        _, thresh = cv2.threshold(blurred, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-        cnts, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-        if cnts:
-            c = max(cnts, key=cv2.contourArea)
-            x, y, w, h = cv2.boundingRect(c)
-            if w > img_np.shape[1] * 0.3 and h > img_np.shape[0] * 0.3:
-                cropped = orig[y:y+h, x:x+w]
-                return Image.fromarray(cv2.cvtColor(cropped, cv2.COLOR_BGR2RGB)), True
+        area = cv2.contourArea(c)
+        # केवळ संपूर्ण फोटोच्या ३५% पेक्षा मोठ्या आकारालाच कार्ड मानणे (लहान बॉक्सेस वगळणे)
+        if area > total_area * 0.35:
+            peri = cv2.arcLength(c, True)
+            approx = cv2.approxPolyDP(c, 0.02 * peri, True)
+            if len(approx) == 4:
+                warped = four_point_transform(orig, approx.reshape(4, 2))
+                return Image.fromarray(cv2.cvtColor(warped, cv2.COLOR_BGR2RGB)), True
 
-    return pil_img, False
+    # जर योग्य ४ कोपरे सापडले नाहीत तर ऑटोमॅटिकली ५% बाहेरील भाग ट्रिम करणे
+    crop_x = int(w_img * 0.03)
+    crop_y = int(h_img * 0.03)
+    cropped_fallback = orig[crop_y:h_img-crop_y, crop_x:w_img-crop_x]
+    return Image.fromarray(cv2.cvtColor(cropped_fallback, cv2.COLOR_BGR2RGB)), False
 
 def enhance_hd_quality(pil_img):
     enhancer_contrast = ImageEnhance.Contrast(pil_img)
@@ -390,9 +381,9 @@ with tab4:
             )
 
             if st.button("🚀 HD स्कॅनिंग पूर्ण करा", type="primary", use_container_width=True, key="btn_smart_scan"):
-                with st.spinner("⏳ स्वयंचलितपणे कार्डचे कोपरे शोधून ऑटो-क्रॉप केले जात आहे..."):
+                with st.spinner("⏳ स्वयंचलितपणे संपूर्ण डॉक्युमेंट शोधून ऑटो-क्रॉप केले जात आहे..."):
                     try:
-                        # १. पक्का ऑटो-क्रॉप
+                        # १. स्मार्ट ऑटो-क्रॉप (लहान बॉक्सेस इग्नोर करून)
                         cropped_img, is_cropped = auto_detect_and_crop(original_image)
                         
                         # २. स्लाईडर ट्रिम (युझरने सेट केले असल्यास)
@@ -413,12 +404,9 @@ with tab4:
                         else:
                             final_res = cropped_img
 
-                        if is_cropped:
-                            st.success("✅ डॉक्युमेंटच्या चारही कडा अचूक शोधून ऑटो-क्रॉप यशस्वी झाले!")
-                        else:
-                            st.info("ℹ️ फाईल स्कॅन झाली आहे.")
+                        st.success("✅ संपूर्ण डॉक्युमेंट यशस्वीरित्या स्कॅन झाले आहे!")
 
-                        st.image(final_res, caption="Scanned Result (HD)", width=450)
+                        st.image(final_res, caption="Scanned Result (HD)", width=500)
                         
                         img_byte_arr = io.BytesIO()
                         final_res.save(img_byte_arr, format='JPEG', quality=100)
