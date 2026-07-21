@@ -77,21 +77,19 @@ st.markdown("""
 st.markdown("<div class='main-header'>बालाजी सायबर पॉईंट - इमेज प्रोसेसिंग टूलकिट</div>", unsafe_allow_html=True)
 
 # ==========================================
-# ⚡ सावली पूर्ण साफ करणारे अ‍ॅडव्हान्स्ड फिल्टर
+# ⚡ सावली साफ करणारे आणि सेफ पॅडिंग देणारे एनहान्सर
 # ==========================================
 def remove_shadow_and_clean(pil_img):
     img_np = np.array(pil_img.convert('RGB'))
     img_cv = cv2.cvtColor(img_np, cv2.COLOR_RGB2BGR)
     
-    # १. प्रतिमेतील बॅकग्राउंड लाईट आणि सावली मोजणे
+    # सावली वेगळी करून साफ करणे
     rgb_planes = cv2.split(img_cv)
     result_planes = []
     
     for plane in rgb_planes:
-        # डिलिट करून बॅकग्राउंडची सावली वेगळी करणे
         dilated_img = cv2.dilate(plane, np.ones((7,7), np.uint8))
         bg_img = cv2.medianBlur(dilated_img, 21)
-        # मूळ प्रतिमेतून सावली वजा करणे
         diff_img = 255 - cv2.absdiff(plane, bg_img)
         norm_img = cv2.normalize(diff_img, None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_8UC1)
         result_planes.append(norm_img)
@@ -99,13 +97,12 @@ def remove_shadow_and_clean(pil_img):
     result = cv2.merge(result_planes)
     result_rgb = cv2.cvtColor(result, cv2.COLOR_BGR2RGB)
     
-    # २. कागद पांढरा लख्ख करणे आणि लिखाण स्पष्ट करणे
     enhanced = Image.fromarray(result_rgb)
     enhancer_contrast = ImageEnhance.Contrast(enhanced)
-    img_contrast = enhancer_contrast.enhance(1.4)
+    img_contrast = enhancer_contrast.enhance(1.35)
     
     enhancer_sharpness = ImageEnhance.Sharpness(img_contrast)
-    img_sharp = enhancer_sharpness.enhance(1.3)
+    img_sharp = enhancer_sharpness.enhance(1.25)
     
     return img_sharp
 
@@ -116,7 +113,7 @@ tab1, tab2, tab3, tab4 = st.tabs([
     "आधार कटर (4x6 Layout)", 
     "पासपोर्ट फोटो मेकर (9 Photos)", 
     "फॉर्म फोटो व सही रीसायझर", 
-    "स्मार्ट डॉक्युमेंट स्कॅनर (Shadow Cleaner)"
+    "स्मार्ट डॉक्युमेंट स्कॅनर (Full Safe View)"
 ])
 
 # ------------------------------------------
@@ -311,10 +308,10 @@ with tab3:
                     st.error(f"त्रुटी: {e}")
 
 # ------------------------------------------
-# 📸 टॅब ४: सावली साफ करणारा डॉक्युमेंट स्कॅनर
+# 📸 टॅब ४: सेफ डॉक्युमेंट स्कॅनर (अक्षरे न कापणारा)
 # ------------------------------------------
 with tab4:
-    scan_file = st.file_uploader("स्कॅन करण्यासाठी फोटो किंवा PDF अपलोड करा:", type=["jpg", "jpeg", "png", "pdf"], key="shadow_scan_upload")
+    scan_file = st.file_uploader("स्कॅन करण्यासाठी फोटो किंवा PDF अपलोड करा:", type=["jpg", "jpeg", "png", "pdf"], key="safe_scan_upload")
 
     if scan_file is not None:
         try:
@@ -328,33 +325,33 @@ with tab4:
             else:
                 original_image = Image.open(scan_file).convert("RGB")
             
-            st.markdown("##### ⚙️ ट्रिमिंग कंट्रोल्स (बाजूचा नको असलेला भाग कापण्यासाठी):")
+            st.markdown("##### ⚙️ मॅन्युअल ट्रीम (केवळ आवश्यक असल्यास वापरा):")
             col_t1, col_t2 = st.columns(2)
             with col_t1:
-                crop_margin_x = st.slider("डावी-उजवी बाजू ट्रिम करा (%)", 0, 30, 0, key="trim_x")
+                crop_margin_x = st.slider("डावी-उजवी बाजू ट्रिम करा (%)", 0, 20, 0, key="trim_x_safe")
             with col_t2:
-                crop_margin_y = st.slider("वरची-خालची बाजू ट्रिम करा (%)", 0, 30, 0, key="trim_y")
+                crop_margin_y = st.slider("वरची-खालची बाजू ट्रिम करा (%)", 0, 20, 0, key="trim_y_safe")
                 
             scan_mode = st.selectbox(
                 "कलर मोड निवडा:", 
                 ["Magic Clean (सावली पूर्ण साफ करा)", "Black & White (कडक B&W)", "Original"],
-                key="shadow_scan_mode"
+                key="safe_scan_mode"
             )
 
-            if st.button("🚀 सावली साफ करून HD स्कॅन करा", type="primary", use_container_width=True, key="btn_shadow_scan"):
-                with st.spinner("⏳ सावली पूर्णपणे साफ करून कागद लख्ख पांढरा केला जात आहे..."):
+            if st.button("🚀 अक्षरे न कापता HD स्कॅन करा", type="primary", use_container_width=True, key="btn_safe_scan"):
+                with st.spinner("⏳ अक्षरे व मजकूर सुरक्षित ठेवून सावली साफ केली जात आहे..."):
                     try:
-                        # १. ट्रिमिंग (युझरने सेट केले असल्यास)
                         w, h = original_image.size
                         mx = int(w * (crop_margin_x / 100))
                         my = int(h * (crop_margin_y / 100))
                         
+                        # मॅन्युअल ट्रीम लावल्यासच कट होईल, अन्यथा संपूर्ण कागद १००% सुरक्षित राहील
                         if mx > 0 or my > 0:
                             working_img = original_image.crop((mx, my, w - mx, h - my))
                         else:
                             working_img = original_image
                         
-                        # २. सावली काढणे व कलर मोड
+                        # सावली साफ करणे
                         if scan_mode == "Magic Clean (सावली पूर्ण साफ करा)":
                             final_res = remove_shadow_and_clean(working_img)
                         elif scan_mode == "Black & White (कडक B&W)":
@@ -364,19 +361,19 @@ with tab4:
                         else:
                             final_res = working_img
 
-                        st.success("✅ डॉक्युमेंटवरील सावली यशस्वीरित्या साफ झाली आहे!")
-                        st.image(final_res, caption="Scanned Result (Shadow Cleaned)", width=500)
+                        st.success("✅ मजकूर व अक्षरे पूर्ण सुरक्षित ठेवून सावली साफ झाली आहे!")
+                        st.image(final_res, caption="Scanned Result (Safe Full View)", width=550)
                         
                         img_byte_arr = io.BytesIO()
                         final_res.save(img_byte_arr, format='JPEG', quality=100)
                         
                         st.download_button(
-                            label="📥 स्कॅन झालेली HD फाईल डाऊनलोड करा (JPG)",
+                            label="📥 संपूर्ण HD डॉक्युमेंट डाऊनलोड करा (JPG)",
                             data=img_byte_arr.getvalue(),
-                            file_name="Balaji_Clean_Document.jpg",
+                            file_name="Balaji_Full_Document.jpg",
                             mime="image/jpeg",
                             use_container_width=True,
-                            key="shadow_scan_dl"
+                            key="safe_scan_dl"
                         )
                     except Exception as e:
                         st.error(f"त्रुटी: {e}")
