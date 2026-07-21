@@ -77,75 +77,36 @@ st.markdown("""
 st.markdown("<div class='main-header'>बालाजी सायबर पॉईंट - इमेज प्रोसेसिंग टूलकिट</div>", unsafe_allow_html=True)
 
 # ==========================================
-# 📐 संपूर्ण डॉक्युमेंट डिटेक्ट करणारा स्मार्ट क्रॉप
+# ⚡ सावली पूर्ण साफ करणारे अ‍ॅडव्हान्स्ड फिल्टर
 # ==========================================
-def order_points(pts):
-    rect = np.zeros((4, 2), dtype="float32")
-    s = pts.sum(axis=1)
-    rect[0] = pts[np.argmin(s)]
-    rect[2] = pts[np.argmax(s)]
-    diff = np.diff(pts, axis=1)
-    rect[1] = pts[np.argmin(diff)]
-    rect[3] = pts[np.argmax(diff)]
-    return rect
-
-def four_point_transform(image, pts):
-    rect = order_points(pts)
-    (tl, tr, br, bl) = rect
-    widthA = np.sqrt(((br[0] - bl[0]) ** 2) + ((br[1] - bl[1]) ** 2))
-    widthB = np.sqrt(((tr[0] - tl[0]) ** 2) + ((tr[1] - tl[1]) ** 2))
-    maxWidth = max(int(widthA), int(widthB))
-
-    heightA = np.sqrt(((tr[0] - br[0]) ** 2) + ((tr[1] - br[1]) ** 2))
-    heightB = np.sqrt(((tl[0] - bl[0]) ** 2) + ((tl[1] - bl[1]) ** 2))
-    maxHeight = max(int(heightA), int(heightB))
-
-    dst = np.array([
-        [0, 0],
-        [maxWidth - 1, 0],
-        [maxWidth - 1, maxHeight - 1],
-        [0, maxHeight - 1]], dtype="float32")
-
-    M = cv2.getPerspectiveTransform(rect, dst)
-    warped = cv2.warpPerspective(image, M, (maxWidth, maxHeight))
-    return warped
-
-def auto_detect_and_crop(pil_img):
+def remove_shadow_and_clean(pil_img):
     img_np = np.array(pil_img.convert('RGB'))
     img_cv = cv2.cvtColor(img_np, cv2.COLOR_RGB2BGR)
-    orig = img_cv.copy()
-    h_img, w_img = img_cv.shape[:2]
-    total_area = h_img * w_img
     
-    gray = cv2.cvtColor(img_cv, cv2.COLOR_BGR2GRAY)
-    blurred = cv2.GaussianBlur(gray, (5, 5), 0)
-    edged = cv2.Canny(blurred, 30, 150)
+    # १. प्रतिमेतील बॅकग्राउंड लाईट आणि सावली मोजणे
+    rgb_planes = cv2.split(img_cv)
+    result_planes = []
     
-    contours, _ = cv2.findContours(edged.copy(), cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
-    contours = sorted(contours, key=cv2.contourArea, reverse=True)[:5]
+    for plane in rgb_planes:
+        # डिलिट करून बॅकग्राउंडची सावली वेगळी करणे
+        dilated_img = cv2.dilate(plane, np.ones((7,7), np.uint8))
+        bg_img = cv2.medianBlur(dilated_img, 21)
+        # मूळ प्रतिमेतून सावली वजा करणे
+        diff_img = 255 - cv2.absdiff(plane, bg_img)
+        norm_img = cv2.normalize(diff_img, None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_8UC1)
+        result_planes.append(norm_img)
+        
+    result = cv2.merge(result_planes)
+    result_rgb = cv2.cvtColor(result, cv2.COLOR_BGR2RGB)
     
-    for c in contours:
-        area = cv2.contourArea(c)
-        # केवळ संपूर्ण फोटोच्या ३५% पेक्षा मोठ्या आकारालाच कार्ड मानणे (लहान बॉक्सेस वगळणे)
-        if area > total_area * 0.35:
-            peri = cv2.arcLength(c, True)
-            approx = cv2.approxPolyDP(c, 0.02 * peri, True)
-            if len(approx) == 4:
-                warped = four_point_transform(orig, approx.reshape(4, 2))
-                return Image.fromarray(cv2.cvtColor(warped, cv2.COLOR_BGR2RGB)), True
-
-    # जर योग्य ४ कोपरे सापडले नाहीत तर ऑटोमॅटिकली ५% बाहेरील भाग ट्रिम करणे
-    crop_x = int(w_img * 0.03)
-    crop_y = int(h_img * 0.03)
-    cropped_fallback = orig[crop_y:h_img-crop_y, crop_x:w_img-crop_x]
-    return Image.fromarray(cv2.cvtColor(cropped_fallback, cv2.COLOR_BGR2RGB)), False
-
-def enhance_hd_quality(pil_img):
-    enhancer_contrast = ImageEnhance.Contrast(pil_img)
-    img_contrast = enhancer_contrast.enhance(1.25)
+    # २. कागद पांढरा लख्ख करणे आणि लिखाण स्पष्ट करणे
+    enhanced = Image.fromarray(result_rgb)
+    enhancer_contrast = ImageEnhance.Contrast(enhanced)
+    img_contrast = enhancer_contrast.enhance(1.4)
     
     enhancer_sharpness = ImageEnhance.Sharpness(img_contrast)
     img_sharp = enhancer_sharpness.enhance(1.3)
+    
     return img_sharp
 
 # ==========================================
@@ -155,7 +116,7 @@ tab1, tab2, tab3, tab4 = st.tabs([
     "आधार कटर (4x6 Layout)", 
     "पासपोर्ट फोटो मेकर (9 Photos)", 
     "फॉर्म फोटो व सही रीसायझर", 
-    "स्मार्ट डॉक्युमेंट स्कॅनर (Auto Scan)"
+    "स्मार्ट डॉक्युमेंट स्कॅनर (Shadow Cleaner)"
 ])
 
 # ------------------------------------------
@@ -350,10 +311,10 @@ with tab3:
                     st.error(f"त्रुटी: {e}")
 
 # ------------------------------------------
-# 📸 टॅब ४: अचूक ऑटो-क्रॉप डॉक्युमेंट स्कॅनर
+# 📸 टॅब ४: सावली साफ करणारा डॉक्युमेंट स्कॅनर
 # ------------------------------------------
 with tab4:
-    scan_file = st.file_uploader("स्कॅन करण्यासाठी फोटो किंवा PDF अपलोड करा:", type=["jpg", "jpeg", "png", "pdf"], key="smart_scan_upload")
+    scan_file = st.file_uploader("स्कॅन करण्यासाठी फोटो किंवा PDF अपलोड करा:", type=["jpg", "jpeg", "png", "pdf"], key="shadow_scan_upload")
 
     if scan_file is not None:
         try:
@@ -367,57 +328,55 @@ with tab4:
             else:
                 original_image = Image.open(scan_file).convert("RGB")
             
-            st.markdown("##### ⚙️ मॅन्युअल ट्रिम (आवश्यकता असल्यास):")
+            st.markdown("##### ⚙️ ट्रिमिंग कंट्रोल्स (बाजूचा नको असलेला भाग कापण्यासाठी):")
             col_t1, col_t2 = st.columns(2)
             with col_t1:
-                crop_margin_x = st.slider("डावी-उजवी बाजू ट्रिम करा (%)", 0, 25, 0, key="trim_x")
+                crop_margin_x = st.slider("डावी-उजवी बाजू ट्रिम करा (%)", 0, 30, 0, key="trim_x")
             with col_t2:
-                crop_margin_y = st.slider("वरची-खालची बाजू ट्रिम करा (%)", 0, 25, 0, key="trim_y")
+                crop_margin_y = st.slider("वरची-خालची बाजू ट्रिम करा (%)", 0, 30, 0, key="trim_y")
                 
             scan_mode = st.selectbox(
                 "कलर मोड निवडा:", 
-                ["HD Magic Color", "Original Clean", "Black & White"],
-                key="smart_scan_mode"
+                ["Magic Clean (सावली पूर्ण साफ करा)", "Black & White (कडक B&W)", "Original"],
+                key="shadow_scan_mode"
             )
 
-            if st.button("🚀 HD स्कॅनिंग पूर्ण करा", type="primary", use_container_width=True, key="btn_smart_scan"):
-                with st.spinner("⏳ स्वयंचलितपणे संपूर्ण डॉक्युमेंट शोधून ऑटो-क्रॉप केले जात आहे..."):
+            if st.button("🚀 सावली साफ करून HD स्कॅन करा", type="primary", use_container_width=True, key="btn_shadow_scan"):
+                with st.spinner("⏳ सावली पूर्णपणे साफ करून कागद लख्ख पांढरा केला जात आहे..."):
                     try:
-                        # १. स्मार्ट ऑटो-क्रॉप (लहान बॉक्सेस इग्नोर करून)
-                        cropped_img, is_cropped = auto_detect_and_crop(original_image)
-                        
-                        # २. स्लाईडर ट्रिम (युझरने सेट केले असल्यास)
-                        w, h = cropped_img.size
+                        # १. ट्रिमिंग (युझरने सेट केले असल्यास)
+                        w, h = original_image.size
                         mx = int(w * (crop_margin_x / 100))
                         my = int(h * (crop_margin_y / 100))
-                        if mx > 0 or my > 0:
-                            if w - mx > mx and h - my > my:
-                                cropped_img = cropped_img.crop((mx, my, w - mx, h - my))
                         
-                        # ३. HD एनहान्समेंट
-                        if scan_mode == "HD Magic Color":
-                            final_res = enhance_hd_quality(cropped_img)
-                        elif scan_mode == "Black & White":
-                            gray_np = np.array(cropped_img.convert('L'))
-                            scanned = cv2.adaptiveThreshold(gray_np, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 21, 10)
+                        if mx > 0 or my > 0:
+                            working_img = original_image.crop((mx, my, w - mx, h - my))
+                        else:
+                            working_img = original_image
+                        
+                        # २. सावली काढणे व कलर मोड
+                        if scan_mode == "Magic Clean (सावली पूर्ण साफ करा)":
+                            final_res = remove_shadow_and_clean(working_img)
+                        elif scan_mode == "Black & White (कडक B&W)":
+                            gray_np = np.array(working_img.convert('L'))
+                            scanned = cv2.adaptiveThreshold(gray_np, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 25, 12)
                             final_res = Image.fromarray(scanned)
                         else:
-                            final_res = cropped_img
+                            final_res = working_img
 
-                        st.success("✅ संपूर्ण डॉक्युमेंट यशस्वीरित्या स्कॅन झाले आहे!")
-
-                        st.image(final_res, caption="Scanned Result (HD)", width=500)
+                        st.success("✅ डॉक्युमेंटवरील सावली यशस्वीरित्या साफ झाली आहे!")
+                        st.image(final_res, caption="Scanned Result (Shadow Cleaned)", width=500)
                         
                         img_byte_arr = io.BytesIO()
                         final_res.save(img_byte_arr, format='JPEG', quality=100)
                         
                         st.download_button(
-                            label="📥 स्कॅन झालेली HD इमेज डाऊनलोड करा (JPG)",
+                            label="📥 स्कॅन झालेली HD फाईल डाऊनलोड करा (JPG)",
                             data=img_byte_arr.getvalue(),
-                            file_name="Balaji_HD_Scanned.jpg",
+                            file_name="Balaji_Clean_Document.jpg",
                             mime="image/jpeg",
                             use_container_width=True,
-                            key="smart_scan_dl"
+                            key="shadow_scan_dl"
                         )
                     except Exception as e:
                         st.error(f"त्रुटी: {e}")
