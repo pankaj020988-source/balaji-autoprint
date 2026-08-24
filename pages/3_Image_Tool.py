@@ -1,5 +1,5 @@
 import streamlit as st
-from PIL import Image, ImageOps, ImageEnhance
+from PIL import Image, ImageOps, ImageEnhance, ImageDraw
 import io
 import fitz  # PyMuPDF
 import cv2
@@ -77,47 +77,39 @@ st.markdown("""
 st.markdown("<div class='main-header'>बालाजी सायबर पॉईंट - इमेज प्रोसेसिंग टूलकिट</div>", unsafe_allow_html=True)
 
 # ==========================================
-# ⚡ सावली साफ करणारे आणि सेफ पॅडिंग देणारे एनहान्सर
+# 📐 कटिंग लाईन काढणारे फंक्शन
 # ==========================================
-def remove_shadow_and_clean(pil_img):
-    img_np = np.array(pil_img.convert('RGB'))
-    img_cv = cv2.cvtColor(img_np, cv2.COLOR_RGB2BGR)
+def draw_cutting_guides(draw_obj, box, margin=15, line_len=30, color="#555555", width=2):
+    x0, y0, x1, y1 = box
+    # ४ ही बाजूंना स्पष्ट कटिंग बॉर्डर
+    draw_obj.rectangle([x0, y0, x1, y1], outline="black", width=2)
     
-    # सावली वेगळी करून साफ करणे
-    rgb_planes = cv2.split(img_cv)
-    result_planes = []
-    
-    for plane in rgb_planes:
-        dilated_img = cv2.dilate(plane, np.ones((7,7), np.uint8))
-        bg_img = cv2.medianBlur(dilated_img, 21)
-        diff_img = 255 - cv2.absdiff(plane, bg_img)
-        norm_img = cv2.normalize(diff_img, None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_8UC1)
-        result_planes.append(norm_img)
-        
-    result = cv2.merge(result_planes)
-    result_rgb = cv2.cvtColor(result, cv2.COLOR_BGR2RGB)
-    
-    enhanced = Image.fromarray(result_rgb)
-    enhancer_contrast = ImageEnhance.Contrast(enhanced)
-    img_contrast = enhancer_contrast.enhance(1.35)
-    
-    enhancer_sharpness = ImageEnhance.Sharpness(img_contrast)
-    img_sharp = enhancer_sharpness.enhance(1.25)
-    
-    return img_sharp
+    # कोपऱ्यांवर सुलभ कटिंगसाठी कॉर्नर कट्स (Crop Marks)
+    # Top-Left
+    draw_obj.line([(x0 - margin, y0), (x0 - margin - line_len, y0)], fill=color, width=width)
+    draw_obj.line([(x0, y0 - margin), (x0, y0 - margin - line_len)], fill=color, width=width)
+    # Top-Right
+    draw_obj.line([(x1 + margin, y0), (x1 + margin + line_len, y0)], fill=color, width=width)
+    draw_obj.line([(x1, y0 - margin), (x1, y0 - margin - line_len)], fill=color, width=width)
+    # Bottom-Left
+    draw_obj.line([(x0 - margin, y1), (x0 - margin - line_len, y1)], fill=color, width=width)
+    draw_obj.line([(x0, y1 + margin), (x0, y1 + margin + line_len)], fill=color, width=width)
+    # Bottom-Right
+    draw_obj.line([(x1 + margin, y1), (x1 + margin + line_len, y1)], fill=color, width=width)
+    draw_obj.line([(x1, y1 + margin), (x1, y1 + margin + line_len)], fill=color, width=width)
 
 # ==========================================
-# 🛠️ ३. मुख्य टूल्स (टॅब्स)
+# 🛠️ मुख्य टूल्स (टॅब्स)
 # ==========================================
 tab1, tab2, tab3, tab4 = st.tabs([
-    "आधार कटर (4x6 Layout)", 
+    "आधार कटर (4x6 Cutting Guides)", 
     "पासपोर्ट फोटो मेकर (9 Photos)", 
     "फॉर्म फोटो व सही रीसायझर", 
     "स्मार्ट डॉक्युमेंट स्कॅनर (Full Safe View)"
 ])
 
 # ------------------------------------------
-# 🖨️ टॅब १: आधार कार्ड कटर
+# 🖨️ टॅब १: आधार कार्ड कटर (४ ही बाजूंना कटिंग लाईन)
 # ------------------------------------------
 with tab1:
     col_a1, col_a2 = st.columns([2, 1])
@@ -133,7 +125,7 @@ with tab1:
         with col_c2:
             bottom_trim = st.slider("खालचा भाग ट्रीम (%)", 88.0, 98.0, 92.5, step=0.2, key="bot_trim_slider")
 
-        if st.button("4x6 लेआउट जनरेट करा", type="primary", use_container_width=True, key="btn_aadhaar_gen"):
+        if st.button("4x6 कटिंग लाईन लेआउट जनरेट करा", type="primary", use_container_width=True, key="btn_aadhaar_gen"):
             with st.spinner("प्रक्रिया सुरू आहे..."):
                 try:
                     pdf_bytes = pdf_file.read()
@@ -169,23 +161,27 @@ with tab1:
                     front_resized = crop_front.resize((card_w, card_h), Image.Resampling.LANCZOS)
                     back_resized = crop_back.resize((card_w, card_h), Image.Resampling.LANCZOS)
 
-                    front_bordered = ImageOps.expand(front_resized, border=5, fill='black')
-                    back_bordered = ImageOps.expand(back_resized, border=5, fill='black')
+                    paste_x = (PAPER_W - card_w) // 2
+                    y_front = 180
+                    y_back = 950
 
-                    paste_x = (PAPER_W - front_bordered.width) // 2
-                    
-                    final_canvas.paste(front_bordered, (paste_x, 180))
-                    final_canvas.paste(back_bordered, (paste_x, 950))
+                    final_canvas.paste(front_resized, (paste_x, y_front))
+                    final_canvas.paste(back_resized, (paste_x, y_back))
 
-                    st.image(final_canvas, caption="4x6 Print Preview", width=450)
+                    # ४ ही बाजूंना कटिंग लाईन्स आणि गाईड मार्क्स काढणे
+                    draw = ImageDraw.Draw(final_canvas)
+                    draw_cutting_guides(draw, (paste_x, y_front, paste_x + card_w, y_front + card_h))
+                    draw_cutting_guides(draw, (paste_x, y_back, paste_x + card_w, y_back + card_h))
+
+                    st.image(final_canvas, caption="4x6 Print Preview (Cutting Lines Added)", width=450)
                     
                     id_buffer = io.BytesIO()
                     final_canvas.save(id_buffer, format="PNG", dpi=(300, 300))
                     
                     st.download_button(
-                        label="4x6 PNG डाऊनलोड करा", 
+                        label="4x6 कटिंग लाईन PNG डाऊनलोड करा", 
                         data=id_buffer.getvalue(), 
-                        file_name="Aadhaar_4x6_Layout.png", 
+                        file_name="Aadhaar_4x6_Cutting_Layout.png", 
                         mime="image/png", 
                         use_container_width=True,
                         key="dl_aadhaar_btn"
@@ -308,7 +304,7 @@ with tab3:
                     st.error(f"त्रुटी: {e}")
 
 # ------------------------------------------
-# 📸 टॅब ४: सेफ डॉक्युमेंट स्कॅनर (अक्षरे न कापणारा)
+# 📸 टॅब ४: सेफ डॉक्युमेंट स्कॅनर
 # ------------------------------------------
 with tab4:
     scan_file = st.file_uploader("स्कॅन करण्यासाठी फोटो किंवा PDF अपलोड करा:", type=["jpg", "jpeg", "png", "pdf"], key="safe_scan_upload")
@@ -345,7 +341,6 @@ with tab4:
                         mx = int(w * (crop_margin_x / 100))
                         my = int(h * (crop_margin_y / 100))
                         
-                        # मॅन्युअल ट्रीम लावल्यासच कट होईल, अन्यथा संपूर्ण कागद १००% सुरक्षित राहील
                         if mx > 0 or my > 0:
                             working_img = original_image.crop((mx, my, w - mx, h - my))
                         else:
@@ -353,7 +348,19 @@ with tab4:
                         
                         # सावली साफ करणे
                         if scan_mode == "Magic Clean (सावली पूर्ण साफ करा)":
-                            final_res = remove_shadow_and_clean(working_img)
+                            img_np = np.array(working_img.convert('RGB'))
+                            img_cv = cv2.cvtColor(img_np, cv2.COLOR_RGB2BGR)
+                            rgb_planes = cv2.split(img_cv)
+                            result_planes = []
+                            for plane in rgb_planes:
+                                dilated_img = cv2.dilate(plane, np.ones((7,7), np.uint8))
+                                bg_img = cv2.medianBlur(dilated_img, 21)
+                                diff_img = 255 - cv2.absdiff(plane, bg_img)
+                                norm_img = cv2.normalize(diff_img, None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_8UC1)
+                                result_planes.append(norm_img)
+                            result = cv2.merge(result_planes)
+                            enhanced = Image.fromarray(cv2.cvtColor(result, cv2.COLOR_BGR2RGB))
+                            final_res = ImageEnhance.Contrast(enhanced).enhance(1.35)
                         elif scan_mode == "Black & White (कडक B&W)":
                             gray_np = np.array(working_img.convert('L'))
                             scanned = cv2.adaptiveThreshold(gray_np, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 25, 12)
@@ -361,8 +368,8 @@ with tab4:
                         else:
                             final_res = working_img
 
-                        st.success("✅ मजकूर व अक्षरे पूर्ण सुरक्षित ठेवून सावली साफ झाली आहे!")
-                        st.image(final_res, caption="Scanned Result (Safe Full View)", width=550)
+                        st.success("✅ डॉक्युमेंट HD स्कॅन झाले आहे!")
+                        st.image(final_res, caption="Scanned Result (Safe Full View)", width=500)
                         
                         img_byte_arr = io.BytesIO()
                         final_res.save(img_byte_arr, format='JPEG', quality=100)
