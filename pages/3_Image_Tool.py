@@ -77,39 +77,64 @@ st.markdown("""
 st.markdown("<div class='main-header'>बालाजी सायबर पॉईंट - इमेज प्रोसेसिंग टूलकिट</div>", unsafe_allow_html=True)
 
 # ==========================================
-# 📐 कटिंग लाईन काढणारे फंक्शन
+# 📐 बॉर्डरपेक्षा सुरक्षित अंतरावर कटिंग लाईन काढणारे फंक्शन
 # ==========================================
-def draw_cutting_guides(draw_obj, box, margin=15, line_len=30, color="#555555", width=2):
+def draw_safe_cutting_guides(draw_obj, box, offset=12, line_len=35, color="#666666", width=2):
+    """
+    कार्डच्या मुख्य बॉर्डरपेक्षा offset पिक्सेल लांब कटिंग लाईन आणि कॉर्नर मार्क्स काढते.
+    """
     x0, y0, x1, y1 = box
-    # ४ ही बाजूंना स्पष्ट कटिंग बॉर्डर
-    draw_obj.rectangle([x0, y0, x1, y1], outline="black", width=2)
     
-    # कोपऱ्यांवर सुलभ कटिंगसाठी कॉर्नर कट्स (Crop Marks)
+    # बॉर्डरपेक्षा बाहेर सुरक्षित चौकोन (Safe Cut Box)
+    cx0 = x0 - offset
+    cy0 = y0 - offset
+    cx1 = x1 + offset
+    cy1 = y1 + offset
+    
+    # डॅश/बारीक कटिंग लाईन (कार्डच्या बाहेर)
+    # आडव्या आणि उभ्या सेफ कट लाईन्स (Corner Crop Lines)
     # Top-Left
-    draw_obj.line([(x0 - margin, y0), (x0 - margin - line_len, y0)], fill=color, width=width)
-    draw_obj.line([(x0, y0 - margin), (x0, y0 - margin - line_len)], fill=color, width=width)
+    draw_obj.line([(cx0 - line_len, cy0), (cx0, cy0)], fill=color, width=width)
+    draw_obj.line([(cx0, cy0 - line_len), (cx0, cy0)], fill=color, width=width)
+    
     # Top-Right
-    draw_obj.line([(x1 + margin, y0), (x1 + margin + line_len, y0)], fill=color, width=width)
-    draw_obj.line([(x1, y0 - margin), (x1, y0 - margin - line_len)], fill=color, width=width)
+    draw_obj.line([(cx1, cy0), (cx1 + line_len, cy0)], fill=color, width=width)
+    draw_obj.line([(cx1, cy0 - line_len), (cx1, cy0)], fill=color, width=width)
+    
     # Bottom-Left
-    draw_obj.line([(x0 - margin, y1), (x0 - margin - line_len, y1)], fill=color, width=width)
-    draw_obj.line([(x0, y1 + margin), (x0, y1 + margin + line_len)], fill=color, width=width)
+    draw_obj.line([(cx0 - line_len, cy1), (cx0, cy1)], fill=color, width=width)
+    draw_obj.line([(cx0, cy1), (cx0, cy1 + line_len)], fill=color, width=width)
+    
     # Bottom-Right
-    draw_obj.line([(x1 + margin, y1), (x1 + margin + line_len, y1)], fill=color, width=width)
-    draw_obj.line([(x1, y1 + margin), (x1, y1 + margin + line_len)], fill=color, width=width)
+    draw_obj.line([(cx1, cy1), (cx1 + line_len, cy1)], fill=color, width=width)
+    draw_obj.line([(cx1, cy1), (cx1, cy1 + line_len)], fill=color, width=width)
+    
+    # हलकी तुटक (Dotted) कटिंग बॉर्डर संपूर्ण कार्डभोवती
+    dash_len = 15
+    space_len = 10
+    
+    # वरची आणि खालची तुटक रेषा
+    for x in range(int(cx0), int(cx1), dash_len + space_len):
+        draw_obj.line([(x, cy0), (min(x + dash_len, cx1), cy0)], fill="#888888", width=1)
+        draw_obj.line([(x, cy1), (min(x + dash_len, cx1), cy1)], fill="#888888", width=1)
+        
+    # डावी आणि उजवी तुटक रेषा
+    for y in range(int(cy0), int(cy1), dash_len + space_len):
+        draw_obj.line([(cx0, y), (cx0, min(y + dash_len, cy1))], fill="#888888", width=1)
+        draw_obj.line([(cx1, y), (cx1, min(y + dash_len, cy1))], fill="#888888", width=1)
 
 # ==========================================
 # 🛠️ मुख्य टूल्स (टॅब्स)
 # ==========================================
 tab1, tab2, tab3, tab4 = st.tabs([
-    "आधार कटर (4x6 Cutting Guides)", 
+    "आधार कटर (Safe Cutting Line)", 
     "पासपोर्ट फोटो मेकर (9 Photos)", 
     "फॉर्म फोटो व सही रीसायझर", 
     "स्मार्ट डॉक्युमेंट स्कॅनर (Full Safe View)"
 ])
 
 # ------------------------------------------
-# 🖨️ टॅब १: आधार कार्ड कटर (४ ही बाजूंना कटिंग लाईन)
+# 🖨️ टॅब १: आधार कार्ड कटर (बॉर्डरपेक्षा लांब कटिंग लाईन)
 # ------------------------------------------
 with tab1:
     col_a1, col_a2 = st.columns([2, 1])
@@ -157,31 +182,35 @@ with tab1:
                     PAPER_W, PAPER_HEIGHT = 1200, 1800
                     final_canvas = Image.new("RGB", (PAPER_W, PAPER_HEIGHT), "white")
 
-                    card_w, card_h = 1050, 600
+                    card_w, card_h = 1040, 595
                     front_resized = crop_front.resize((card_w, card_h), Image.Resampling.LANCZOS)
                     back_resized = crop_back.resize((card_w, card_h), Image.Resampling.LANCZOS)
 
-                    paste_x = (PAPER_W - card_w) // 2
+                    front_bordered = ImageOps.expand(front_resized, border=4, fill='black')
+                    back_bordered = ImageOps.expand(back_resized, border=4, fill='black')
+
+                    bw, bh = front_bordered.size
+                    paste_x = (PAPER_W - bw) // 2
                     y_front = 180
                     y_back = 950
 
-                    final_canvas.paste(front_resized, (paste_x, y_front))
-                    final_canvas.paste(back_resized, (paste_x, y_back))
+                    final_canvas.paste(front_bordered, (paste_x, y_front))
+                    final_canvas.paste(back_bordered, (paste_x, y_back))
 
-                    # ४ ही बाजूंना कटिंग लाईन्स आणि गाईड मार्क्स काढणे
+                    # 🎯 मुख्य बॉर्डरच्या १२ px बाहेर सेफ कटिंग लाईन्स काढणे
                     draw = ImageDraw.Draw(final_canvas)
-                    draw_cutting_guides(draw, (paste_x, y_front, paste_x + card_w, y_front + card_h))
-                    draw_cutting_guides(draw, (paste_x, y_back, paste_x + card_w, y_back + card_h))
+                    draw_safe_cutting_guides(draw, (paste_x, y_front, paste_x + bw, y_front + bh), offset=12)
+                    draw_safe_cutting_guides(draw, (paste_x, y_back, paste_x + bw, y_back + bh), offset=12)
 
-                    st.image(final_canvas, caption="4x6 Print Preview (Cutting Lines Added)", width=450)
+                    st.image(final_canvas, caption="4x6 Print Preview (Safe Margin Cutting Lines)", width=450)
                     
                     id_buffer = io.BytesIO()
                     final_canvas.save(id_buffer, format="PNG", dpi=(300, 300))
                     
                     st.download_button(
-                        label="4x6 कटिंग लाईन PNG डाऊनलोड करा", 
+                        label="4x6 सेफ कटिंग लाईन PNG डाऊनलोड करा", 
                         data=id_buffer.getvalue(), 
-                        file_name="Aadhaar_4x6_Cutting_Layout.png", 
+                        file_name="Aadhaar_4x6_Safe_Cutting.png", 
                         mime="image/png", 
                         use_container_width=True,
                         key="dl_aadhaar_btn"
