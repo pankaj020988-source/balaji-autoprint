@@ -70,7 +70,7 @@ st.markdown("""
 st.markdown("<div class='main-header'>Balaji Cyber Point - Image Processing Toolkit</div>", unsafe_allow_html=True)
 
 # ==========================================
-# Helper Function for Cutting Lines
+# Helper Functions
 # ==========================================
 def draw_safe_cutting_guides(draw_obj, box, offset=12, line_len=35, color="#666666", width=2):
     x0, y0, x1, y1 = box
@@ -198,7 +198,7 @@ with tab1:
                     st.error(f"Error: {e}")
 
 # ------------------------------------------
-# Tab 2: Senior Citizen Card
+# Tab 2: Senior Citizen Card (Separation Fix)
 # ------------------------------------------
 with tab2:
     sc_file = st.file_uploader("Senior Citizen Card PDF / Image Upload Kara:", type=["pdf", "png", "jpg", "jpeg"], key="sc_uploader")
@@ -206,9 +206,9 @@ with tab2:
     if sc_file is not None:
         col_s1, col_s2 = st.columns(2)
         with col_s1:
-            split_front = st.slider("Front Card Cut Limit (%)", 35.0, 55.0, 48.0, step=0.5, key="sc_f_slider")
+            split_front = st.slider("Front Card Cut (वरून कुठपर्यंत %)", 15.0, 32.0, 24.0, step=0.5, key="sc_f_slider")
         with col_s2:
-            split_back = st.slider("Back Card Start Limit (%)", 48.0, 65.0, 51.0, step=0.5, key="sc_b_slider")
+            split_back = st.slider("Back Card Cut (खालून कुठपर्यंत %)", 35.0, 58.0, 48.0, step=0.5, key="sc_b_slider")
 
         if st.button("Generate Senior Citizen Card Layout", type="primary", use_container_width=True, key="btn_sc_gen"):
             with st.spinner("Processing chalu ahe..."):
@@ -225,9 +225,10 @@ with tab2:
 
                     w, h = full_img.size
 
-                    # वरचे फ्रंट कार्ड आणि खालचे बॅक कार्ड स्पष्ट अलग करणे
+                    # Front: Top part (0 ते split_front)
                     front_raw = full_img.crop((0, 0, w, int(h * (split_front / 100.0))))
-                    back_raw = full_img.crop((0, int(h * (split_back / 100.0)), w, h))
+                    # Back: Middle part (split_front ते split_back)
+                    back_raw = full_img.crop((0, int(h * (split_front / 100.0)), w, int(h * (split_back / 100.0))))
 
                     front_trimmed = trim_white_edges(front_raw)
                     back_trimmed = trim_white_edges(back_raw)
@@ -248,6 +249,7 @@ with tab2:
                     y_front = 180
                     y_back = 950
 
+                    # दोन्ही वेगवेगळे पेस्ट करणे
                     final_canvas.paste(front_bordered, (paste_x, y_front))
                     final_canvas.paste(back_bordered, (paste_x, y_back))
 
