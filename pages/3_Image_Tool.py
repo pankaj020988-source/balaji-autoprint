@@ -99,14 +99,6 @@ def draw_safe_cutting_guides(draw_obj, box, offset=12, line_len=35, color="#6666
         draw_obj.line([(cx0, y), (cx0, min(y + dash_len, cy1))], fill="#888888", width=1)
         draw_obj.line([(cx1, y), (cx1, min(y + dash_len, cy1))], fill="#888888", width=1)
 
-def auto_trim_white(im):
-    gray = im.convert("L")
-    inv = ImageOps.invert(gray)
-    bbox = inv.getbbox()
-    if bbox:
-        return im.crop(bbox)
-    return im
-
 # ==========================================
 # 3. Main Tabs
 # ==========================================
@@ -202,7 +194,7 @@ with tab1:
                     st.error(f"Error: {e}")
 
 # ------------------------------------------
-# Tab 2: Senior Citizen Card
+# Tab 2: Senior Citizen Card (Correct Division)
 # ------------------------------------------
 with tab2:
     sc_file = st.file_uploader("Senior Citizen Card PDF / Image Upload Kara:", type=["pdf", "png", "jpg", "jpeg"], key="sc_uploader")
@@ -223,17 +215,17 @@ with tab2:
 
                     w, h = full_img.size
 
-                    front_part = full_img.crop((0, 0, w, int(h * 0.49)))
-                    back_part = full_img.crop((0, int(h * 0.50), w, h))
-
-                    front_cropped = auto_trim_white(front_part)
-                    back_cropped = auto_trim_white(back_part)
+                    # Front: Top part (border sah barobar cut)
+                    front_part = full_img.crop((int(w * 0.005), int(h * 0.005), int(w * 0.995), int(h * 0.490)))
+                    
+                    # Back: Bottom part (border sah barobar cut)
+                    back_part = full_img.crop((int(w * 0.005), int(h * 0.505), int(w * 0.995), int(h * 0.995)))
 
                     PAPER_W, PAPER_HEIGHT = 1200, 1800
                     card_w, card_h = 1040, 595
 
-                    front_resized = front_cropped.resize((card_w, card_h), Image.Resampling.LANCZOS)
-                    back_resized = back_cropped.resize((card_w, card_h), Image.Resampling.LANCZOS)
+                    front_resized = front_part.resize((card_w, card_h), Image.Resampling.LANCZOS)
+                    back_resized = back_part.resize((card_w, card_h), Image.Resampling.LANCZOS)
 
                     front_bordered = ImageOps.expand(front_resized, border=4, fill='black')
                     back_bordered = ImageOps.expand(back_resized, border=4, fill='black')
@@ -245,6 +237,7 @@ with tab2:
                     y_front = 180
                     y_back = 950
 
+                    # Ek Front var ani ek Back khali paste hone
                     final_canvas.paste(front_bordered, (paste_x, y_front))
                     final_canvas.paste(back_bordered, (paste_x, y_back))
 
