@@ -1,9 +1,7 @@
 import streamlit as st
-from PIL import Image, ImageOps, ImageEnhance, ImageDraw
+from PIL import Image, ImageOps, ImageDraw
 import io
 import fitz
-import cv2
-import numpy as np
 
 # ==========================================
 # 1. Page Configuration
@@ -72,7 +70,7 @@ st.markdown("""
 st.markdown("<div class='main-header'>Balaji Cyber Point - Image Processing Toolkit</div>", unsafe_allow_html=True)
 
 # ==========================================
-# Helper Functions
+# Helper Function for Cutting Lines
 # ==========================================
 def draw_safe_cutting_guides(draw_obj, box, offset=12, line_len=35, color="#666666", width=2):
     x0, y0, x1, y1 = box
@@ -99,15 +97,21 @@ def draw_safe_cutting_guides(draw_obj, box, offset=12, line_len=35, color="#6666
         draw_obj.line([(cx0, y), (cx0, min(y + dash_len, cy1))], fill="#888888", width=1)
         draw_obj.line([(cx1, y), (cx1, min(y + dash_len, cy1))], fill="#888888", width=1)
 
+def trim_white_edges(im):
+    gray = im.convert("L")
+    inv = ImageOps.invert(gray)
+    bbox = inv.getbbox()
+    if bbox:
+        return im.crop(bbox)
+    return im
+
 # ==========================================
 # 3. Main Tabs
 # ==========================================
-tab1, tab2, tab3, tab4, tab5 = st.tabs([
+tab1, tab2, tab3 = st.tabs([
     "Aadhaar Cutter (4x6)",
     "Senior Citizen Card (4x6)",
-    "Passport Photo Maker (9 Photos)",
-    "Photo & Sign Resizer",
-    "Document Scanner"
+    "Passport Photo Maker (9 Photos)"
 ])
 
 # ------------------------------------------
@@ -146,11 +150,4 @@ with tab1:
                     page = doc[0]
                     pix = page.get_pixmap(dpi=400)
                     img_data = pix.tobytes("png")
-                    full_img = Image.open(io.BytesIO(img_data)).convert("RGB")
-
-                    w, h = full_img.size
-                    t_pct = top_trim / 100.0
-                    b_pct = bottom_trim / 100.0
-
-                    crop_front = full_img.crop((int(w * 0.078), int(h * t_pct), int(w * 0.492), int(h * b_pct)))
-                    crop_back = full_img.crop((int(w * 0.508), int(h * t_pct),
+                    full_img = Image.open(io
