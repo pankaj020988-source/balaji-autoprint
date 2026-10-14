@@ -142,4 +142,333 @@ with tab1:
         with col_c2:
             bottom_trim = st.slider("Bottom Trim (%)", 88.0, 98.0, 92.5, step=0.2, key="bot_trim_slider")
 
-        if st.button
+        if st.button("Generate 4x6 Layout", type="primary", use_container_width=True, key="btn_aadhaar_gen"):
+            with st.spinner("Processing chalu ahe..."):
+                try:
+                    pdf_bytes = pdf_file.read()
+                    doc = fitz.open(stream=pdf_bytes, filetype="pdf")
+                    
+                    if doc.is_encrypted:
+                        if pdf_password:
+                            auth_success = doc.authenticate(pdf_password)
+                            if not auth_success:
+                                st.error("Chukicha password takla ahe.")
+                                st.stop()
+                        else:
+                            st.warning("Krupaya PDF password taka.")
+                            st.stop()
+
+                    page = doc[0]
+                    pix = page.get_pixmap(dpi=400)
+                    img_data = pix.tobytes("png")
+                    full_img = Image.open(io.BytesIO(img_data)).convert("RGB")
+                    
+                    w, h = full_img.size
+                    t_pct = top_trim / 100.0
+                    b_pct = bottom_trim / 100.0
+                    
+                    crop_front = full_img.crop((int(w * 0.078), int(h * t_pct), int(w * 0.492), int(h * b_pct)))
+                    crop_back = full_img.crop((int(w * 0.508), int(h * t_pct), int(w * 0.922), int(h * b_pct)))
+                    
+                    PAPER_W, PAPER_HEIGHT = 1200, 1800
+                    final_canvas = Image.new("RGB", (PAPER_W, PAPER_HEIGHT), "white")
+
+                    card_w, card_h = 1040, 595
+                    front_resized = crop_front.resize((card_w, card_h), Image.Resampling.LANCZOS)
+                    back_resized = crop_back.resize((card_w, card_h), Image.Resampling.LANCZOS)
+
+                    front_bordered = ImageOps.expand(front_resized, border=4, fill='black')
+                    back_bordered = ImageOps.expand(back_resized, border=4, fill='black')
+
+                    bw, bh = front_bordered.size
+                    paste_x = (PAPER_W - bw) // 2
+                    y_front = 180
+                    y_back = 950
+
+                    final_canvas.paste(front_bordered, (paste_x, y_front))
+                    final_canvas.paste(back_bordered, (paste_x, y_back))
+
+                    draw = ImageDraw.Draw(final_canvas)
+                    draw_safe_cutting_guides(draw, (paste_x, y_front, paste_x + bw, y_front + bh), offset=12)
+                    draw_safe_cutting_guides(draw, (paste_x, y_back, paste_x + bw, y_back + bh), offset=12)
+
+                    st.image(final_canvas, caption="4x6 Print Preview", width=450)
+                    
+                    id_buffer = io.BytesIO()
+                    final_canvas.save(id_buffer, format="PNG", dpi=(300, 300))
+                    
+                    st.download_button(
+                        label="Download 4x6 PNG", 
+                        data=id_buffer.getvalue(), 
+                        file_name="Aadhaar_4x6_Layout.png", 
+                        mime="image/png", 
+                        use_container_width=True,
+                        key="dl_aadhaar_btn"
+                    )
+                except Exception as e:
+                    st.error(f"Error: {e}")
+
+# ------------------------------------------
+# Tab 2: Senior Citizen Card
+# ------------------------------------------
+with tab2:
+    sc_file = st.file_uploader("Senior Citizen Card PDF / Image Upload Kara:", type=["pdf", "png", "jpg", "jpeg"], key="sc_uploader")
+
+    if sc_file is not None:
+        if st.button("Generate Senior Citizen Card Layout", type="primary", use_container_width=True, key="btn_sc_gen"):
+            with st.spinner("Processing chalu ahe..."):
+                try:
+                    if sc_file.name.lower().endswith(".pdf"):
+                        pdf_bytes = sc_file.read()
+                        doc = fitz.open(stream=pdf_bytes, filetype="pdf")
+                        page = doc[0]
+                        pix = page.get_pixmap(dpi=400)
+                        img_data = pix.tobytes("png")
+                        full_img = Image.open(io.BytesIO(img_data)).convert("RGB")
+                    else:
+                        full_img = Image.open(sc_file).convert("RGB")
+                    
+                    width, height = full_img.size
+                    
+                    rough_front = full_img.crop((0, 0, width, int(height * 0.50)))
+                    rough_back = full_img.crop((0, int(height * 0.50), width, height))
+                    
+                    front_cropped = auto_crop_card(rough_front)
+                    back_cropped = auto_crop_card(rough_back)
+                    
+                    PAPER_W, PAPER_HEIGHT = 1200, 1800
+                    card_w, card_h = 1040, 595
+                    
+                    front_resized = front_cropped.resize((card_w, card_h), Image.Resampling.LANCZOS)
+                    back_resized = back_cropped.resize((card_w, card_h), Image.Resampling.LANCZOS)
+                    
+                    front_bordered = ImageOps.expand(front_resized, border=4, fill='black')
+                    back_bordered = ImageOps.expand(back_resized, border=4, fill='black')
+                    
+                    bw, bh = front_bordered.size
+                    final_canvas = Image.new("RGB", (PAPER_W, PAPER_HEIGHT), "white")
+                    
+                    paste_x = (PAPER_W - bw) // 2
+                    y_front = 180
+                    y_back = 950
+                    
+                    final_canvas.paste(front_bordered, (paste_x, y_front))
+                    final_canvas.paste(back_bordered, (paste_x, y_back))
+                    
+                    draw = ImageDraw.Draw(final_canvas)
+                    draw_safe_cutting_guides(draw, (paste_x, y_front, paste_x + bw, y_front + bh), offset=12)
+                    draw_safe_cutting_guides(draw, (paste_x, y_back, paste_x + bw, y_back + bh), offset=12)
+                    
+                    st.image(final_canvas, caption="Senior Citizen 4x6 Print Preview", width=450)
+                    
+                    buf = io.BytesIO()
+                    final_canvas.save(buf, format="PNG", dpi=(300, 300))
+                    
+                    st.download_button(
+                        label="Download Senior Citizen Card (PNG)",
+                        data=buf.getvalue(),
+                        file_name="Senior_Citizen_Card_4x6.png",
+                        mime="image/png",
+                        use_container_width=True,
+                        key="dl_sc_btn"
+                    )
+                except Exception as e:
+                    st.error(f"Error: {e}")
+
+# ------------------------------------------
+# Tab 3: Passport Photo Maker
+# ------------------------------------------
+with tab3:
+    uploaded_image = st.file_uploader("Photo Upload Kara:", type=["jpg", "jpeg", "png"], key="pp_uploader")
+
+    if uploaded_image is not None:
+        img = Image.open(uploaded_image)
+        st.image(img, caption="Uploaded Photo", width=120)
+        
+        DPI = 300
+        paper_option = st.radio(
+            "Paper Size:",
+            ("4x6 Paper - 9 Photos", "Full A4 Sheet"),
+            key="paper_opt",
+            horizontal=True
+        )
+        
+        if st.button("Generate Passport Sheet", type="primary", use_container_width=True, key="btn_pp"):
+            with st.spinner("Processing chalu ahe..."):
+                try:
+                    if "4x6" in paper_option:
+                        canvas_w, canvas_h = int(4 * DPI), int(6 * DPI)
+                        cols, rows = 3, 3
+                        file_suffix = "4x6_9Photos"
+                        
+                        id_w, id_h = 350, 450
+                        resized_id = ImageOps.fit(img, (id_w, id_h), Image.Resampling.LANCZOS)
+                        resized_id = ImageOps.expand(resized_id, border=3, fill='black')
+                        
+                        sheet = Image.new("RGB", (canvas_w, canvas_h), "white")
+                        margin_x = (canvas_w - (cols * resized_id.width)) // (cols + 1)
+                        margin_y = (canvas_h - (rows * resized_id.height)) // (rows + 1)
+                        
+                        for r in range(rows):
+                            for c in range(cols):
+                                x = margin_x + c * (resized_id.width + margin_x)
+                                y = margin_y + r * (resized_id.height + margin_y)
+                                sheet.paste(resized_id, (x, y))
+                    else:
+                        canvas_w, canvas_h = int(8.27 * DPI), int(11.69 * DPI)
+                        file_suffix = "A4_Sheet"
+                        id_w, id_h = int(3.5 / 2.54 * DPI), int(4.5 / 2.54 * DPI)
+                        
+                        resized_id = ImageOps.fit(img, (id_w, id_h), Image.Resampling.LANCZOS)
+                        resized_id = ImageOps.expand(resized_id, border=3, fill='black')
+                        
+                        sheet = Image.new("RGB", (canvas_w, canvas_h), "white")
+                        margin = 25
+                        for y in range(margin, canvas_h - id_h, id_h + margin):
+                            for x in range(margin, canvas_w - id_w, id_w + margin):
+                                sheet.paste(resized_id, (x, y))
+                    
+                    buffer = io.BytesIO()
+                    sheet.save(buffer, format="PNG", dpi=(DPI, DPI))
+                    buffer.seek(0)
+                    
+                    st.image(sheet, caption="Print Preview", width=450)
+                    
+                    st.download_button(
+                        label="Download Photo Sheet (PNG)",
+                        data=buffer,
+                        file_name=f"Passport_Sheet_{file_suffix}.png",
+                        mime="image/png",
+                        use_container_width=True,
+                        key="dl_pp_btn"
+                    )
+                except Exception as e:
+                    st.error(f"Error: {e}")
+
+# ------------------------------------------
+# Tab 4: Photo & Sign Resizer
+# ------------------------------------------
+with tab4:
+    tool_mode = st.radio("Type:", ("Photo (Max 20KB)", "Sign (Max 10KB)"), key="mode_form", horizontal=True)
+    uploaded_file = st.file_uploader("Image Upload Kara:", type=["jpg", "jpeg", "png"], key="form_uploader")
+
+    if uploaded_file is not None:
+        raw_img = Image.open(uploaded_file).convert("RGB")
+        st.image(raw_img, caption="Uploaded File", width=120)
+        
+        t_width, t_height, max_kb, label = (160, 200, 20, "Photo") if "Photo" in tool_mode else (256, 64, 10, "Signature")
+            
+        if st.button("Compress Kara", type="primary", use_container_width=True, key="btn_resize_gen"):
+            with st.spinner("Processing chalu ahe..."):
+                try:
+                    resized_img = raw_img.resize((t_width, t_height), Image.Resampling.LANCZOS)
+                    quality = 95
+                    img_buffer = io.BytesIO()
+                    resized_img.save(img_buffer, "JPEG", optimize=True, quality=quality)
+                    
+                    while img_buffer.tell() > max_kb * 1024 and quality > 10:
+                        quality -= 5
+                        img_buffer = io.BytesIO()
+                        resized_img.save(img_buffer, "JPEG", optimize=True, quality=quality)
+                        
+                    final_bytes = img_buffer.getvalue()
+                    final_size_kb = len(final_bytes) // 1024
+                    
+                    st.success(f"Final Size: {final_size_kb} KB")
+                    st.image(final_bytes, caption=f"Resized {label}")
+                    
+                    st.download_button(
+                        label="Download (JPG)",
+                        data=final_bytes,
+                        file_name=f"Resized_{label.lower()}.jpg",
+                        mime="image/jpeg",
+                        use_container_width=True,
+                        key="dl_form_btn"
+                    )
+                except Exception as e:
+                    st.error(f"Error: {e}")
+
+# ------------------------------------------
+# Tab 5: Document Scanner
+# ------------------------------------------
+with tab5:
+    scan_file = st.file_uploader("Document Photo / PDF Upload Kara:", type=["jpg", "jpeg", "png", "pdf"], key="safe_scan_upload")
+
+    if scan_file is not None:
+        try:
+            if scan_file.name.lower().endswith(".pdf"):
+                pdf_bytes = scan_file.read()
+                doc = fitz.open(stream=pdf_bytes, filetype="pdf")
+                page = doc[0]
+                pix = page.get_pixmap(dpi=300)
+                img_data = pix.tobytes("png")
+                original_image = Image.open(io.BytesIO(img_data)).convert("RGB")
+            else:
+                original_image = Image.open(scan_file).convert("RGB")
+            
+            col_t1, col_t2 = st.columns(2)
+            with col_t1:
+                crop_margin_x = st.slider("Left-Right Trim (%)", 0, 20, 0, key="trim_x_safe")
+            with col_t2:
+                crop_margin_y = st.slider("Top-Bottom Trim (%)", 0, 20, 0, key="trim_y_safe")
+                
+            scan_mode = st.selectbox(
+                "Color Mode:", 
+                ["Magic Clean (Shadow Clean)", "Black & White", "Original"],
+                key="safe_scan_mode"
+            )
+
+            if st.button("Scan in HD", type="primary", use_container_width=True, key="btn_safe_scan"):
+                with st.spinner("Processing chalu ahe..."):
+                    try:
+                        w, h = original_image.size
+                        mx = int(w * (crop_margin_x / 100))
+                        my = int(h * (crop_margin_y / 100))
+                        
+                        if mx > 0 or my > 0:
+                            working_img = original_image.crop((mx, my, w - mx, h - my))
+                        else:
+                            working_img = original_image
+                        
+                        if scan_mode == "Magic Clean (Shadow Clean)":
+                            img_np = np.array(working_img.convert('RGB'))
+                            img_cv = cv2.cvtColor(img_np, cv2.COLOR_RGB2BGR)
+                            rgb_planes = cv2.split(img_cv)
+                            result_planes = []
+                            for plane in rgb_planes:
+                                dilated_img = cv2.dilate(plane, np.ones((7,7), np.uint8))
+                                bg_img = cv2.medianBlur(dilated_img, 21)
+                                diff_img = 255 - cv2.absdiff(plane, bg_img)
+                                norm_img = cv2.normalize(diff_img, None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_8UC1)
+                                result_planes.append(norm_img)
+                            result = cv2.merge(result_planes)
+                            enhanced = Image.fromarray(cv2.cvtColor(result, cv2.COLOR_BGR2RGB))
+                            final_res = ImageEnhance.Contrast(enhanced).enhance(1.35)
+                        elif scan_mode == "Black & White":
+                            gray_np = np.array(working_img.convert('L'))
+                            scanned = cv2.adaptiveThreshold(gray_np, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 25, 12)
+                            final_res = Image.fromarray(scanned)
+                        else:
+                            final_res = working_img
+
+                        st.success("Document HD Scan zale ahe!")
+                        st.image(final_res, caption="Scanned Result", width=500)
+                        
+                        img_byte_arr = io.BytesIO()
+                        final_res.save(img_byte_arr, format='JPEG', quality=100)
+                        
+                        st.download_button(
+                            label="Download HD Document (JPG)",
+                            data=img_byte_arr.getvalue(),
+                            file_name="Balaji_Full_Document.jpg",
+                            mime="image/jpeg",
+                            use_container_width=True,
+                            key="safe_scan_dl"
+                        )
+                    except Exception as e:
+                        st.error(f"Error: {e}")
+        except Exception as e:
+            st.error(f"Error: {e}")
+
+st.write("---")
+st.markdown("<p style='text-align: center; font-size: 12px; color: #94A3B8;'>Balaji Cyber Point, Mangaon, Raigad</p>", unsafe_allow_html=True)
