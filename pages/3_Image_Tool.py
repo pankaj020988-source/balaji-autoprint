@@ -6,16 +6,16 @@ import cv2
 import numpy as np
 
 # ==========================================
-# 🌐 १. वाईड लेआउट कॉन्फिगरेशन
+# 1. Page Configuration
 # ==========================================
 st.set_page_config(
-    page_title="बालाजी सायबर पॉइंट - डिजिटल टूलकिट", 
+    page_title="Balaji Cyber Point - Digital Toolkit", 
     page_icon="🖥️", 
     layout="wide"
 )
 
 # ==========================================
-# 🎨 २. कॉर्पोरेट UI डिझाईन (CSS)
+# 2. UI Style (CSS)
 # ==========================================
 st.markdown("""
     <style>
@@ -74,10 +74,10 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-st.markdown("<div class='main-header'>बालाजी सायबर पॉईंट - इमेज प्रोसेसिंग टूलकिट</div>", unsafe_allow_html=True)
+st.markdown("<div class='main-header'>Balaji Cyber Point - Image Processing Toolkit</div>", unsafe_allow_html=True)
 
 # ==========================================
-# 📐 कटिंग लाईन फंक्शन (बॉर्डरच्या बाहेर सेफ अंतर)
+# Helper Functions
 # ==========================================
 def draw_safe_cutting_guides(draw_obj, box, offset=12, line_len=35, color="#666666", width=2):
     x0, y0, x1, y1 = box
@@ -86,7 +86,7 @@ def draw_safe_cutting_guides(draw_obj, box, offset=12, line_len=35, color="#6666
     cx1 = x1 + offset
     cy1 = y1 + offset
     
-    # कॉर्नर कट्स (Corner Crop Lines)
+    # Corner Marks
     draw_obj.line([(cx0 - line_len, cy0), (cx0, cy0)], fill=color, width=width)
     draw_obj.line([(cx0, cy0 - line_len), (cx0, cy0)], fill=color, width=width)
     draw_obj.line([(cx1, cy0), (cx1 + line_len, cy0)], fill=color, width=width)
@@ -96,7 +96,7 @@ def draw_safe_cutting_guides(draw_obj, box, offset=12, line_len=35, color="#6666
     draw_obj.line([(cx1, cy1), (cx1 + line_len, cy1)], fill=color, width=width)
     draw_obj.line([(cx1, cy1), (cx1, cy1 + line_len)], fill=color, width=width)
     
-    # तुटक रेषा (Dotted Cutting Lines)
+    # Dotted Border Lines
     dash_len = 15
     space_len = 10
     for x in range(int(cx0), int(cx1), dash_len + space_len):
@@ -115,9 +115,31 @@ def auto_crop_card(card_img):
     return card_img
 
 # ==========================================
-# 🛠️ मुख्य टूल्स (टॅब्स)
+# 3. Main Tabs
 # ==========================================
 tab1, tab2, tab3, tab4, tab5 = st.tabs([
-    "आधार कटर (4x6)", 
-    "ज्येष्ठ नागरिक कार्ड (4x6)",
-    "पासपोर्ट फोटो मेकर (9 Photos)",
+    "Aadhaar Cutter (4x6)", 
+    "Senior Citizen Card (4x6)",
+    "Passport Photo Maker (9 Photos)", 
+    "Photo & Sign Resizer", 
+    "Document Scanner"
+])
+
+# ------------------------------------------
+# Tab 1: Aadhaar Cutter
+# ------------------------------------------
+with tab1:
+    col_a1, col_a2 = st.columns([2, 1])
+    with col_a1:
+        pdf_file = st.file_uploader("Aadhaar PDF Upload Kara:", type=["pdf"], key="aadhaar_pdf_uploader")
+    with col_a2:
+        pdf_password = st.text_input("PDF Password (Asel Tar):", type="password", key="pdf_pass_input")
+
+    if pdf_file is not None:
+        col_c1, col_c2 = st.columns(2)
+        with col_c1:
+            top_trim = st.slider("Top Trim (%)", 65.0, 78.0, 72.2, step=0.2, key="top_trim_slider")
+        with col_c2:
+            bottom_trim = st.slider("Bottom Trim (%)", 88.0, 98.0, 92.5, step=0.2, key="bot_trim_slider")
+
+        if st.button
